@@ -3,6 +3,10 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
+// Debug: verificar se as variáveis estão carregadas
+console.log('Supabase URL:', supabaseUrl)
+console.log('Supabase Key:', supabaseKey ? 'Presente' : 'Ausente')
+
 export const supabase = createClient(supabaseUrl, supabaseKey)
 
 // Interface para pagamentos
@@ -18,6 +22,8 @@ export interface PaymentRecord {
 
 // Funções para gerenciar pagamentos
 export async function addPaymentRecord(payment: PaymentRecord) {
+  console.log('Tentando salvar pagamento:', payment)
+  
   const { data, error } = await supabase
     .from('payments')
     .insert([payment])
@@ -28,10 +34,13 @@ export async function addPaymentRecord(payment: PaymentRecord) {
     return null
   }
 
+  console.log('Pagamento salvo com sucesso:', data)
   return data?.[0]
 }
 
 export async function checkPaymentByEmail(email: string): Promise<PaymentRecord | null> {
+  console.log('Verificando pagamento para email:', email)
+  
   const { data, error } = await supabase
     .from('payments')
     .select('*')
@@ -46,12 +55,15 @@ export async function checkPaymentByEmail(email: string): Promise<PaymentRecord 
     return null
   }
 
+  console.log('Pagamento encontrado:', data)
   return data
 }
 
 export async function isUserPaid(email: string): Promise<boolean> {
   const payment = await checkPaymentByEmail(email)
-  return payment !== null
+  const result = payment !== null
+  console.log('Usuário pagou:', result)
+  return result
 }
 
 // Função para simular pagamento (para testes)
