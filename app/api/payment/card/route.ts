@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createCardPayment } from '@/app/lib/mercadopago'
-import { simulatePaymentApproval } from '@/app/lib/payments'
+import { simulatePaymentApproval } from '@/app/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
