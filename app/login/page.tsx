@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { usersData } from '../lib/data'
 import { loginUser } from '../lib/auth'
-import { isUserPaid } from '../lib/supabase'
+// import { isUserPaid } from '../lib/supabase'
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -32,7 +32,8 @@ export default function LoginPage() {
     // Verificar se o usuário fez pagamento
     setTimeout(async () => {
       // Verificar se o email fez pagamento
-      const userPaid = await isUserPaid(formData.email)
+      // const userPaid = await isUserPaid(formData.email)
+      const userPaid = false // Temporariamente desabilitado
       if (userPaid) {
         // Usuário pagou - verificar senha
         if (formData.password === 'flashconcards123') {

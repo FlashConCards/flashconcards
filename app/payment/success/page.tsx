@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { CheckCircle, User, Mail, Lock, ArrowRight } from 'lucide-react'
 import { addUser } from '../../lib/data'
 import { loginUser } from '../../lib/auth'
-import { simulatePaymentApproval } from '../../lib/supabase'
+// import { simulatePaymentApproval } from '../../lib/supabase'
 
 export default function PaymentSuccessPage() {
   const [formData, setFormData] = useState({
@@ -23,7 +23,7 @@ export default function PaymentSuccessPage() {
     }
 
     // Registrar pagamento para o email
-    simulatePaymentApproval(formData.email, 'success-payment')
+    // simulatePaymentApproval(formData.email, 'success-payment')
 
     // Adicionar usuário aos dados
     const newUser = addUser({
