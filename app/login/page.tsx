@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { usersData } from '../lib/data'
 import { loginUser } from '../lib/auth'
+import { isUserPaid, simulatePaymentApproval } from '../lib/payments'
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -28,29 +29,42 @@ export default function LoginPage() {
     setError('')
     setIsLoading(true)
 
-    // Simular verificação de login
+    // Verificar se o usuário fez pagamento
     setTimeout(() => {
-      const user = usersData.find(u => 
-        u.email === formData.email && 
-        u.isActive === true
-      )
-
-      if (user) {
-        // Senha padrão é "flashconcards123"
+      // Verificar se o email fez pagamento
+      if (isUserPaid(formData.email)) {
+        // Usuário pagou - verificar senha
         if (formData.password === 'flashconcards123') {
-          // Login bem-sucedido - salvar dados do usuário e redirecionar
+          // Login bem-sucedido
           loginUser({
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            isActive: user.isActive
+            id: 'paid-user',
+            name: formData.email.split('@')[0], // Usar parte do email como nome
+            email: formData.email,
+            isActive: true
           })
           window.location.href = '/dashboard/paid'
         } else {
           setError('Senha incorreta. Use a senha padrão: flashconcards123')
         }
       } else {
-        setError('Email não encontrado ou usuário inativo. Faça o pagamento primeiro.')
+        // Usuário não pagou - verificar se é um usuário demo
+        const user = usersData.find(u => 
+          u.email === formData.email && 
+          u.isActive === true
+        )
+
+        if (user && formData.password === 'flashconcards123') {
+          // Usuário demo - acesso limitado
+          loginUser({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            isActive: user.isActive
+          })
+          window.location.href = '/dashboard'
+        } else {
+          setError('Email não encontrado ou pagamento não realizado. Faça o pagamento primeiro.')
+        }
       }
       
       setIsLoading(false)

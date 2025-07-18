@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createCardPayment } from '@/app/lib/mercadopago'
+import { simulatePaymentApproval } from '@/app/lib/payments'
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,6 +39,9 @@ export async function POST(request: NextRequest) {
     const result = await createCardPayment(paymentData)
 
     if (result.success) {
+      // Registrar pagamento para o email
+      simulatePaymentApproval(email, result.payment_id?.toString() || 'card-payment')
+      
       return NextResponse.json({
         success: true,
         payment_id: result.payment_id,

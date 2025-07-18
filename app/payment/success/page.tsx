@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle, User, Mail, Lock, ArrowRight } from 'lucide-react'
 import { addUser } from '../../lib/data'
 import { loginUser } from '../../lib/auth'
+import { simulatePaymentApproval } from '../../lib/payments'
 
 export default function PaymentSuccessPage() {
   const [formData, setFormData] = useState({
@@ -20,6 +21,9 @@ export default function PaymentSuccessPage() {
       alert('Por favor, preencha todos os campos.')
       return
     }
+
+    // Registrar pagamento para o email
+    simulatePaymentApproval(formData.email, 'success-payment')
 
     // Adicionar usuário aos dados
     const newUser = addUser({
