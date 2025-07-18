@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createPixPayment } from '@/app/lib/mercadopago'
-import { simulatePaymentApproval } from '@/app/lib/supabase'
+// import { simulatePaymentApproval } from '@/app/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     if (result.success) {
       // Registrar pagamento para o email
-      simulatePaymentApproval(email, result.payment_id?.toString() || 'pix-payment')
+      // simulatePaymentApproval(email, result.payment_id?.toString() || 'pix-payment')
       
       return NextResponse.json({
         success: true,
