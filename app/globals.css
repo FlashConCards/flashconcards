@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  html {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  body {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 25%, #2563eb 50%, #3b82f6 75%, #60a5fa 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  
+  /* Gradiente alternativo para páginas específicas */
+  .gradient-alego {
+    background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 20%, #2563eb 40%, #3b82f6 60%, #60a5fa 80%, #93c5fd 100%);
+    background-attachment: fixed;
+  }
+  
+  /* Gradiente mais suave para conteúdo */
+  .gradient-content {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary-200 hover:bg-secondary-300 text-secondary-800 font-semibold py-3 px-6 rounded-lg transition-colors duration-200;
+  }
+  
+  .card {
+    @apply bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 p-6;
+  }
+  
+  .flashcard {
+    @apply bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border-2 border-gray-200 p-8 cursor-pointer transition-all duration-300 hover:shadow-xl;
+  }
+  
+  .flashcard-front {
+    @apply text-center;
+  }
+  
+  .flashcard-back {
+    @apply text-center;
+  }
+  
+  /* Container com fundo translúcido */
+  .container-glass {
+    @apply bg-white/90 backdrop-blur-md rounded-xl shadow-xl border border-white/20;
+  }
+  
+  /* Header com gradiente */
+  .header-gradient {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #2563eb 100%);
+  }
+  
+  /* Footer com gradiente */
+  .footer-gradient {
+    background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 50%, #2563eb 100%);
+  }
+} 
