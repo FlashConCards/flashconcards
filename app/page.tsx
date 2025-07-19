@@ -132,6 +132,38 @@ export default function HomePage() {
             O método mais eficiente para estudar e passar no concurso da Assembleia Legislativa de Goiás. 
             Flashcards inteligentes que se adaptam ao seu ritmo de aprendizado.
           </p>
+          
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-8">
+            <h4 className="text-2xl font-bold text-white mb-4 text-center">
+              Por que escolher o FlashConCards?
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-white">
+              <div>
+                <h5 className="font-semibold mb-2">🎯 Foco no Concurso da ALEGO</h5>
+                <p className="text-blue-100 text-sm">
+                  Conteúdo específico e atualizado para o concurso de Policial Legislativo da Assembleia Legislativa de Goiás.
+                </p>
+              </div>
+              <div>
+                <h5 className="font-semibold mb-2">📚 Metodologia Científica</h5>
+                <p className="text-blue-100 text-sm">
+                  Baseado em técnicas comprovadas de memorização e repetição espaçada para máximo aprendizado.
+                </p>
+              </div>
+              <div>
+                <h5 className="font-semibold mb-2">⚡ Estudo Inteligente</h5>
+                <p className="text-blue-100 text-sm">
+                  Sistema que identifica suas dificuldades e prioriza os temas que você precisa revisar mais.
+                </p>
+              </div>
+              <div>
+                <h5 className="font-semibold mb-2">📊 Progresso Real</h5>
+                <p className="text-blue-100 text-sm">
+                  Acompanhe seu desenvolvimento com estatísticas detalhadas e relatórios de performance.
+                </p>
+              </div>
+            </div>
+          </div>
         </motion.div>
 
         {/* Features Grid */}
