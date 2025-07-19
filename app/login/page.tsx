@@ -25,24 +25,7 @@ export default function LoginPage() {
     }
     
     try {
-      // PRIMEIRO: Verificar se já tem pagamento aprovado localmente
-      const localPayments = JSON.parse(localStorage.getItem('flashconcards_payments') || '[]')
-      const hasLocalPayment = localPayments.some((p: any) => p.email === email && p.status === 'approved')
-      
-      if (hasLocalPayment) {
-        // Tem pagamento local, permitir acesso
-        localStorage.setItem('flashconcards_user', JSON.stringify({
-          name: email.split('@')[0],
-          email: email,
-          isPaid: true,
-          loginTime: new Date().toISOString()
-        }))
-        
-        window.location.href = '/dashboard/paid'
-        return
-      }
-      
-      // SEGUNDO: Tentar verificar no servidor
+      // Verificar se o usuário pagou no servidor
       const response = await fetch('/api/payment/status', {
         method: 'POST',
         headers: {
@@ -54,16 +37,7 @@ export default function LoginPage() {
       const data = await response.json()
       
       if (data.success && data.isPaid) {
-        // Usuário pagou, salvar localmente e permitir acesso
-        const newPayment = {
-          email,
-          status: 'approved',
-          date: new Date().toISOString()
-        }
-        
-        localPayments.push(newPayment)
-        localStorage.setItem('flashconcards_payments', JSON.stringify(localPayments))
-        
+        // Usuário pagou, permitir acesso
         localStorage.setItem('flashconcards_user', JSON.stringify({
           name: email.split('@')[0],
           email: email,
