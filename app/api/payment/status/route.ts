@@ -52,7 +52,51 @@ export async function POST(request: NextRequest) {
 
     console.log('Verificando pagamento para email:', email)
 
-    // Verificar se o usuário pagou
+    // PRIMEIRO: Verificar status real no Mercado Pago
+    const { db } = await import('@/app/lib/firebase')
+    const { collection, query, where, getDocs } = await import('firebase/firestore')
+    
+    if (!db) {
+      return NextResponse.json(
+        { error: 'Firebase não inicializado' },
+        { status: 500 }
+      )
+    }
+
+    // Buscar pagamento pelo email
+    const q = query(collection(db, 'payments'), where('email', '==', email))
+    const querySnapshot = await getDocs(q)
+    
+    if (!querySnapshot.empty) {
+      const payment = querySnapshot.docs[0].data()
+      const paymentId = payment.payment_id
+      
+      console.log('Verificando status real do pagamento:', paymentId)
+      
+      // Verificar status real no Mercado Pago
+      const result = await getPaymentStatus(paymentId)
+      
+      if (result.success) {
+        const realStatus = result.status
+        console.log('Status real do pagamento:', realStatus)
+        
+        // Se foi aprovado, atualizar no Firebase
+        if (realStatus === 'approved') {
+          const { updatePaymentStatus } = await import('@/app/lib/firebase')
+          await updatePaymentStatus(paymentId, 'approved')
+          console.log('Pagamento aprovado no Firebase')
+        }
+        
+        return NextResponse.json({
+          success: true,
+          isPaid: realStatus === 'approved',
+          email,
+          realStatus
+        })
+      }
+    }
+
+    // SEGUNDO: Verificar se o usuário pagou (fallback)
     const isPaid = await isUserPaid(email)
     
     console.log('Resultado da verificação:', { email, isPaid })
