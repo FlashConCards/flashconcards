@@ -86,51 +86,27 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Hero Section with Super Discount */}
+      {/* Hero Section */}
       <section className="container mx-auto px-4 py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <motion.div
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-2xl p-8 mb-8 shadow-2xl"
-          >
-            <div className="flex items-center justify-center mb-4">
-              <Zap className="h-8 w-8 mr-2" />
-              <span className="text-2xl font-bold">SUPER DESCONTO</span>
-            </div>
-            <h1 className="text-5xl md:text-7xl font-bold mb-4">
-              DE R$ 399,90
-            </h1>
-            <h2 className="text-6xl md:text-8xl font-bold text-yellow-300 mb-4">
-              POR R$ 99,90
-            </h2>
-            <p className="text-xl mb-6">
-              Economia de <span className="font-bold text-yellow-300">R$ 300,00</span> - 75% de desconto!
-            </p>
-            <div className="bg-white/20 rounded-lg p-4 mb-6">
-              <p className="text-lg font-semibold">⏰ OFERTA POR TEMPO LIMITADO ⏰</p>
-              <p className="text-sm">Não perca essa oportunidade única!</p>
-            </div>
-            <Link 
-              href="/payment"
-              className="bg-yellow-400 text-black px-8 py-4 rounded-xl text-xl font-bold hover:bg-yellow-300 transition-colors inline-flex items-center"
-            >
-              GARANTIR MINHA VAGA
-              <ArrowRight className="ml-2 h-6 w-6" />
-            </Link>
-          </motion.div>
+          <h3 className="text-3xl md:text-4xl font-bold text-white mb-6">
+            Prepare-se para o Concurso da ALEGO
+          </h3>
+          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+            O método mais eficiente para estudar e passar no concurso da Assembleia Legislativa de Goiás. 
+            Flashcards inteligentes que se adaptam ao seu ritmo de aprendizado.
+          </p>
         </motion.div>
 
         {/* Features Grid */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.2 }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12"
         >
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white">
@@ -174,7 +150,7 @@ export default function HomePage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.4 }}
           className="mb-12"
         >
           <h3 className="text-3xl font-bold text-white text-center mb-8">
@@ -212,7 +188,7 @@ export default function HomePage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
+          transition={{ delay: 0.6 }}
           className="mb-12"
         >
           <h3 className="text-3xl font-bold text-white text-center mb-8">
@@ -253,7 +229,7 @@ export default function HomePage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1 }}
+          transition={{ delay: 0.8 }}
           className="text-center"
         >
           <div className="bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-2xl p-8 shadow-2xl">
