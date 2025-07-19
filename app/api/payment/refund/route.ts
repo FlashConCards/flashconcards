@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPaymentStatus } from '@/app/lib/mercadopago'
-import { updatePaymentStatus } from '@/app/lib/firebase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     // Buscar pagamento pelo email
     const { db } = await import('@/app/lib/firebase')
-    const { collection, query, where, getDocs, updateDoc } = await import('firebase/firestore')
+    const { collection, query, where, getDocs, addDoc } = await import('firebase/firestore')
     
     if (!db) {
       return NextResponse.json(
@@ -51,52 +50,34 @@ export async function POST(request: NextRequest) {
 
     if (result.status !== 'approved') {
       return NextResponse.json(
-        { error: 'Pagamento não foi aprovado, não é possível reembolsar' },
+        { error: 'Pagamento não foi aprovado, não é possível solicitar reembolso' },
         { status: 400 }
       )
     }
 
-    // Processar reembolso via Mercado Pago
-    const refundResponse = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}/refunds`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.MERCADO_PAGO_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        amount: payment.amount,
-        reason: reason || 'Solicitação do cliente'
-      })
+    // Criar solicitação de reembolso (pendente de aprovação)
+    const refundRequest = {
+      email,
+      payment_id: paymentId,
+      amount: payment.amount,
+      reason: reason || 'Solicitação do cliente',
+      status: 'pending',
+      created_at: new Date().toISOString(),
+      method: payment.method
+    }
+
+    await addDoc(collection(db, 'refund_requests'), refundRequest)
+    
+    console.log('Solicitação de reembolso criada para:', email)
+
+    return NextResponse.json({
+      success: true,
+      message: 'Solicitação de reembolso enviada com sucesso! Aguarde a aprovação.',
+      email,
+      amount: payment.amount
     })
-
-    const refundData = await refundResponse.json()
-
-    if (refundResponse.ok) {
-      // Atualizar status no Firebase
-      await updatePaymentStatus(paymentId, 'refunded')
-      
-      // Registrar reembolso
-      await updateDoc(querySnapshot.docs[0].ref, {
-        refunded_at: new Date().toISOString(),
-        refund_reason: reason || 'Solicitação do cliente',
-        refund_id: refundData.id
-      })
-
-      return NextResponse.json({
-        success: true,
-        message: 'Reembolso processado com sucesso',
-        refund_id: refundData.id,
-        amount: payment.amount,
-        email
-      })
-    } else {
-      return NextResponse.json(
-        { error: 'Erro ao processar reembolso' },
-        { status: 400 }
-      )
-    }
   } catch (error: any) {
-    console.error('Erro ao processar reembolso:', error)
+    console.error('Erro ao criar solicitação de reembolso:', error)
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
