@@ -1,4 +1,6 @@
-// Sistema para verificar pagamentos por email
+import { addPaymentRecord as addPaymentToFirebase, checkPaymentByEmail as checkPaymentInFirebase, isUserPaid as isUserPaidInFirebase, PaymentRecord as FirebasePaymentRecord } from './firebase'
+
+// Sistema para verificar pagamentos por email usando Firebase
 export interface PaymentRecord {
   email: string
   paymentId: string
@@ -8,30 +10,64 @@ export interface PaymentRecord {
   method: 'pix' | 'card'
 }
 
-// Simulação de banco de dados de pagamentos
-// Em produção, isso seria um banco de dados real
-const paymentRecords: PaymentRecord[] = []
-
-export function addPaymentRecord(payment: PaymentRecord) {
-  paymentRecords.push(payment)
-  // Em produção, salvaria no banco de dados
-  console.log('Pagamento registrado:', payment)
+// Função para converter PaymentRecord local para Firebase
+function convertToFirebasePayment(payment: PaymentRecord): FirebasePaymentRecord {
+  return {
+    email: payment.email,
+    payment_id: payment.paymentId,
+    amount: payment.amount,
+    status: payment.status,
+    created_at: payment.date,
+    method: payment.method
+  }
 }
 
-export function checkPaymentByEmail(email: string): PaymentRecord | null {
-  const payment = paymentRecords.find(p => 
-    p.email.toLowerCase() === email.toLowerCase() && 
-    p.status === 'approved'
-  )
-  return payment || null
+// Função para converter Firebase PaymentRecord para local
+function convertFromFirebasePayment(firebasePayment: FirebasePaymentRecord): PaymentRecord {
+  return {
+    email: firebasePayment.email,
+    paymentId: firebasePayment.payment_id,
+    amount: firebasePayment.amount,
+    status: firebasePayment.status,
+    date: firebasePayment.created_at || new Date().toISOString(),
+    method: firebasePayment.method
+  }
 }
 
-export function isUserPaid(email: string): boolean {
-  return checkPaymentByEmail(email) !== null
+export async function addPaymentRecord(payment: PaymentRecord) {
+  try {
+    const firebasePayment = convertToFirebasePayment(payment)
+    await addPaymentToFirebase(firebasePayment)
+    console.log('Pagamento registrado no Firebase:', payment)
+  } catch (error) {
+    console.error('Erro ao registrar pagamento:', error)
+  }
+}
+
+export async function checkPaymentByEmail(email: string): Promise<PaymentRecord | null> {
+  try {
+    const firebasePayment = await checkPaymentInFirebase(email)
+    if (firebasePayment) {
+      return convertFromFirebasePayment(firebasePayment)
+    }
+    return null
+  } catch (error) {
+    console.error('Erro ao verificar pagamento:', error)
+    return null
+  }
+}
+
+export async function isUserPaid(email: string): Promise<boolean> {
+  try {
+    return await isUserPaidInFirebase(email)
+  } catch (error) {
+    console.error('Erro ao verificar se usuário pagou:', error)
+    return false
+  }
 }
 
 // Função para simular pagamento aprovado (para testes)
-export function simulatePaymentApproval(email: string, paymentId: string) {
+export async function simulatePaymentApproval(email: string, paymentId: string) {
   const payment: PaymentRecord = {
     email,
     paymentId,
@@ -40,6 +76,6 @@ export function simulatePaymentApproval(email: string, paymentId: string) {
     date: new Date().toISOString(),
     method: 'pix'
   }
-  addPaymentRecord(payment)
+  await addPaymentRecord(payment)
   return payment
 } 

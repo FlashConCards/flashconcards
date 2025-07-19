@@ -9,7 +9,16 @@ export default function RealTestimonials() {
   const [testimonials, setTestimonials] = useState<any[]>([])
 
   useEffect(() => {
-    setTestimonials(getRealTestimonials())
+    const loadTestimonials = async () => {
+      try {
+        const testimonialsData = await getRealTestimonials()
+        setTestimonials(testimonialsData)
+      } catch (error) {
+        console.error('Erro ao carregar depoimentos:', error)
+      }
+    }
+    
+    loadTestimonials()
   }, [])
 
   return (

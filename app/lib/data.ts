@@ -1,3 +1,6 @@
+import { db } from './firebase'
+import { collection, addDoc, getDocs, query, where, doc, getDoc, updateDoc } from 'firebase/firestore'
+
 export interface UserData {
   id: string;
   name: string;
@@ -13,158 +16,126 @@ export interface UserData {
   };
 }
 
-// Dados reais dos usuários (simulando um banco de dados)
-export const usersData: UserData[] = [
-  {
-    id: '1',
-    name: 'Maria Silva',
-    email: 'maria.silva@email.com',
-    isActive: true,
-    joinedAt: new Date('2023-01-15'),
-    passedExam: true,
-    examDate: new Date('2023-06-15')
-  },
-  {
-    id: '2',
-    name: 'João Santos',
-    email: 'joao.santos@email.com',
-    isActive: true,
-    joinedAt: new Date('2023-02-20'),
-    passedExam: true,
-    examDate: new Date('2023-06-15')
-  },
-  {
-    id: '3',
-    name: 'Ana Costa',
-    email: 'ana.costa@email.com',
-    isActive: true,
-    joinedAt: new Date('2023-03-10'),
-    passedExam: false,
-    examDate: new Date('2023-06-15')
-  },
-  {
-    id: '4',
-    name: 'Carlos Oliveira',
-    email: 'carlos.oliveira@email.com',
-    isActive: true,
-    joinedAt: new Date('2023-01-30'),
-    passedExam: true,
-    examDate: new Date('2023-06-15')
-  },
-  {
-    id: '5',
-    name: 'Fernanda Lima',
-    email: 'fernanda.lima@email.com',
-    isActive: true,
-    joinedAt: new Date('2023-02-15'),
-    passedExam: true,
-    examDate: new Date('2023-06-15')
-  },
-  {
-    id: '6',
-    name: 'Roberto Almeida',
-    email: 'roberto.almeida@email.com',
-    isActive: false,
-    joinedAt: new Date('2023-01-10'),
-    passedExam: false,
-    examDate: new Date('2023-06-15')
-  },
-  {
-    id: '7',
-    name: 'Patrícia Souza',
-    email: 'patricia.souza@email.com',
-    isActive: true,
-    joinedAt: new Date('2023-03-05'),
-    passedExam: true,
-    examDate: new Date('2023-06-15')
-  },
-  {
-    id: '8',
-    name: 'Lucas Mendes',
-    email: 'lucas.mendes@email.com',
-    isActive: true,
-    joinedAt: new Date('2023-02-25'),
-    passedExam: true,
-    examDate: new Date('2023-06-15')
-  },
-  {
-    id: '9',
-    name: 'Juliana Ferreira',
-    email: 'juliana.ferreira@email.com',
-    isActive: true,
-    joinedAt: new Date('2023-01-20'),
-    passedExam: false,
-    examDate: new Date('2023-06-15')
-  },
-  {
-    id: '10',
-    name: 'Marcos Rodrigues',
-    email: 'marcos.rodrigues@email.com',
-    isActive: true,
-    joinedAt: new Date('2023-03-01'),
-    passedExam: true,
-    examDate: new Date('2023-06-15')
+// Funções para calcular estatísticas reais usando Firebase
+export async function getApprovalRate(): Promise<number> {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'users'))
+    const users = querySnapshot.docs.map(doc => doc.data())
+    
+    const usersWhoTookExam = users.filter(user => user.passedExam !== undefined);
+    const usersWhoPassed = usersWhoTookExam.filter(user => user.passedExam === true);
+    
+    if (usersWhoTookExam.length === 0) return 0;
+    return Math.round((usersWhoPassed.length / usersWhoTookExam.length) * 100);
+  } catch (error) {
+    console.error('Erro ao calcular taxa de aprovação:', error)
+    return 0
   }
-];
-
-// Funções para calcular estatísticas reais
-export function getApprovalRate(): number {
-  const usersWhoTookExam = usersData.filter(user => user.passedExam !== undefined);
-  const usersWhoPassed = usersWhoTookExam.filter(user => user.passedExam === true);
-  
-  if (usersWhoTookExam.length === 0) return 0;
-  return Math.round((usersWhoPassed.length / usersWhoTookExam.length) * 100);
 }
 
-export function getActiveStudents(): number {
-  return usersData.filter(user => user.isActive).length;
+export async function getActiveStudents(): Promise<number> {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'users'))
+    const users = querySnapshot.docs.map(doc => doc.data())
+    return users.filter(user => user.isActive).length;
+  } catch (error) {
+    console.error('Erro ao contar estudantes ativos:', error)
+    return 0
+  }
 }
 
-export function getTotalStudents(): number {
-  return usersData.length;
+export async function getTotalStudents(): Promise<number> {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'users'))
+    return querySnapshot.docs.length;
+  } catch (error) {
+    console.error('Erro ao contar total de estudantes:', error)
+    return 0
+  }
 }
 
-export function getRealTestimonials() {
-  return usersData
-    .filter(user => user.feedback)
-    .map(user => ({
-      name: user.name,
-      role: user.passedExam ? 'Aprovado(a)' : 'Candidato(a)',
-      content: user.feedback!.comment,
-      rating: user.feedback!.rating,
-      date: user.feedback!.date
-    }))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 6); // Retorna os 6 feedbacks mais recentes
+export async function getRealTestimonials() {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'users'))
+    const users = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserData[]
+    
+    return users
+      .filter(user => user.feedback)
+      .map(user => ({
+        name: user.name,
+        role: user.passedExam ? 'Aprovado(a)' : 'Candidato(a)',
+        content: user.feedback!.comment,
+        rating: user.feedback!.rating,
+        date: user.feedback!.date
+      }))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 6); // Retorna os 6 feedbacks mais recentes
+  } catch (error) {
+    console.error('Erro ao buscar depoimentos:', error)
+    return []
+  }
 }
 
 // Função para adicionar novo usuário
-export function addUser(userData: Omit<UserData, 'id'>): UserData {
-  const newUser: UserData = {
-    ...userData,
-    id: (usersData.length + 1).toString()
-  };
-  usersData.push(newUser);
-  return newUser;
+export async function addUser(userData: Omit<UserData, 'id'>): Promise<UserData | null> {
+  try {
+    const docRef = await addDoc(collection(db, 'users'), {
+      ...userData,
+      joinedAt: new Date().toISOString()
+    })
+    
+    return {
+      ...userData,
+      id: docRef.id
+    }
+  } catch (error) {
+    console.error('Erro ao adicionar usuário:', error)
+    return null
+  }
 }
 
 // Função para atualizar status de aprovação
-export function updateUserApprovalStatus(userId: string, passed: boolean, examDate?: Date): void {
-  const user = usersData.find(u => u.id === userId);
-  if (user) {
-    user.passedExam = passed;
-    if (examDate) user.examDate = examDate;
+export async function updateUserApprovalStatus(userId: string, passed: boolean, examDate?: Date): Promise<void> {
+  try {
+    const userRef = doc(db, 'users', userId)
+    await updateDoc(userRef, {
+      passedExam: passed,
+      examDate: examDate ? examDate.toISOString() : null
+    })
+  } catch (error) {
+    console.error('Erro ao atualizar status de aprovação:', error)
   }
 }
 
 // Função para adicionar feedback
-export function addUserFeedback(userId: string, rating: number, comment: string): void {
-  const user = usersData.find(u => u.id === userId);
-  if (user) {
-    user.feedback = {
-      rating,
-      comment,
-      date: new Date()
-    };
+export async function addUserFeedback(userId: string, rating: number, comment: string): Promise<void> {
+  try {
+    const userRef = doc(db, 'users', userId)
+    await updateDoc(userRef, {
+      feedback: {
+        rating,
+        comment,
+        date: new Date().toISOString()
+      }
+    })
+  } catch (error) {
+    console.error('Erro ao adicionar feedback:', error)
+  }
+}
+
+// Função para buscar usuário por email
+export async function getUserByEmail(email: string): Promise<UserData | null> {
+  try {
+    const q = query(collection(db, 'users'), where('email', '==', email))
+    const querySnapshot = await getDocs(q)
+    
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0]
+      return { id: doc.id, ...doc.data() } as UserData
+    }
+    return null
+  } catch (error) {
+    console.error('Erro ao buscar usuário por email:', error)
+    return null
   }
 } 

@@ -12,11 +12,25 @@ export default function RealStats() {
   })
 
   useEffect(() => {
-    setStats({
-      approvalRate: getApprovalRate(),
-      activeStudents: getActiveStudents(),
-      totalStudents: getTotalStudents()
-    })
+    const loadStats = async () => {
+      try {
+        const [approvalRate, activeStudents, totalStudents] = await Promise.all([
+          getApprovalRate(),
+          getActiveStudents(),
+          getTotalStudents()
+        ])
+        
+        setStats({
+          approvalRate,
+          activeStudents,
+          totalStudents
+        })
+      } catch (error) {
+        console.error('Erro ao carregar estatísticas:', error)
+      }
+    }
+    
+    loadStats()
   }, [])
 
   return (

@@ -38,6 +38,13 @@ npm run dev
 npm run build
 ```
 
+## 🔥 Configuração Firebase
+
+1. **Criar projeto** no Firebase Console
+2. **Configurar Firestore Database**
+3. **Adicionar variáveis de ambiente** (ver `CONFIGURACAO_FIREBASE.md`)
+4. **Configurar regras de segurança**
+
 ## 📁 Estrutura do Projeto
 
 ```
@@ -50,7 +57,12 @@ flashconcard/
 │   ├── study/                  # Sistema de estudo
 │   └── globals.css            # Estilos globais
 ├── lib/
-│   └── mercadopago.ts         # Configuração MP
+│   ├── firebase.ts            # Configuração Firebase
+│   ├── mercadopago.ts         # Configuração MP
+│   ├── data.ts                # Funções de dados
+│   └── payments.ts            # Sistema de pagamentos
+├── CONFIGURACAO_FIREBASE.md   # Guia Firebase
+├── DEPLOY_VERCEL_FIREBASE.md  # Deploy completo
 └── CONFIGURACAO_MERCADO_PAGO.md
 ```
 
@@ -69,6 +81,8 @@ flashconcard/
 - ✅ Progresso de estudos
 - ✅ Interface responsiva
 - ✅ Deploy automático
+- ✅ Banco de dados Firebase
+- ✅ Autenticação de usuários
 
 ## 📞 Suporte
 
