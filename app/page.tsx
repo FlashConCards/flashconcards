@@ -16,8 +16,48 @@ import {
   ArrowRight,
   X
 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+
+interface Feedback {
+  id: string
+  name: string
+  rating: number
+  comment: string
+  createdAt: string
+  isVerified: boolean
+}
 
 export default function HomePage() {
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
+  const [isLoadingFeedbacks, setIsLoadingFeedbacks] = useState(true)
+
+  useEffect(() => {
+    fetchRealFeedbacks()
+  }, [])
+
+  const fetchRealFeedbacks = async () => {
+    try {
+      const response = await fetch('/api/user/feedback')
+      if (response.ok) {
+        const data = await response.json()
+        setFeedbacks(data)
+      }
+    } catch (error) {
+      console.error('Erro ao buscar feedbacks:', error)
+    } finally {
+      setIsLoadingFeedbacks(false)
+    }
+  }
+
+  const renderStars = (rating: number) => {
+    return [...Array(5)].map((_, i) => (
+      <Star 
+        key={i} 
+        className={`h-5 w-5 ${i < rating ? 'text-yellow-300 fill-current' : 'text-gray-400'}`} 
+      />
+    ))
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700">
       {/* Header */}
@@ -176,7 +216,7 @@ export default function HomePage() {
           </div>
         </motion.div>
 
-        {/* Testimonials */}
+        {/* Real Testimonials */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -184,43 +224,37 @@ export default function HomePage() {
           className="mb-12"
         >
           <h3 className="text-3xl font-bold text-white text-center mb-8">
-            O que nossos alunos dizem
+            O que nossos alunos pagantes dizem
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white">
-              <div className="flex items-center mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-5 w-5 text-yellow-300 fill-current" />
-                ))}
-              </div>
-              <p className="text-blue-100 mb-4">
-                "Consegui passar no concurso graças aos flashcards! Método incrível!"
-              </p>
-              <p className="font-semibold">- Maria Silva</p>
+          
+          {isLoadingFeedbacks ? (
+            <div className="text-center text-white">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+              <p>Carregando depoimentos reais...</p>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white">
-              <div className="flex items-center mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-5 w-5 text-yellow-300 fill-current" />
-                ))}
-              </div>
-              <p className="text-blue-100 mb-4">
-                "Estudar nunca foi tão fácil e eficiente. Recomendo para todos!"
-              </p>
-              <p className="font-semibold">- João Santos</p>
+          ) : feedbacks.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {feedbacks.slice(0, 3).map((feedback) => (
+                <div key={feedback.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white">
+                  <div className="flex items-center mb-4">
+                    {renderStars(feedback.rating)}
+                  </div>
+                  <p className="text-blue-100 mb-4">
+                    "{feedback.comment}"
+                  </p>
+                  <p className="font-semibold">- {feedback.name}</p>
+                  <p className="text-sm text-blue-200 mt-1">
+                    {new Date(feedback.createdAt).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              ))}
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white">
-              <div className="flex items-center mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-5 w-5 text-yellow-300 fill-current" />
-                ))}
-              </div>
-              <p className="text-blue-100 mb-4">
-                "O progresso inteligente me ajudou a focar no que realmente importa."
-              </p>
-              <p className="font-semibold">- Ana Costa</p>
+          ) : (
+            <div className="text-center text-white">
+              <p className="text-lg">Seja o primeiro a deixar um depoimento!</p>
+              <p className="text-blue-200">Compre o curso e compartilhe sua experiência</p>
             </div>
-          </div>
+          )}
         </motion.div>
 
         {/* Final CTA */}

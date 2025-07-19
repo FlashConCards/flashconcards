@@ -382,6 +382,21 @@ export default function PaidDashboardPage() {
               </div>
             </div>
           </div>
+          
+          {/* Feedback Link */}
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <h3 className="font-semibold text-gray-900 mb-2">Compartilhe sua experiência</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              Ajude outros alunos compartilhando como o FlashConCards te ajudou nos estudos.
+            </p>
+            <Link 
+              href="/feedback"
+              className="inline-flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Deixar Feedback
+            </Link>
+          </div>
         </motion.div>
       </div>
     </div>
