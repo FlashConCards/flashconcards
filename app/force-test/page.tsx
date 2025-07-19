@@ -14,6 +14,19 @@ export default function ForceTestPage() {
     setResult(null)
     
     try {
+      // SALVAR LOCALMENTE PRIMEIRO
+      const localPayments = JSON.parse(localStorage.getItem('flashconcards_payments') || '[]')
+      const newPayment = {
+        email,
+        status: 'approved',
+        date: new Date().toISOString(),
+        paymentId: `forced-${Date.now()}`
+      }
+      
+      localPayments.push(newPayment)
+      localStorage.setItem('flashconcards_payments', JSON.stringify(localPayments))
+      
+      // TAMBÉM SALVAR NO SERVIDOR
       const response = await fetch('/api/payment/force-approve', {
         method: 'POST',
         headers: {
@@ -23,7 +36,7 @@ export default function ForceTestPage() {
       })
       
       const data = await response.json()
-      setResult(data)
+      setResult({ ...data, localSaved: true })
       
       if (data.success) {
         // Aguardar um pouco e redirecionar
@@ -32,7 +45,7 @@ export default function ForceTestPage() {
         }, 2000)
       }
     } catch (error) {
-      setResult({ error: 'Erro ao forçar aprovação' })
+      setResult({ error: 'Erro ao forçar aprovação', localSaved: true })
     } finally {
       setIsLoading(false)
     }
@@ -94,6 +107,11 @@ export default function ForceTestPage() {
                 <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
                 <span className="text-red-700">{result.error}</span>
               </div>
+            )}
+            {result.localSaved && (
+              <p className="text-xs text-green-600 mt-1">
+                ✅ Salvo localmente também!
+              </p>
             )}
           </div>
         )}
