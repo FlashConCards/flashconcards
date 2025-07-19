@@ -35,7 +35,7 @@ export interface PaymentRecord {
   email: string
   payment_id: string
   amount: number
-  status: 'approved' | 'pending' | 'rejected'
+  status: 'approved' | 'pending' | 'rejected' | 'refunded'
   created_at?: string
   method: 'pix' | 'card'
 }
@@ -286,7 +286,7 @@ export async function simulatePaymentApproval(email: string, paymentId: string) 
   }
 } 
 
-export async function updatePaymentStatus(paymentId: string, status: 'approved' | 'pending' | 'rejected') {
+export async function updatePaymentStatus(paymentId: string, status: 'approved' | 'pending' | 'rejected' | 'refunded') {
   if (!db) {
     console.warn('Firebase não inicializado')
     return
