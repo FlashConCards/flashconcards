@@ -80,11 +80,35 @@ export async function POST(request: NextRequest) {
         const realStatus = result.status
         console.log('Status real do pagamento:', realStatus)
         
-        // Se foi aprovado, atualizar no Firebase
+        // Se foi aprovado, atualizar no Firebase e enviar email
         if (realStatus === 'approved') {
           const { updatePaymentStatus } = await import('@/app/lib/firebase')
           await updatePaymentStatus(paymentId, 'approved')
           console.log('Pagamento aprovado no Firebase')
+          
+          // Enviar email de confirmação
+          try {
+            const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/email/send-confirmation`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email,
+                name: payment.first_name || 'Usuário',
+                paymentId,
+                amount: payment.amount || '99,90'
+              })
+            })
+            
+            if (emailResponse.ok) {
+              console.log('Email de confirmação enviado com sucesso')
+            } else {
+              console.error('Erro ao enviar email de confirmação')
+            }
+          } catch (emailError) {
+            console.error('Erro ao enviar email:', emailError)
+          }
         }
         
         return NextResponse.json({
