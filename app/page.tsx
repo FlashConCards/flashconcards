@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { BookOpen, ArrowRight, CheckCircle, Star, Users, Target, Eye } from 'lucide-react'
+import { BookOpen, ArrowRight, CheckCircle, Star, Users, Target, Eye, LogIn } from 'lucide-react'
 import Link from 'next/link'
 
 export default function HomePage() {
@@ -34,6 +34,13 @@ export default function HomePage() {
             >
               <ArrowRight className="h-5 w-5 mr-2" />
               Começar Agora
+            </Link>
+            <Link 
+              href="/login"
+              className="bg-transparent border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors flex items-center justify-center"
+            >
+              <LogIn className="h-5 w-5 mr-2" />
+              Entrar
             </Link>
           </div>
         </motion.div>
@@ -134,6 +141,13 @@ export default function HomePage() {
             >
               <ArrowRight className="h-5 w-5 mr-2" />
               Fazer Cadastro
+            </Link>
+            <Link 
+              href="/login"
+              className="bg-transparent border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors flex items-center justify-center"
+            >
+              <LogIn className="h-5 w-5 mr-2" />
+              Entrar
             </Link>
           </div>
         </motion.div>
