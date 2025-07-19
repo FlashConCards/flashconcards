@@ -17,19 +17,19 @@ export default function DemoPage() {
         subjects: ['Direito Constitucional', 'Direito Administrativo', 'Direito Penal'],
         sampleFlashcards: [
           {
-            question: 'Qual é o princípio fundamental da República Federativa do Brasil?',
-            answer: 'A soberania popular, expressa pelo voto direto, secreto, universal e periódico.',
+            question: 'O que é Poder Constituinte Originário?',
+            answer: 'É o poder de criar uma nova Constituição, exercido por uma assembleia constituinte eleita pelo povo. É inicial, ilimitado, incondicionado e autônomo, não se submetendo a nenhuma norma anterior.',
             subject: 'Direito Constitucional'
           },
           {
-            question: 'O que é o princípio da legalidade na Administração Pública?',
-            answer: 'A Administração Pública só pode fazer o que a lei autorizar.',
-            subject: 'Direito Administrativo'
+            question: 'O que é Poder Difuso?',
+            answer: 'É a competência de todos os juízes e tribunais para declarar a inconstitucionalidade de leis ou atos normativos em casos concretos. Qualquer juiz pode declarar uma lei inconstitucional no caso específico que está julgando.',
+            subject: 'Direito Constitucional'
           },
           {
-            question: 'Qual a diferença entre crime e contravenção penal?',
-            answer: 'Crime é infração penal a que a lei comina pena de reclusão ou detenção, e contravenção é infração penal de menor potencial ofensivo.',
-            subject: 'Direito Penal'
+            question: 'O que são Normas de Princípio Programático?',
+            answer: 'São normas constitucionais que estabelecem programas de ação para o Estado, indicando objetivos a serem alcançados. Não têm aplicação imediata, mas orientam a atuação dos poderes públicos.',
+            subject: 'Direito Constitucional'
           }
         ]
       })
@@ -98,7 +98,7 @@ export default function DemoPage() {
         >
           <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
             <Eye className="h-5 w-5 text-blue-600 mr-2" />
-            Exemplos de Flashcards
+            Exemplos de Flashcards - Direito Constitucional
           </h2>
           
           <div className="space-y-4">
