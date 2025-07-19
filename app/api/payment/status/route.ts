@@ -50,8 +50,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log('Verificando pagamento para email:', email)
+
     // Verificar se o usuário pagou
     const isPaid = await isUserPaid(email)
+    
+    console.log('Resultado da verificação:', { email, isPaid })
 
     return NextResponse.json({
       success: true,
