@@ -14,7 +14,8 @@ import {
   BarChart3,
   ArrowRight,
   Trophy,
-  MessageSquare
+  MessageSquare,
+  AlertCircle
 } from 'lucide-react'
 import ExamResultForm from '../../components/ExamResultForm'
 import { updateUserApprovalStatus, addUserFeedback } from '../../lib/data'
@@ -40,6 +41,8 @@ export default function PaidDashboardPage() {
   const [showExamForm, setShowExamForm] = useState(false)
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [isClient, setIsClient] = useState(false)
+  const [isAuthorized, setIsAuthorized] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     setIsClient(true)
@@ -48,92 +51,122 @@ export default function PaidDashboardPage() {
   useEffect(() => {
     if (!isClient) return
 
-    const loggedInUser = getLoggedInUser()
-    if (loggedInUser) {
-      // Carregar progresso real
-      const overallProgress = getOverallProgress()
-      
-      setUser({
-        name: loggedInUser.name,
-        email: loggedInUser.email,
-        progress: overallProgress.percentage
-      })
-
-      // Carregar progresso das matérias
-      const subjectsData: Subject[] = [
-        {
-          id: 'portugues',
-          name: 'Língua Portuguesa',
-          description: 'Compreensão, interpretação e gramática',
-          totalCards: 120,
-          completedCards: 0,
-          icon: BookOpen,
-          color: 'bg-blue-500'
-        },
-        {
-          id: 'informatica',
-          name: 'Noções de Informática',
-          description: 'Sistemas operacionais e pacote Office',
-          totalCards: 80,
-          completedCards: 0,
-          icon: Target,
-          color: 'bg-green-500'
-        },
-        {
-          id: 'constitucional',
-          name: 'Direito Constitucional',
-          description: 'Constituição e direitos fundamentais',
-          totalCards: 150,
-          completedCards: 0,
-          icon: TrendingUp,
-          color: 'bg-purple-500'
-        },
-        {
-          id: 'administrativo',
-          name: 'Direito Administrativo',
-          description: 'Administração pública e atos administrativos',
-          totalCards: 130,
-          completedCards: 0,
-          icon: BarChart3,
-          color: 'bg-orange-500'
-        },
-        {
-          id: 'realidade-goias',
-          name: 'Realidade de Goiás',
-          description: 'História, cultura e geografia do estado',
-          totalCards: 90,
-          completedCards: 0,
-          icon: Clock,
-          color: 'bg-red-500'
-        },
-        {
-          id: 'legislacao-alego',
-          name: 'Legislação ALEGO',
-          description: 'Regimento interno e estrutura legislativa',
-          totalCards: 70,
-          completedCards: 0,
-          icon: CheckCircle,
-          color: 'bg-indigo-500'
+    const checkAuthorization = async () => {
+      try {
+        // Verificar se o usuário está logado
+        const loggedInUser = getLoggedInUser()
+        if (!loggedInUser) {
+          window.location.href = '/login'
+          return
         }
-      ]
 
-      // Atualizar progresso real de cada matéria
-      subjectsData.forEach(subject => {
-        const subjectProgress = getSubjectProgress(subject.id)
-        if (subjectProgress) {
-          let totalCompleted = 0
-          Object.values(subjectProgress).forEach(topic => {
-            totalCompleted += topic.completedCards.length
+        // Verificar se o usuário pagou
+        const response = await fetch('/api/payment/status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: loggedInUser.email })
+        })
+        
+        const data = await response.json()
+        
+        if (data.success && data.isPaid) {
+          setIsAuthorized(true)
+          
+          // Carregar progresso real
+          const overallProgress = getOverallProgress()
+          
+          setUser({
+            name: loggedInUser.name,
+            email: loggedInUser.email,
+            progress: overallProgress.percentage
           })
-          subject.completedCards = totalCompleted
-        }
-      })
 
-      setSubjects(subjectsData)
-    } else {
-      // Se não está logado, redirecionar para dashboard demo
-      window.location.href = '/dashboard'
+          // Carregar progresso das matérias
+          const subjectsData: Subject[] = [
+            {
+              id: 'portugues',
+              name: 'Língua Portuguesa',
+              description: 'Compreensão, interpretação e gramática',
+              totalCards: 120,
+              completedCards: 0,
+              icon: BookOpen,
+              color: 'bg-blue-500'
+            },
+            {
+              id: 'informatica',
+              name: 'Noções de Informática',
+              description: 'Sistemas operacionais e pacote Office',
+              totalCards: 80,
+              completedCards: 0,
+              icon: Target,
+              color: 'bg-green-500'
+            },
+            {
+              id: 'constitucional',
+              name: 'Direito Constitucional',
+              description: 'Constituição e direitos fundamentais',
+              totalCards: 150,
+              completedCards: 0,
+              icon: TrendingUp,
+              color: 'bg-purple-500'
+            },
+            {
+              id: 'administrativo',
+              name: 'Direito Administrativo',
+              description: 'Administração pública e atos administrativos',
+              totalCards: 130,
+              completedCards: 0,
+              icon: BarChart3,
+              color: 'bg-orange-500'
+            },
+            {
+              id: 'realidade-goias',
+              name: 'Realidade de Goiás',
+              description: 'História, cultura e geografia do estado',
+              totalCards: 90,
+              completedCards: 0,
+              icon: Clock,
+              color: 'bg-red-500'
+            },
+            {
+              id: 'legislacao-alego',
+              name: 'Legislação ALEGO',
+              description: 'Regimento interno e estrutura legislativa',
+              totalCards: 70,
+              completedCards: 0,
+              icon: CheckCircle,
+              color: 'bg-indigo-500'
+            }
+          ]
+
+          // Atualizar progresso real de cada matéria
+          subjectsData.forEach(subject => {
+            const subjectProgress = getSubjectProgress(subject.id)
+            if (subjectProgress) {
+              let totalCompleted = 0
+              Object.values(subjectProgress).forEach(topic => {
+                totalCompleted += topic.completedCards.length
+              })
+              subject.completedCards = totalCompleted
+            }
+          })
+
+          setSubjects(subjectsData)
+        } else {
+          // Usuário não pagou, redirecionar
+          window.location.href = '/payment'
+        }
+      } catch (error) {
+        console.error('Erro ao verificar autorização:', error)
+        window.location.href = '/login'
+      } finally {
+        setIsLoading(false)
+      }
     }
+
+    checkAuthorization()
   }, [isClient])
 
   const getProgressPercentage = (completed: number, total: number) => {
@@ -153,6 +186,39 @@ export default function PaidDashboardPage() {
     }
     
     alert(passed ? 'Parabéns pela aprovação! Seu resultado foi registrado.' : 'Continue estudando! Seu resultado foi registrado para acompanhamento.')
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verificando autorização...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center shadow-lg">
+          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            Acesso Restrito
+          </h1>
+          <p className="text-gray-600 mb-6">
+            Você precisa fazer o pagamento para acessar esta área.
+          </p>
+          <a 
+            href="/payment" 
+            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Fazer Pagamento
+          </a>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -258,12 +324,12 @@ export default function PaidDashboardPage() {
           >
             <div className="flex items-center">
               <div className="p-2 bg-purple-100 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-purple-600" />
+                <Trophy className="h-6 w-6 text-purple-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Progresso Geral</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {isClient ? user.progress : 0}%
+                  {isClient ? `${getOverallProgress().percentage}%` : '0%'}
                 </p>
               </div>
             </div>
@@ -277,100 +343,82 @@ export default function PaidDashboardPage() {
           >
             <div className="flex items-center">
               <div className="p-2 bg-orange-100 rounded-lg">
-                <Clock className="h-6 w-6 text-orange-600" />
+                <MessageSquare className="h-6 w-6 text-orange-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Matérias Ativas</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {isClient ? subjects.filter(s => s.completedCards > 0).length : 0}
-                </p>
+                <p className="text-sm font-medium text-gray-600">Dias Estudando</p>
+                <p className="text-2xl font-bold text-gray-900">7</p>
               </div>
             </div>
           </motion.div>
         </div>
 
         {/* Subjects Grid */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Matérias</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {subjects.map((subject, index) => (
-              <motion.div
-                key={subject.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-lg ${subject.color}`}>
-                    <subject.icon className="h-6 w-6 text-white" />
-                  </div>
-                  <a href={`/study/${subject.id}`} className="text-primary-600 hover:text-primary-700">
-                    <Play className="h-5 w-5" />
-                  </a>
-                </div>
-                
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {subject.name}
-                </h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  {subject.description}
-                </p>
-                
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Progresso</span>
-                    <span className="font-medium">
-                      {subject.completedCards}/{subject.totalCards}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-300 ${subject.color.replace('bg-', 'bg-')}`}
-                      style={{ width: `${getProgressPercentage(subject.completedCards, subject.totalCards)}%` }}
-                    ></div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-medium text-gray-900">
-                      {getProgressPercentage(subject.completedCards, subject.totalCards)}%
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a href="/study/portugues" className="flex items-center justify-center p-4 border-2 border-primary-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors duration-200">
-              <Play className="h-5 w-5 text-primary-600 mr-2" />
-              <span className="font-medium text-primary-600">Continuar Estudando</span>
-            </a>
-            <button 
-              onClick={() => setShowExamForm(true)}
-              className="flex items-center justify-center p-4 border-2 border-green-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors duration-200"
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {subjects.map((subject, index) => (
+            <motion.div
+              key={subject.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 * (index + 1) }}
+              className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
             >
-              <Trophy className="h-5 w-5 text-green-600 mr-2" />
-              <span className="font-medium text-green-600">Registrar Resultado</span>
-            </button>
-            <button className="flex items-center justify-center p-4 border-2 border-blue-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors duration-200">
-              <MessageSquare className="h-5 w-5 text-blue-600 mr-2" />
-              <span className="font-medium text-blue-600">Enviar Feedback</span>
+              <div className="flex items-center mb-4">
+                <div className={`p-2 rounded-lg ${subject.color}`}>
+                  <subject.icon className="h-6 w-6 text-white" />
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-lg font-semibold text-gray-900">{subject.name}</h3>
+                  <p className="text-sm text-gray-600">{subject.description}</p>
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <div className="flex justify-between text-sm text-gray-600 mb-1">
+                  <span>Progresso</span>
+                  <span>{subject.completedCards}/{subject.totalCards}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${getProgressPercentage(subject.completedCards, subject.totalCards)}%` }}
+                  ></div>
+                </div>
+              </div>
+              
+              <a 
+                href={`/study/${subject.id}`}
+                className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Começar a estudar
+                <ArrowRight className="h-4 w-4 ml-1" />
+              </a>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Exam Result Form */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="bg-white rounded-xl p-6 shadow-sm"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">Registrar Resultado do Concurso</h2>
+            <button
+              onClick={() => setShowExamForm(!showExamForm)}
+              className="text-blue-600 hover:text-blue-700 font-medium"
+            >
+              {showExamForm ? 'Fechar' : 'Registrar'}
             </button>
           </div>
-        </div>
+          
+                     {showExamForm && (
+             <ExamResultForm onSubmit={handleExamResult} onClose={() => setShowExamForm(false)} />
+           )}
+        </motion.div>
       </div>
-
-      {/* Exam Result Form Modal */}
-      {showExamForm && (
-        <ExamResultForm
-          onSubmit={handleExamResult}
-          onClose={() => setShowExamForm(false)}
-        />
-      )}
     </div>
   )
 } 

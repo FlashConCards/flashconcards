@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPaymentStatus } from '@/app/lib/mercadopago'
+import { isUserPaid } from '@/app/lib/payments'
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,6 +31,35 @@ export async function GET(request: NextRequest) {
     }
   } catch (error: any) {
     console.error('Erro ao verificar status do pagamento:', error)
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { email } = body
+
+    if (!email) {
+      return NextResponse.json(
+        { error: 'Email não fornecido' },
+        { status: 400 }
+      )
+    }
+
+    // Verificar se o usuário pagou
+    const isPaid = await isUserPaid(email)
+
+    return NextResponse.json({
+      success: true,
+      isPaid,
+      email
+    })
+  } catch (error: any) {
+    console.error('Erro ao verificar pagamento por email:', error)
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
