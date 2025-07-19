@@ -285,3 +285,26 @@ export async function simulatePaymentApproval(email: string, paymentId: string) 
     return false
   }
 } 
+
+export async function updatePaymentStatus(paymentId: string, status: 'approved' | 'pending' | 'rejected') {
+  if (!db) {
+    console.warn('Firebase não inicializado')
+    return
+  }
+  
+  try {
+    const q = query(collection(db, 'payments'), where('payment_id', '==', paymentId))
+    const querySnapshot = await getDocs(q)
+    
+    if (!querySnapshot.empty) {
+      const docRef = querySnapshot.docs[0].ref
+      await updateDoc(docRef, {
+        status,
+        updated_at: new Date().toISOString()
+      })
+      console.log('Status do pagamento atualizado:', paymentId, status)
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar status do pagamento:', error)
+  }
+} 

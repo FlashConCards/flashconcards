@@ -1,4 +1,4 @@
-import { addPaymentRecord as addPaymentToFirebase, checkPaymentByEmail as checkPaymentInFirebase, isUserPaid as isUserPaidInFirebase, PaymentRecord as FirebasePaymentRecord } from './firebase'
+import { addPaymentRecord as addPaymentToFirebase, checkPaymentByEmail as checkPaymentInFirebase, isUserPaid as isUserPaidInFirebase, PaymentRecord as FirebasePaymentRecord, updatePaymentStatus as updatePaymentStatusInFirebase } from './firebase'
 
 // Sistema para verificar pagamentos por email usando Firebase
 export interface PaymentRecord {
@@ -63,6 +63,15 @@ export async function isUserPaid(email: string): Promise<boolean> {
   } catch (error) {
     console.error('Erro ao verificar se usuário pagou:', error)
     return false
+  }
+}
+
+export async function updatePaymentStatus(paymentId: string, status: 'approved' | 'pending' | 'rejected') {
+  try {
+    await updatePaymentStatusInFirebase(paymentId, status)
+    console.log('Status do pagamento atualizado:', paymentId, status)
+  } catch (error) {
+    console.error('Erro ao atualizar status do pagamento:', error)
   }
 }
 
