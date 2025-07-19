@@ -224,7 +224,7 @@ export default function HomePage() {
           className="mb-12"
         >
           <h3 className="text-3xl font-bold text-white text-center mb-8">
-            O que nossos alunos pagantes dizem
+            O que nossos alunos dizem
           </h3>
           
           {isLoadingFeedbacks ? (
