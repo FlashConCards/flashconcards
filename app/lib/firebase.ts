@@ -308,3 +308,40 @@ export async function updatePaymentStatus(paymentId: string, status: 'approved' 
     console.error('Erro ao atualizar status do pagamento:', error)
   }
 } 
+
+// Função para criar usuário no Firebase Authentication
+export async function createAuthUser(email: string, password: string) {
+  if (!auth) {
+    console.warn('Firebase Auth não inicializado')
+    return null
+  }
+  
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+    return userCredential.user
+  } catch (error: any) {
+    // Se usuário já existe, não é erro
+    if (error.code === 'auth/email-already-in-use') {
+      console.log('Usuário já existe no Firebase Auth')
+      return null
+    }
+    console.error('Erro ao criar usuário no Auth:', error)
+    return null
+  }
+}
+
+// Função para fazer login no Firebase Authentication
+export async function signInUser(email: string, password: string) {
+  if (!auth) {
+    console.warn('Firebase Auth não inicializado')
+    return null
+  }
+  
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password)
+    return userCredential.user
+  } catch (error: any) {
+    console.error('Erro ao fazer login:', error)
+    return null
+  }
+} 

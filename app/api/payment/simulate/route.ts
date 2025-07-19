@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { simulatePaymentApproval } from '@/app/lib/payments'
+import { createAuthUser } from '@/app/lib/firebase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,10 +18,15 @@ export async function POST(request: NextRequest) {
     const paymentId = `simulated-${Date.now()}`
     const payment = await simulatePaymentApproval(email, paymentId)
     
+    // Criar usuário no Firebase Authentication
+    const password = 'souflashconcards'
+    const authUser = await createAuthUser(email, password)
+    
     return NextResponse.json({
       success: true,
-      message: 'Pagamento simulado com sucesso',
-      payment
+      message: 'Pagamento simulado e usuário criado com sucesso',
+      payment,
+      authUser: authUser ? 'created' : 'already_exists'
     })
   } catch (error: any) {
     console.error('Erro ao simular pagamento:', error)

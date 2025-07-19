@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { BookOpen, ArrowLeft, Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
+import { signInUser } from '@/app/lib/firebase'
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -37,15 +38,23 @@ export default function LoginPage() {
       const data = await response.json()
       
       if (data.success && data.isPaid) {
-        // Usuário pagou e senha está correta, permitir acesso
-        // Salvar dados do usuário no localStorage
-        localStorage.setItem('flashconcards_user', JSON.stringify({
-          name: email.split('@')[0], // Usar parte do email como nome
-          email: email,
-          isPaid: true
-        }))
+        // Usuário pagou, tentar fazer login no Firebase Auth
+        const authUser = await signInUser(email, password)
         
-        window.location.href = '/dashboard/paid'
+        if (authUser) {
+          // Login bem-sucedido
+          localStorage.setItem('flashconcards_user', JSON.stringify({
+            name: email.split('@')[0],
+            email: email,
+            isPaid: true,
+            uid: authUser.uid
+          }))
+          
+          window.location.href = '/dashboard/paid'
+        } else {
+          // Usuário não existe no Firebase Auth, mas pagou
+          setError('Usuário não encontrado. Entre em contato com o suporte.')
+        }
       } else {
         // Usuário não pagou
         setError('Acesso restrito. Você precisa fazer o pagamento para acessar o sistema.')
