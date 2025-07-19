@@ -93,13 +93,35 @@ export default function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h3 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Prepare-se para o Concurso da ALEGO
-          </h3>
-          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-            O método mais eficiente para estudar e passar no concurso da Assembleia Legislativa de Goiás. 
-            Flashcards inteligentes que se adaptam ao seu ritmo de aprendizado.
-          </p>
+          <motion.div
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl p-8 mb-8 shadow-2xl"
+          >
+            <div className="flex items-center justify-center mb-4">
+              <BookOpen className="h-8 w-8 mr-2" />
+              <span className="text-2xl font-bold">FLASHCONCARDS</span>
+            </div>
+            <h1 className="text-4xl md:text-6xl font-bold mb-4">
+              Prepare-se para o Concurso da ALEGO
+            </h1>
+            <p className="text-xl mb-6 text-blue-100">
+              O método mais eficiente para estudar e passar no concurso da Assembleia Legislativa de Goiás. 
+              Flashcards inteligentes que se adaptam ao seu ritmo de aprendizado.
+            </p>
+            <div className="bg-white/20 rounded-lg p-4 mb-6">
+              <p className="text-lg font-semibold">🎯 Método Científico Comprovado</p>
+              <p className="text-sm">Baseado em técnicas de memorização que realmente funcionam</p>
+            </div>
+            <Link 
+              href="/payment"
+              className="bg-yellow-400 text-black px-8 py-4 rounded-xl text-xl font-bold hover:bg-yellow-300 transition-colors inline-flex items-center"
+            >
+              COMEÇAR AGORA
+              <ArrowRight className="ml-2 h-6 w-6" />
+            </Link>
+          </motion.div>
         </motion.div>
 
         {/* Features Grid */}
