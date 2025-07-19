@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { BookOpen, CheckCircle, Trophy, MessageSquare, TrendingUp, User, Calendar } from 'lucide-react'
+import { BookOpen, CheckCircle, Trophy, MessageSquare, TrendingUp, User, Calendar, Target, BarChart3, Clock, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 interface UserStats {
@@ -12,6 +12,16 @@ interface UserStats {
   daysStudying: number
   lastLogin: string
   totalSubjects: number
+}
+
+interface Subject {
+  id: string
+  name: string
+  description: string
+  totalCards: number
+  completedCards: number
+  icon: any
+  color: string
 }
 
 export default function PaidDashboardPage() {
@@ -24,6 +34,7 @@ export default function PaidDashboardPage() {
     lastLogin: '',
     totalSubjects: 0
   })
+  const [subjects, setSubjects] = useState<Subject[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -39,6 +50,9 @@ export default function PaidDashboardPage() {
 
     // Buscar dados reais do Firebase
     fetchUserStats(userInfo.email)
+    
+    // Carregar matérias disponíveis
+    loadSubjects()
   }, [])
 
   const fetchUserStats = async (email: string) => {
@@ -80,6 +94,70 @@ export default function PaidDashboardPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const loadSubjects = () => {
+    const subjectsData: Subject[] = [
+      {
+        id: 'portugues',
+        name: 'Língua Portuguesa',
+        description: 'Compreensão, interpretação e gramática',
+        totalCards: 120,
+        completedCards: 0,
+        icon: BookOpen,
+        color: 'bg-blue-500'
+      },
+      {
+        id: 'informatica',
+        name: 'Noções de Informática',
+        description: 'Sistemas operacionais e pacote Office',
+        totalCards: 80,
+        completedCards: 0,
+        icon: Target,
+        color: 'bg-green-500'
+      },
+      {
+        id: 'constitucional',
+        name: 'Direito Constitucional',
+        description: 'Constituição e direitos fundamentais',
+        totalCards: 150,
+        completedCards: 0,
+        icon: TrendingUp,
+        color: 'bg-purple-500'
+      },
+      {
+        id: 'administrativo',
+        name: 'Direito Administrativo',
+        description: 'Administração pública e atos administrativos',
+        totalCards: 130,
+        completedCards: 0,
+        icon: BarChart3,
+        color: 'bg-orange-500'
+      },
+      {
+        id: 'realidade-goias',
+        name: 'Realidade de Goiás',
+        description: 'História, cultura e geografia do estado',
+        totalCards: 90,
+        completedCards: 0,
+        icon: Clock,
+        color: 'bg-red-500'
+      },
+      {
+        id: 'legislacao-alego',
+        name: 'Legislação ALEGO',
+        description: 'Regimento interno e estrutura legislativa',
+        totalCards: 70,
+        completedCards: 0,
+        icon: CheckCircle,
+        color: 'bg-indigo-500'
+      }
+    ]
+    setSubjects(subjectsData)
+  }
+
+  const getProgressPercentage = (completed: number, total: number) => {
+    return Math.round((completed / total) * 100)
   }
 
   const handleLogout = () => {
@@ -190,38 +268,55 @@ export default function PaidDashboardPage() {
           </div>
         </motion.div>
 
-        {/* Quick Actions */}
+        {/* Subjects Grid */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
           className="bg-white rounded-xl p-6 shadow-2xl mb-8"
         >
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Ações Rápidas</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link 
-              href="/study/constitucional"
-              className="bg-blue-500 text-white p-4 rounded-lg hover:bg-blue-600 transition-colors text-center"
-            >
-              <BookOpen className="h-8 w-8 mx-auto mb-2" />
-              <div className="font-semibold">Direito Constitucional</div>
-            </Link>
-            
-            <Link 
-              href="/study/administrativo"
-              className="bg-green-500 text-white p-4 rounded-lg hover:bg-green-600 transition-colors text-center"
-            >
-              <BookOpen className="h-8 w-8 mx-auto mb-2" />
-              <div className="font-semibold">Direito Administrativo</div>
-            </Link>
-            
-            <Link 
-              href="/study/penal"
-              className="bg-purple-500 text-white p-4 rounded-lg hover:bg-purple-600 transition-colors text-center"
-            >
-              <BookOpen className="h-8 w-8 mx-auto mb-2" />
-              <div className="font-semibold">Direito Penal</div>
-            </Link>
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Matérias Disponíveis</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {subjects.map((subject, index) => (
+              <motion.div
+                key={subject.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * (index + 1) }}
+                className="bg-gray-50 rounded-xl p-6 hover:shadow-lg transition-shadow"
+              >
+                <div className="flex items-center mb-4">
+                  <div className={`p-2 rounded-lg ${subject.color}`}>
+                    <subject.icon className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-lg font-semibold text-gray-900">{subject.name}</h3>
+                    <p className="text-sm text-gray-600">{subject.description}</p>
+                  </div>
+                </div>
+                
+                <div className="mb-4">
+                  <div className="flex justify-between text-sm text-gray-600 mb-1">
+                    <span>Progresso</span>
+                    <span>{subject.completedCards}/{subject.totalCards}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${getProgressPercentage(subject.completedCards, subject.totalCards)}%` }}
+                    ></div>
+                  </div>
+                </div>
+                
+                <Link 
+                  href={`/study/${subject.id}`}
+                  className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Começar a estudar
+                  <ArrowRight className="h-4 w-4 ml-1" />
+                </Link>
+              </motion.div>
+            ))}
           </div>
         </motion.div>
 
