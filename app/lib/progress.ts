@@ -14,10 +14,11 @@ function isClient() {
 }
 
 // Função para salvar progresso de um card específico
-export function saveCardProgress(subjectId: string, topicId: string, cardId: string, totalCards: number) {
+export async function saveCardProgress(subjectId: string, topicId: string, cardId: string, totalCards: number) {
   if (!isClient()) return
 
   try {
+    // Salvar no localStorage
     const progressKey = `flashconcards_progress_${subjectId}`
     const existingProgress = localStorage.getItem(progressKey)
     const progress: ProgressData = existingProgress ? JSON.parse(existingProgress) : {}
@@ -42,6 +43,30 @@ export function saveCardProgress(subjectId: string, topicId: string, cardId: str
     progress[subjectId][topicId].lastStudied = new Date()
 
     localStorage.setItem(progressKey, JSON.stringify(progress))
+
+    // Salvar também no Firebase
+    const userData = localStorage.getItem('flashconcards_user')
+    if (userData) {
+      const userInfo = JSON.parse(userData)
+      
+      try {
+        await fetch('/api/user/save-progress', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: userInfo.email,
+            subjectId,
+            topicId,
+            cardId,
+            totalCards
+          })
+        })
+      } catch (error) {
+        console.error('Erro ao salvar progresso no Firebase:', error)
+      }
+    }
   } catch (error) {
     console.error('Erro ao salvar progresso:', error)
   }

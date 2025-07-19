@@ -52,7 +52,7 @@ export default function PaidDashboardPage() {
     fetchUserStats(userInfo.email)
     
     // Carregar matérias disponíveis
-    loadSubjects()
+    loadSubjects(userInfo.email)
   }, [])
 
   const fetchUserStats = async (email: string) => {
@@ -96,7 +96,7 @@ export default function PaidDashboardPage() {
     }
   }
 
-  const loadSubjects = () => {
+  const loadSubjects = async (email: string) => {
     const subjectsData: Subject[] = [
       {
         id: 'portugues',
@@ -153,7 +153,36 @@ export default function PaidDashboardPage() {
         color: 'bg-indigo-500'
       }
     ]
-    setSubjects(subjectsData)
+
+    // Buscar progresso real de cada matéria
+    const updatedSubjects = await Promise.all(
+      subjectsData.map(async (subject) => {
+        try {
+          const response = await fetch('/api/user/subject-progress', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, subjectId: subject.id })
+          })
+
+          if (response.ok) {
+            const progressData = await response.json()
+            return {
+              ...subject,
+              completedCards: progressData.completedCards || 0,
+              totalCards: progressData.totalCards || subject.totalCards
+            }
+          }
+        } catch (error) {
+          console.error(`Erro ao buscar progresso de ${subject.name}:`, error)
+        }
+        
+        return subject
+      })
+    )
+
+    setSubjects(updatedSubjects)
   }
 
   const getProgressPercentage = (completed: number, total: number) => {

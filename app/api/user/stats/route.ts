@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Buscar progresso do usuário
+    // Buscar progresso do usuário no Firebase
     const progressQuery = query(collection(db, 'userProgress'), where('userId', '==', email))
     const progressSnapshot = await getDocs(progressQuery)
     
@@ -31,10 +31,22 @@ export async function POST(request: NextRequest) {
     const userQuery = query(collection(db, 'users'), where('email', '==', email))
     const userSnapshot = await getDocs(userQuery)
     
-    // Calcular estatísticas
+    // Calcular estatísticas baseadas no Firebase
     const totalCards = 150 // Total de flashcards disponíveis
-    const cardsStudied = progressSnapshot.size
-    const generalProgress = Math.round((cardsStudied / totalCards) * 100)
+    let cardsStudied = 0
+    let generalProgress = 0
+    
+    // Contar cards estudados no Firebase
+    if (!progressSnapshot.empty) {
+      progressSnapshot.forEach(doc => {
+        const data = doc.data()
+        if (data.completedCards) {
+          cardsStudied += data.completedCards.length
+        }
+      })
+    }
+    
+    generalProgress = Math.round((cardsStudied / totalCards) * 100)
     
     // Calcular dias estudando
     let daysStudying = 1
