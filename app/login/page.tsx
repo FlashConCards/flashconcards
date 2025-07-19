@@ -17,6 +17,13 @@ export default function LoginPage() {
     setIsLoading(true)
     setError('')
     
+    // Verificar se a senha está correta
+    if (password !== 'souflashconcards') {
+      setError('Senha incorreta. Use a senha fornecida após o pagamento.')
+      setIsLoading(false)
+      return
+    }
+    
     try {
       // Verificar se o usuário pagou
       const response = await fetch('/api/payment/status', {
@@ -30,7 +37,14 @@ export default function LoginPage() {
       const data = await response.json()
       
       if (data.success && data.isPaid) {
-        // Usuário pagou, permitir acesso
+        // Usuário pagou e senha está correta, permitir acesso
+        // Salvar dados do usuário no localStorage
+        localStorage.setItem('flashconcards_user', JSON.stringify({
+          name: email.split('@')[0], // Usar parte do email como nome
+          email: email,
+          isPaid: true
+        }))
+        
         window.location.href = '/dashboard/paid'
       } else {
         // Usuário não pagou
@@ -60,7 +74,7 @@ export default function LoginPage() {
         </h1>
         
         <p className="text-gray-600 mb-6">
-          Entre com o email usado no pagamento
+          Entre com o email usado no pagamento e sua senha
         </p>
         
         {error && (
@@ -118,6 +132,15 @@ export default function LoginPage() {
         </form>
         
         <div className="mt-6 text-center">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <p className="text-sm text-blue-800">
+              <strong>Senha padrão:</strong> souflashconcards
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              Use esta senha após fazer o pagamento
+            </p>
+          </div>
+          
           <p className="text-sm text-gray-600 mb-4">
             Não tem uma conta? 
             <Link href="/payment" className="text-blue-600 hover:text-blue-700 font-semibold ml-1">

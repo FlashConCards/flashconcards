@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { CheckCircle, ArrowLeft, BookOpen } from 'lucide-react'
+import { CheckCircle, ArrowLeft, BookOpen, Lock, Mail } from 'lucide-react'
 import Link from 'next/link'
 
 export default function PaymentSuccessPage() {
@@ -32,13 +32,40 @@ export default function PaymentSuccessPage() {
             Você pode começar a estudar agora mesmo!
           </p>
         </div>
+
+        {/* Credenciais de Acesso */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <h3 className="text-lg font-semibold text-blue-900 mb-3">
+            Suas Credenciais de Acesso
+          </h3>
+          
+          <div className="space-y-3 text-left">
+            <div className="flex items-center">
+              <Mail className="h-4 w-4 text-blue-600 mr-2" />
+              <span className="text-sm text-blue-800">
+                <strong>Email:</strong> Use o email do pagamento
+              </span>
+            </div>
+            
+            <div className="flex items-center">
+              <Lock className="h-4 w-4 text-blue-600 mr-2" />
+              <span className="text-sm text-blue-800">
+                <strong>Senha:</strong> souflashconcards
+              </span>
+            </div>
+          </div>
+          
+          <p className="text-xs text-blue-600 mt-3">
+            Guarde estas informações em local seguro!
+          </p>
+        </div>
         
         <div className="space-y-3">
           <Link 
-            href="/dashboard/paid" 
+            href="/login" 
             className="block w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
           >
-            Começar a Estudar
+            Acessar Sistema
           </Link>
           
           <Link 
