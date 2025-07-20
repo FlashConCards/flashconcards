@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createCardPayment } from '@/app/lib/mercadopago'
+import { createCardPayment, getPaymentStatus } from '@/app/lib/mercadopago'
 
 export async function POST(request: NextRequest) {
   try {
@@ -61,6 +61,48 @@ export async function POST(request: NextRequest) {
         }
       } catch (firebaseError) {
         console.error('❌ Erro ao salvar no Firebase:', firebaseError)
+      }
+
+      // Verificar status imediatamente e enviar email se aprovado
+      if (result.payment_id) {
+        console.log('🔍 Verificando status do pagamento...')
+        
+        // Aguardar 3 segundos para o pagamento ser processado
+        await new Promise(resolve => setTimeout(resolve, 3000))
+        
+        const statusResult = await getPaymentStatus(result.payment_id.toString())
+        console.log('Status verificado:', statusResult)
+        
+        if (statusResult.success && statusResult.status === 'approved') {
+          console.log('✅ PAGAMENTO APROVADO - Enviando email...')
+          
+          try {
+            const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://flashconcards.vercel.app'}/api/email/send-confirmation`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email,
+                name: firstName,
+                paymentId: result.payment_id.toString(),
+                amount: '1,00'
+              })
+            })
+            
+            if (emailResponse.ok) {
+              const emailResult = await emailResponse.json()
+              console.log('✅ Email enviado com sucesso:', emailResult)
+            } else {
+              const errorText = await emailResponse.text()
+              console.error('❌ Erro ao enviar email:', errorText)
+            }
+          } catch (emailError) {
+            console.error('❌ Erro ao enviar email:', emailError)
+          }
+        } else {
+          console.log('⏳ Pagamento ainda não aprovado. Status:', statusResult.status)
+        }
       }
       
       return NextResponse.json({
