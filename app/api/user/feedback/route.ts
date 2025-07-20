@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar se o usuário pagou
+    // Verificar se o usuário tem algum pagamento
     const { db } = await import('@/app/lib/firebase')
     const { collection, query, where, getDocs } = await import('firebase/firestore')
     
@@ -42,25 +42,24 @@ export async function POST(request: NextRequest) {
 
     console.log('🔍 Verificando pagamento para email:', email)
 
-    // Verificar se o usuário tem pagamento aprovado
+    // Verificar se o usuário tem qualquer pagamento (aprovado ou pendente)
     const paymentQuery = query(
       collection(db, 'payments'), 
-      where('email', '==', email),
-      where('status', '==', 'approved')
+      where('email', '==', email)
     )
     const paymentSnapshot = await getDocs(paymentQuery)
     
     console.log('Pagamentos encontrados:', paymentSnapshot.size)
     
     if (paymentSnapshot.empty) {
-      console.log('❌ Usuário não tem pagamento aprovado')
+      console.log('❌ Usuário não tem pagamento')
       return NextResponse.json(
-        { error: 'Usuário não tem pagamento aprovado' },
+        { error: 'Usuário não tem pagamento registrado' },
         { status: 403 }
       )
     }
 
-    console.log('✅ Usuário tem pagamento aprovado')
+    console.log('✅ Usuário tem pagamento registrado')
 
     // Salvar feedback no Firebase
     const { doc, setDoc } = await import('firebase/firestore')
@@ -73,7 +72,7 @@ export async function POST(request: NextRequest) {
       rating: parseInt(rating),
       comment,
       createdAt: new Date().toISOString(),
-      isVerified: true // Marcar como verificado (usuário pagante)
+      isVerified: true // Marcar como verificado (usuário com pagamento)
     }
 
     console.log('Salvando feedback:', feedbackData)
