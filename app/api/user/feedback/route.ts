@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Salvar feedback diretamente sem verificação
+    // Salvar feedback diretamente no Firebase
     try {
       const { db } = await import('@/app/lib/firebase')
       const { collection, addDoc } = await import('firebase/firestore')
@@ -43,15 +43,16 @@ export async function POST(request: NextRequest) {
           isVerified: true
         }
 
-        console.log('Salvando feedback:', feedbackData)
+        console.log('Salvando feedback no Firebase:', feedbackData)
 
-        await addDoc(collection(db, 'userFeedback'), feedbackData)
+        const docRef = await addDoc(collection(db, 'userFeedback'), feedbackData)
 
-        console.log('✅ Feedback salvo com sucesso')
+        console.log('✅ Feedback salvo com sucesso! ID:', docRef.id)
 
         return NextResponse.json({
           success: true,
-          message: 'Feedback salvo com sucesso'
+          message: 'Feedback salvo com sucesso',
+          id: docRef.id
         })
       } else {
         console.log('❌ Firebase não inicializado')
@@ -60,14 +61,12 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         )
       }
-    } catch (firebaseError) {
+    } catch (firebaseError: any) {
       console.error('❌ Erro no Firebase:', firebaseError)
-      
-      // Se o Firebase falhar, retornar sucesso mesmo assim
-      return NextResponse.json({
-        success: true,
-        message: 'Feedback processado com sucesso'
-      })
+      return NextResponse.json(
+        { error: 'Erro ao salvar no Firebase', details: firebaseError.message },
+        { status: 500 }
+      )
     }
   } catch (error: any) {
     console.error('❌ Erro ao salvar feedback:', error)
@@ -88,15 +87,12 @@ export async function GET() {
     
     if (!db) {
       console.log('❌ Firebase não inicializado')
-      return NextResponse.json(
-        { error: 'Firebase não inicializado' },
-        { status: 500 }
-      )
+      return NextResponse.json([])
     }
 
     console.log('🔍 Buscando feedbacks no Firebase...')
 
-    // Buscar feedbacks verificados (apenas de usuários pagantes)
+    // Buscar feedbacks verificados
     const feedbackQuery = query(
       collection(db, 'userFeedback'),
       orderBy('createdAt', 'desc'),
@@ -124,8 +120,6 @@ export async function GET() {
     return NextResponse.json(feedbacks)
   } catch (error: any) {
     console.error('❌ Erro ao buscar feedbacks:', error)
-    
-    // Se der erro, retornar array vazio
     return NextResponse.json([])
   }
 } 
