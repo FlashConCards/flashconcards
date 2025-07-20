@@ -81,15 +81,20 @@ export async function POST(request: NextRequest) {
 // GET para buscar feedbacks reais
 export async function GET() {
   try {
+    console.log('=== BUSCANDO FEEDBACKS ===')
+    
     const { db } = await import('@/app/lib/firebase')
     const { collection, query, orderBy, limit, getDocs } = await import('firebase/firestore')
     
     if (!db) {
+      console.log('❌ Firebase não inicializado')
       return NextResponse.json(
         { error: 'Firebase não inicializado' },
         { status: 500 }
       )
     }
+
+    console.log('🔍 Buscando feedbacks no Firebase...')
 
     // Buscar feedbacks verificados (apenas de usuários pagantes)
     const feedbackQuery = query(
@@ -98,6 +103,8 @@ export async function GET() {
       limit(10)
     )
     const feedbackSnapshot = await getDocs(feedbackQuery)
+    
+    console.log('Feedbacks encontrados:', feedbackSnapshot.size)
     
     const feedbacks: Feedback[] = []
     feedbackSnapshot.forEach(doc => {
@@ -112,12 +119,13 @@ export async function GET() {
       })
     })
 
+    console.log('✅ Feedbacks retornados:', feedbacks.length)
+
     return NextResponse.json(feedbacks)
   } catch (error: any) {
-    console.error('Erro ao buscar feedbacks:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    console.error('❌ Erro ao buscar feedbacks:', error)
+    
+    // Se der erro, retornar array vazio
+    return NextResponse.json([])
   }
 } 
