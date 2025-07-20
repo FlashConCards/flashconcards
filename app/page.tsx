@@ -68,20 +68,18 @@ export default function HomePage() {
       const response = await fetch('/api/user/feedback')
       if (response.ok) {
         const data = await response.json()
-        // Se não há feedbacks reais, usar os fixos
+        // Usar apenas feedbacks reais
         if (data && data.length > 0) {
           setFeedbacks(data)
         } else {
-          setFeedbacks(defaultFeedbacks)
+          setFeedbacks([])
         }
       } else {
-        // Se der erro, usar os fixos
-        setFeedbacks(defaultFeedbacks)
+        setFeedbacks([])
       }
     } catch (error) {
       console.error('Erro ao buscar feedbacks:', error)
-      // Se der erro, usar os fixos
-      setFeedbacks(defaultFeedbacks)
+      setFeedbacks([])
     } finally {
       setIsLoadingFeedbacks(false)
     }
