@@ -14,7 +14,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { email, rating, comment, name } = body
 
+    console.log('=== SALVANDO FEEDBACK ===')
+    console.log('Email:', email)
+    console.log('Rating:', rating)
+    console.log('Comment:', comment)
+    console.log('Name:', name)
+
     if (!email || !rating || !comment) {
+      console.log('❌ Dados obrigatórios não fornecidos')
       return NextResponse.json(
         { error: 'Dados obrigatórios não fornecidos' },
         { status: 400 }
@@ -26,11 +33,14 @@ export async function POST(request: NextRequest) {
     const { collection, query, where, getDocs } = await import('firebase/firestore')
     
     if (!db) {
+      console.log('❌ Firebase não inicializado')
       return NextResponse.json(
         { error: 'Firebase não inicializado' },
         { status: 500 }
       )
     }
+
+    console.log('🔍 Verificando pagamento para email:', email)
 
     // Verificar se o usuário tem pagamento aprovado
     const paymentQuery = query(
@@ -40,35 +50,46 @@ export async function POST(request: NextRequest) {
     )
     const paymentSnapshot = await getDocs(paymentQuery)
     
+    console.log('Pagamentos encontrados:', paymentSnapshot.size)
+    
     if (paymentSnapshot.empty) {
+      console.log('❌ Usuário não tem pagamento aprovado')
       return NextResponse.json(
         { error: 'Usuário não tem pagamento aprovado' },
         { status: 403 }
       )
     }
 
+    console.log('✅ Usuário tem pagamento aprovado')
+
     // Salvar feedback no Firebase
     const { doc, setDoc } = await import('firebase/firestore')
     const feedbackId = `${email}_${Date.now()}`
     const feedbackRef = doc(db, 'userFeedback', feedbackId)
 
-    await setDoc(feedbackRef, {
+    const feedbackData = {
       userId: email,
       name: name || 'Usuário',
       rating: parseInt(rating),
       comment,
       createdAt: new Date().toISOString(),
       isVerified: true // Marcar como verificado (usuário pagante)
-    })
+    }
+
+    console.log('Salvando feedback:', feedbackData)
+
+    await setDoc(feedbackRef, feedbackData)
+
+    console.log('✅ Feedback salvo com sucesso')
 
     return NextResponse.json({
       success: true,
       message: 'Feedback salvo com sucesso'
     })
   } catch (error: any) {
-    console.error('Erro ao salvar feedback:', error)
+    console.error('❌ Erro ao salvar feedback:', error)
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: 'Erro interno do servidor', details: error.message },
       { status: 500 }
     )
   }
