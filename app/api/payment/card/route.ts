@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createCardPayment } from '@/app/lib/mercadopago'
-// import { simulatePaymentApproval } from '@/app/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,8 +38,30 @@ export async function POST(request: NextRequest) {
     const result = await createCardPayment(paymentData)
 
     if (result.success) {
-      // Registrar pagamento para o email
-      // simulatePaymentApproval(email, result.payment_id?.toString() || 'card-payment')
+      console.log('✅ Pagamento criado com sucesso:', result.payment_id)
+      
+      // Salvar pagamento no Firebase
+      try {
+        const { db } = await import('@/app/lib/firebase')
+        const { collection, addDoc } = await import('firebase/firestore')
+        
+        if (db) {
+          await addDoc(collection(db, 'payments'), {
+            payment_id: result.payment_id?.toString(),
+            email,
+            first_name: firstName,
+            last_name: lastName,
+            amount: 1.00,
+            status: result.status || 'pending',
+            created_at: new Date().toISOString(),
+            payment_method: 'card'
+          })
+          
+          console.log('✅ Pagamento salvo no Firebase')
+        }
+      } catch (firebaseError) {
+        console.error('❌ Erro ao salvar no Firebase:', firebaseError)
+      }
       
       return NextResponse.json({
         success: true,
@@ -53,7 +74,7 @@ export async function POST(request: NextRequest) {
         { error: result.error },
         { status: 400 }
       )
-      }
+    }
   } catch (error: any) {
     console.error('Erro ao processar pagamento com cartão:', error)
     return NextResponse.json(
