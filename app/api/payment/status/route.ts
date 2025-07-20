@@ -50,13 +50,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('Verificando pagamento para email:', email)
+    console.log('=== VERIFICAÇÃO DE PAGAMENTO ===')
+    console.log('Email:', email)
 
     // PRIMEIRO: Verificar status real no Mercado Pago
     const { db } = await import('@/app/lib/firebase')
     const { collection, query, where, getDocs } = await import('firebase/firestore')
     
     if (!db) {
+      console.log('ERRO: Firebase não inicializado')
       return NextResponse.json(
         { error: 'Firebase não inicializado' },
         { status: 500 }
@@ -67,11 +69,14 @@ export async function POST(request: NextRequest) {
     const q = query(collection(db, 'payments'), where('email', '==', email))
     const querySnapshot = await getDocs(q)
     
+    console.log('Pagamentos encontrados:', querySnapshot.size)
+    
     if (!querySnapshot.empty) {
       const payment = querySnapshot.docs[0].data()
       const paymentId = payment.payment_id
       
-      console.log('Verificando status real do pagamento:', paymentId)
+      console.log('Payment ID encontrado:', paymentId)
+      console.log('Dados do pagamento:', payment)
       
       // Verificar status real no Mercado Pago
       const result = await getPaymentStatus(paymentId)
@@ -82,13 +87,18 @@ export async function POST(request: NextRequest) {
         
         // Se foi aprovado, atualizar no Firebase e enviar email
         if (realStatus === 'approved') {
+          console.log('✅ PAGAMENTO APROVADO - Enviando email...')
+          
           const { updatePaymentStatus } = await import('@/app/lib/firebase')
           await updatePaymentStatus(paymentId, 'approved')
-          console.log('Pagamento aprovado no Firebase')
+          console.log('Status atualizado no Firebase')
           
           // Enviar email de confirmação
           try {
-            const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/email/send-confirmation`, {
+            console.log('Enviando email para:', email)
+            console.log('URL do site:', process.env.NEXT_PUBLIC_SITE_URL)
+            
+            const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://flashconcards.vercel.app'}/api/email/send-confirmation`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -101,29 +111,40 @@ export async function POST(request: NextRequest) {
               })
             })
             
+            console.log('Resposta do email:', emailResponse.status)
+            
             if (emailResponse.ok) {
-              console.log('Email de confirmação enviado com sucesso')
+              const emailResult = await emailResponse.json()
+              console.log('✅ Email de confirmação enviado com sucesso:', emailResult)
             } else {
-              console.error('Erro ao enviar email de confirmação')
+              const errorText = await emailResponse.text()
+              console.error('❌ Erro ao enviar email de confirmação:', errorText)
             }
           } catch (emailError) {
-            console.error('Erro ao enviar email:', emailError)
+            console.error('❌ Erro ao enviar email:', emailError)
           }
+        } else {
+          console.log('❌ Pagamento não aprovado. Status:', realStatus)
         }
         
         return NextResponse.json({
           success: true,
           isPaid: realStatus === 'approved',
           email,
-          realStatus
+          realStatus,
+          paymentId
         })
+      } else {
+        console.log('❌ Erro ao verificar status no Mercado Pago:', result.error)
       }
+    } else {
+      console.log('❌ Nenhum pagamento encontrado para o email:', email)
     }
 
     // SEGUNDO: Verificar se o usuário pagou (fallback)
     const isPaid = await isUserPaid(email)
     
-    console.log('Resultado da verificação:', { email, isPaid })
+    console.log('Resultado final da verificação:', { email, isPaid })
 
     return NextResponse.json({
       success: true,
@@ -131,7 +152,7 @@ export async function POST(request: NextRequest) {
       email
     })
   } catch (error: any) {
-    console.error('Erro ao verificar pagamento por email:', error)
+    console.error('❌ Erro ao verificar pagamento por email:', error)
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
