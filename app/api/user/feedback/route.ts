@@ -30,39 +30,49 @@ export async function POST(request: NextRequest) {
 
     // Salvar feedback diretamente no Firebase
     try {
+      console.log('🔍 Importando Firebase...')
       const { db } = await import('@/app/lib/firebase')
       const { collection, addDoc } = await import('firebase/firestore')
       
-      if (db) {
-        const feedbackData = {
-          userId: email,
-          name: name || 'Usuário',
-          rating: parseInt(rating),
-          comment,
-          createdAt: new Date().toISOString(),
-          isVerified: true
-        }
-
-        console.log('Salvando feedback no Firebase:', feedbackData)
-
-        const docRef = await addDoc(collection(db, 'userFeedback'), feedbackData)
-
-        console.log('✅ Feedback salvo com sucesso! ID:', docRef.id)
-
-        return NextResponse.json({
-          success: true,
-          message: 'Feedback salvo com sucesso',
-          id: docRef.id
-        })
-      } else {
+      console.log('🔍 Firebase importado, verificando db...')
+      if (!db) {
         console.log('❌ Firebase não inicializado')
         return NextResponse.json(
           { error: 'Firebase não inicializado' },
           { status: 500 }
         )
       }
+
+      console.log('✅ Firebase inicializado, criando dados...')
+      const feedbackData = {
+        userId: email,
+        name: name || 'Usuário',
+        rating: parseInt(rating),
+        comment,
+        createdAt: new Date().toISOString(),
+        isVerified: true
+      }
+
+      console.log('Salvando feedback no Firebase:', feedbackData)
+
+      console.log('🔍 Acessando coleção userFeedback...')
+      const feedbackCollection = collection(db, 'userFeedback')
+      console.log('✅ Coleção acessada')
+
+      console.log('🔍 Adicionando documento...')
+      const docRef = await addDoc(feedbackCollection, feedbackData)
+
+      console.log('✅ Feedback salvo com sucesso! ID:', docRef.id)
+
+      return NextResponse.json({
+        success: true,
+        message: 'Feedback salvo com sucesso',
+        id: docRef.id
+      })
     } catch (firebaseError: any) {
       console.error('❌ Erro no Firebase:', firebaseError)
+      console.error('❌ Detalhes do erro:', firebaseError.message)
+      console.error('❌ Stack trace:', firebaseError.stack)
       return NextResponse.json(
         { error: 'Erro ao salvar no Firebase', details: firebaseError.message },
         { status: 500 }

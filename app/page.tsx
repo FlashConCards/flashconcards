@@ -258,7 +258,7 @@ export default function HomePage() {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
               <p>Carregando depoimentos reais...</p>
             </div>
-          ) : (
+          ) : feedbacks.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {feedbacks.slice(0, 3).map((feedback) => (
                 <div key={feedback.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white">
@@ -274,6 +274,11 @@ export default function HomePage() {
                   </p>
                 </div>
               ))}
+            </div>
+          ) : (
+            <div className="text-center text-white">
+              <p className="text-lg">Seja o primeiro a deixar um depoimento!</p>
+              <p className="text-blue-200">Compre o curso e compartilhe sua experiência</p>
             </div>
           )}
         </motion.div>
