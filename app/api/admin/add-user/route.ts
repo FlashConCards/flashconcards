@@ -53,11 +53,37 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Usuário criado com sucesso:', userRecord.uid);
 
+    // Criar registro de pagamento aprovado no Firestore
+    try {
+      const { getFirestore } = await import('firebase-admin/firestore');
+      const db = getFirestore();
+      
+      // Gerar um payment_id único
+      const paymentId = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      await db.collection('payments').add({
+        payment_id: paymentId,
+        email: email,
+        first_name: email.split('@')[0], // Nome baseado no email
+        last_name: '',
+        amount: 0.00, // Gratuito para usuários adicionados pelo admin
+        status: 'approved', // Aprovado automaticamente
+        created_at: new Date().toISOString(),
+        payment_method: 'admin',
+        admin_created: true
+      });
+
+      console.log('✅ Registro de pagamento criado para:', email);
+    } catch (firestoreError) {
+      console.error('❌ Erro ao criar registro de pagamento:', firestoreError);
+      // Não falha o processo se der erro no Firestore
+    }
+
     return NextResponse.json({
       success: true,
       uid: userRecord.uid,
       email: userRecord.email,
-      message: 'Usuário criado com sucesso'
+      message: 'Usuário criado com sucesso e com acesso ao dashboard'
     });
 
   } catch (error: any) {
