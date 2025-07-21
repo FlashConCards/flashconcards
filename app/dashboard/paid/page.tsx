@@ -6,7 +6,7 @@ import { BookOpen, CheckCircle, Trophy, MessageSquare, TrendingUp, User, Calenda
 import Link from 'next/link'
 import conteudoProgramatico from '../../../conteudo_programatico.json';
 import { db } from '../../../app/lib/firebase';
-import { collection, query, where, getCountFromServer } from 'firebase/firestore';
+import { collection, query, where, getCountFromServer, getDocs } from 'firebase/firestore';
 
 interface UserStats {
   totalCards: number
@@ -56,6 +56,8 @@ export default function PaidDashboardPage() {
     
     // Carregar matérias disponíveis
     loadSubjects(userInfo.email)
+    // Buscar total de cards e progresso geral em tempo real
+    loadDashboardStats(userInfo.email)
   }, [])
 
   const fetchUserStats = async (email: string) => {
@@ -97,6 +99,37 @@ export default function PaidDashboardPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Atualizar todos os indicadores do dashboard em tempo real
+  const loadDashboardStats = async (email: string) => {
+    // Total de flashcards
+    let totalCards = 0;
+    try {
+      const snap = await getCountFromServer(collection(db, 'flashcards'));
+      totalCards = snap.data().count || 0;
+    } catch (e) {
+      totalCards = 0;
+    }
+    // Cards estudados pelo usuário
+    let cardsStudied = 0;
+    try {
+      const q = query(collection(db, 'userProgress'), where('userId', '==', email));
+      const snap = await getDocs(q);
+      // Considera apenas flashcards únicos estudados
+      const uniqueCards = new Set(snap.docs.map(doc => doc.data().flashcardId));
+      cardsStudied = uniqueCards.size;
+    } catch (e) {
+      cardsStudied = 0;
+    }
+    // Progresso geral
+    const generalProgress = totalCards > 0 ? Math.round((cardsStudied / totalCards) * 100) : 0;
+    setStats(prev => ({
+      ...prev,
+      totalCards,
+      cardsStudied,
+      generalProgress
+    }));
   }
 
   const iconMap: Record<string, any> = {
