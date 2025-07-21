@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { BookOpen, CheckCircle, Trophy, MessageSquare, TrendingUp, User, Calendar, Target, BarChart3, Clock, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+import conteudoProgramatico from '../../../conteudo_programatico.json';
 
 interface UserStats {
   totalCards: number
@@ -96,63 +97,40 @@ export default function PaidDashboardPage() {
     }
   }
 
+  const iconMap: Record<string, any> = {
+    'Língua Portuguesa': BookOpen,
+    'Noções de Informática': Target,
+    'Direito Constitucional': TrendingUp,
+    'Direito Administrativo': BarChart3,
+    'Realidade Étnica, Social, Histórica, Geográfica, Cultural e Política de Goiás': Clock,
+    'Legislação Específica da ALEGO': CheckCircle,
+    'Noções de Segurança Pública / SUSP': MessageSquare,
+    'Qualidade na Prestação do Serviço Público / Trabalho em Equipe': User,
+    'Redação (Prova Discursiva)': Trophy
+  };
+  const colorMap: Record<string, string> = {
+    'Língua Portuguesa': 'bg-blue-500',
+    'Noções de Informática': 'bg-green-500',
+    'Direito Constitucional': 'bg-purple-500',
+    'Direito Administrativo': 'bg-orange-500',
+    'Realidade Étnica, Social, Histórica, Geográfica, Cultural e Política de Goiás': 'bg-red-500',
+    'Legislação Específica da ALEGO': 'bg-indigo-500',
+    'Noções de Segurança Pública / SUSP': 'bg-pink-500',
+    'Qualidade na Prestação do Serviço Público / Trabalho em Equipe': 'bg-yellow-500',
+    'Redação (Prova Discursiva)': 'bg-gray-500'
+  };
+
   const loadSubjects = async (email: string) => {
-    const subjectsData: Subject[] = [
-      {
-        id: 'portugues',
-        name: 'Língua Portuguesa',
-        description: 'Compreensão, interpretação e gramática',
-        totalCards: 120,
-        completedCards: 0,
-        icon: BookOpen,
-        color: 'bg-blue-500'
-      },
-      {
-        id: 'informatica',
-        name: 'Noções de Informática',
-        description: 'Sistemas operacionais e pacote Office',
-        totalCards: 80,
-        completedCards: 0,
-        icon: Target,
-        color: 'bg-green-500'
-      },
-      {
-        id: 'constitucional',
-        name: 'Direito Constitucional',
-        description: 'Constituição e direitos fundamentais',
-        totalCards: 150,
-        completedCards: 0,
-        icon: TrendingUp,
-        color: 'bg-purple-500'
-      },
-      {
-        id: 'administrativo',
-        name: 'Direito Administrativo',
-        description: 'Administração pública e atos administrativos',
-        totalCards: 130,
-        completedCards: 0,
-        icon: BarChart3,
-        color: 'bg-orange-500'
-      },
-      {
-        id: 'realidade-goias',
-        name: 'Realidade de Goiás',
-        description: 'História, cultura e geografia do estado',
-        totalCards: 90,
-        completedCards: 0,
-        icon: Clock,
-        color: 'bg-red-500'
-      },
-      {
-        id: 'legislacao-alego',
-        name: 'Legislação ALEGO',
-        description: 'Regimento interno e estrutura legislativa',
-        totalCards: 70,
-        completedCards: 0,
-        icon: CheckCircle,
-        color: 'bg-indigo-500'
-      }
-    ]
+    // Carregar matérias do JSON
+    const subjectsData: Subject[] = conteudoProgramatico.map((item, idx) => ({
+      id: item.titulo.toLowerCase().replace(/[^a-z0-9]+/gi, '-'),
+      name: item.titulo,
+      description: item.topicos[0] || '',
+      totalCards: 50 + idx * 10, // Valor fictício, ajuste conforme necessário
+      completedCards: 0,
+      icon: iconMap[item.titulo] || BookOpen,
+      color: colorMap[item.titulo] || 'bg-blue-500'
+    }));
 
     // Buscar progresso real de cada matéria
     const updatedSubjects = await Promise.all(
@@ -177,11 +155,9 @@ export default function PaidDashboardPage() {
         } catch (error) {
           console.error(`Erro ao buscar progresso de ${subject.name}:`, error)
         }
-        
         return subject
       })
     )
-
     setSubjects(updatedSubjects)
   }
 
