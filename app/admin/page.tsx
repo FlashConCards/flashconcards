@@ -16,6 +16,7 @@ export default function AdminPage() {
   // Painel admin
   const [preparatorio, setPreparatorio] = useState("ALEGO");
   const [materia, setMateria] = useState("");
+  const [subtopico, setSubtopico] = useState("");
   const [flashcards, setFlashcards] = useState<any[]>([]);
   const [novaPergunta, setNovaPergunta] = useState("");
   const [novaResposta, setNovaResposta] = useState("");
@@ -44,25 +45,38 @@ export default function AdminPage() {
     return () => unsub();
   }, [materia, preparatorio, autenticado]);
 
+  // Subtópicos da matéria selecionada
+  const subtitulos = materia ? (conteudoProgramatico.find((m: any) => m.titulo === materia)?.topicos || []) : [];
+
   // Adicionar flashcard
   const handleAddFlashcard = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!novaPergunta.trim() || !novaResposta.trim()) return;
+    if (!novaPergunta.trim() || !novaResposta.trim() || !subtopico) return;
     await addDoc(collection(db, 'flashcards'), {
       preparatorio,
       subject: materia,
+      subtopico,
       question: novaPergunta,
       answer: novaResposta,
       created_at: new Date().toISOString(),
     });
     setNovaPergunta("");
     setNovaResposta("");
+    setSubtopico("");
   };
 
   // Remover flashcard
   const handleDelete = async (id: string) => {
     await deleteDoc(doc(db, 'flashcards', id));
   };
+
+  // Agrupar flashcards por subtópico
+  const flashcardsPorSubtopico: Record<string, any[]> = {};
+  flashcards.forEach(fc => {
+    const key = fc.subtopico || "(Sem subtópico)";
+    if (!flashcardsPorSubtopico[key]) flashcardsPorSubtopico[key] = [];
+    flashcardsPorSubtopico[key].push(fc);
+  });
 
   if (!autenticado) {
     return (
@@ -108,6 +122,15 @@ export default function AdminPage() {
           <>
             <form onSubmit={handleAddFlashcard} className="mb-6">
               <div className="mb-2">
+                <label className="block text-gray-700 mb-1">Subtópico</label>
+                <select value={subtopico} onChange={e => setSubtopico(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
+                  <option value="">Selecione o subtópico</option>
+                  {subtitulos.map((sub: string, idx: number) => (
+                    <option key={idx} value={sub}>{sub}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="mb-2">
                 <label className="block text-gray-700 mb-1">Pergunta</label>
                 <input type="text" value={novaPergunta} onChange={e => setNovaPergunta(e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
               </div>
@@ -121,18 +144,25 @@ export default function AdminPage() {
             {carregando ? (
               <div>Carregando...</div>
             ) : (
-              <ul className="space-y-2">
-                {flashcards.map(fc => (
-                  <li key={fc.id} className="flex items-center justify-between bg-gray-100 rounded-lg px-4 py-2">
-                    <div>
-                      <span className="font-semibold">Q:</span> {fc.question}<br />
-                      <span className="font-semibold">A:</span> {fc.answer}
-                    </div>
-                    <button onClick={() => handleDelete(fc.id)} className="ml-4 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700">Remover</button>
-                  </li>
+              <div>
+                {Object.keys(flashcardsPorSubtopico).map(sub => (
+                  <div key={sub} className="mb-4">
+                    <div className="font-semibold text-blue-700 mb-1">{sub}</div>
+                    <ul className="space-y-2">
+                      {flashcardsPorSubtopico[sub].map(fc => (
+                        <li key={fc.id} className="flex items-center justify-between bg-gray-100 rounded-lg px-4 py-2">
+                          <div>
+                            <span className="font-semibold">Q:</span> {fc.question}<br />
+                            <span className="font-semibold">A:</span> {fc.answer}
+                          </div>
+                          <button onClick={() => handleDelete(fc.id)} className="ml-4 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700">Remover</button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-                {flashcards.length === 0 && <li className="text-gray-500">Nenhum flashcard cadastrado.</li>}
-              </ul>
+                {flashcards.length === 0 && <div className="text-gray-500">Nenhum flashcard cadastrado.</div>}
+              </div>
             )}
           </>
         )}
