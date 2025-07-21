@@ -250,49 +250,78 @@ export default function PaidDashboardPage() {
     setProfileSuccess('');
 
     try {
-      console.log('Iniciando upload da foto...', { fileName: file.name, fileSize: file.size, fileType: file.type });
+      console.log('=== INÍCIO DO UPLOAD ===');
+      console.log('Usuário:', user);
+      console.log('Arquivo:', { fileName: file.name, fileSize: file.size, fileType: file.type });
+      console.log('Storage disponível:', !!storage);
+      console.log('Auth disponível:', !!auth);
+
+      // Verificar se o storage está disponível
+      if (!storage) {
+        throw new Error('Firebase Storage não está inicializado');
+      }
 
       // Gerar nome único para o arquivo
-      const fileExtension = file.name.split('.').pop();
+      const fileExtension = file.name.split('.').pop() || 'jpg';
       const uniqueFileName = `profile_${Date.now()}.${fileExtension}`;
+      
+      console.log('Nome único gerado:', uniqueFileName);
       
       // Upload para Firebase Storage
       const storageRef = ref(storage, `profile-photos/${user.uid}/${uniqueFileName}`);
-      console.log('Referência do storage:', storageRef.fullPath);
+      console.log('Referência do storage criada:', storageRef.fullPath);
       
+      console.log('Iniciando upload...');
       const uploadResult = await uploadBytes(storageRef, file);
-      console.log('Upload concluído:', uploadResult);
+      console.log('Upload concluído com sucesso:', uploadResult);
       
+      console.log('Obtendo URL de download...');
       const downloadURL = await getDownloadURL(storageRef);
       console.log('URL de download obtida:', downloadURL);
 
       // Atualizar perfil do usuário no Firebase Auth
-      if (auth.currentUser) {
+      if (auth && auth.currentUser) {
+        console.log('Atualizando perfil no Firebase Auth...');
         await updateProfile(auth.currentUser, {
           photoURL: downloadURL
         });
-        console.log('Perfil do Firebase Auth atualizado');
+        console.log('Perfil do Firebase Auth atualizado com sucesso');
+      } else {
+        console.warn('Usuário não autenticado no Firebase Auth');
       }
 
       // Atualizar no Firestore
-      const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, {
-        photoURL: downloadURL,
-        updated_at: new Date().toISOString()
-      });
-      console.log('Dados do Firestore atualizados');
+      if (db) {
+        console.log('Atualizando dados no Firestore...');
+        const userRef = doc(db, 'users', user.uid);
+        await updateDoc(userRef, {
+          photoURL: downloadURL,
+          updated_at: new Date().toISOString()
+        });
+        console.log('Dados do Firestore atualizados com sucesso');
+      } else {
+        console.warn('Firestore não disponível');
+      }
 
       setProfileData((prev: any) => ({ ...prev, photoURL: downloadURL }));
       setProfileSuccess('Foto de perfil atualizada com sucesso!');
       
       // Recarregar dados do usuário
-      const userDoc = await getDoc(userRef);
-      if (userDoc.exists()) {
-        setUser((prev: any) => ({ ...prev, ...userDoc.data() }));
+      if (db) {
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          setUser((prev: any) => ({ ...prev, ...userDoc.data() }));
+        }
       }
 
+      console.log('=== UPLOAD CONCLUÍDO COM SUCESSO ===');
+
     } catch (error: any) {
-      console.error('Erro detalhado ao fazer upload da foto:', error);
+      console.error('=== ERRO NO UPLOAD ===');
+      console.error('Erro completo:', error);
+      console.error('Código do erro:', error.code);
+      console.error('Mensagem do erro:', error.message);
       
       let errorMessage = 'Erro ao fazer upload da foto. Tente novamente.';
       
@@ -302,11 +331,14 @@ export default function PaidDashboardPage() {
         errorMessage = 'Limite de armazenamento excedido.';
       } else if (error.code === 'storage/invalid-format') {
         errorMessage = 'Formato de arquivo inválido.';
+      } else if (error.message?.includes('Firebase Storage não está inicializado')) {
+        errorMessage = 'Erro de configuração do Firebase Storage.';
       }
       
       setProfileError(errorMessage);
     } finally {
       setUploadingPhoto(false);
+      console.log('Estado de upload resetado');
     }
   };
 
