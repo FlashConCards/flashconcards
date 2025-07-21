@@ -315,153 +315,16 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
   }
 
   // Obter tópicos de cada matéria
-  const getTopicsBySubject = (subjectId: string): Topic[] => {
-    const topicsBySubject: { [key: string]: Topic[] } = {
-      'portugues': [
-        {
-          id: 'Ortografia',
-          name: 'Ortografia',
-          description: 'Novo Acordo Ortográfico e acentuação',
-          cardCount: 5,
-          icon: BookOpen,
-          color: 'bg-green-500'
-        }
-      ],
-      'informatica': [
-        {
-          id: 'Segurança',
-          name: 'Segurança da Informação',
-          description: 'Firewall, phishing e proteção',
-          cardCount: 2,
-          icon: BookOpen,
-          color: 'bg-red-500'
-        },
-        {
-          id: 'Excel',
-          name: 'Microsoft Excel',
-          description: 'Fórmulas e funções',
-          cardCount: 1,
-          icon: BookOpen,
-          color: 'bg-green-500'
-        },
-        {
-          id: 'Hardware',
-          name: 'Hardware',
-          description: 'Componentes físicos do computador',
-          cardCount: 1,
-          icon: BookOpen,
-          color: 'bg-blue-500'
-        },
-        {
-          id: 'Backup',
-          name: 'Backup e Armazenamento',
-          description: 'Cópia de segurança e nuvem',
-          cardCount: 1,
-          icon: BookOpen,
-          color: 'bg-purple-500'
-        }
-      ],
-      'constitucional': [
-        {
-          id: 'Direitos',
-          name: 'Direitos Fundamentais',
-          description: 'Arts. 5º a 17 da Constituição',
-          cardCount: 2,
-          icon: BookOpen,
-          color: 'bg-blue-500'
-        },
-        {
-          id: 'Poderes',
-          name: 'Poderes da União',
-          description: 'Legislativo, Executivo e Judiciário',
-          cardCount: 2,
-          icon: BookOpen,
-          color: 'bg-green-500'
-        },
-        {
-          id: 'Poder Judiciário',
-          name: 'Poder Judiciário',
-          description: 'STF e estrutura judiciária',
-          cardCount: 1,
-          icon: BookOpen,
-          color: 'bg-purple-500'
-        }
-      ],
-      'administrativo': [
-        {
-          id: 'Legalidade',
-          name: 'Princípio da Legalidade',
-          description: 'Conformidade com a lei',
-          cardCount: 1,
-          icon: BookOpen,
-          color: 'bg-blue-500'
-        },
-        {
-          id: 'Atos Administrativos',
-          name: 'Atos Administrativos',
-          description: 'Conceito, atributos e classificação',
-          cardCount: 1,
-          icon: BookOpen,
-          color: 'bg-green-500'
-        },
-        {
-          id: 'Princípios',
-          name: 'Princípios Administrativos',
-          description: 'LIMPE e princípios fundamentais',
-          cardCount: 1,
-          icon: BookOpen,
-          color: 'bg-purple-500'
-        },
-        {
-          id: 'Licitação',
-          name: 'Licitação e Contratos',
-          description: 'Procedimentos e modalidades',
-          cardCount: 1,
-          icon: BookOpen,
-          color: 'bg-orange-500'
-        },
-        {
-          id: 'Responsabilidade',
-          name: 'Responsabilidade Civil',
-          description: 'Responsabilidade do Estado',
-          cardCount: 1,
-          icon: BookOpen,
-          color: 'bg-red-500'
-        }
-      ],
-      'realidade-goias': [
-        {
-          id: 'Geografia',
-          name: 'Geografia de Goiás',
-          description: 'Relevo, clima e hidrografia',
-          cardCount: 1,
-          icon: BookOpen,
-          color: 'bg-blue-500'
-        },
-        {
-          id: 'História',
-          name: 'História de Goiás',
-          description: 'Formação histórica e social',
-          cardCount: 1,
-          icon: BookOpen,
-          color: 'bg-green-500'
-        },
-        {
-          id: 'Agricultura',
-          name: 'Agricultura de Goiás',
-          description: 'Principais produtos agrícolas',
-          cardCount: 1,
-          icon: BookOpen,
-          color: 'bg-purple-500'
-        }
-      ]
-    }
-    
-    return topicsBySubject[subjectId] || []
-  }
-
+  const topics = Array.from(new Set(firebaseFlashcards.map(card => card.subtopico || card.topic))).filter(Boolean).map((sub, idx) => ({
+    id: sub,
+    name: sub,
+    description: '',
+    cardCount: firebaseFlashcards.filter(card => (card.subtopico || card.topic) === sub).length,
+    icon: BookOpen,
+    color: 'bg-blue-500'
+  }));
+  
   const flashcards = getFlashcardsBySubject(params.subject)
-  const topics = getTopicsBySubject(params.subject)
   
   // Filtrar cards por tópico selecionado
   const filteredFlashcards = selectedTopic 
