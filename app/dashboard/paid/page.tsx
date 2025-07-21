@@ -252,32 +252,34 @@ export default function PaidDashboardPage() {
     try {
       console.log('=== INÍCIO DO UPLOAD ===');
       console.log('Usuário:', user);
+      console.log('User UID:', user.uid);
       console.log('Arquivo:', { fileName: file.name, fileSize: file.size, fileType: file.type });
-      console.log('Storage disponível:', !!storage);
-      console.log('Auth disponível:', !!auth);
 
-      // Verificar se o storage está disponível
-      if (!storage) {
-        throw new Error('Firebase Storage não está inicializado');
+      // Verificar se o usuário tem UID
+      if (!user.uid) {
+        throw new Error('Usuário não tem UID válido');
       }
 
-      // Gerar nome único para o arquivo
-      const fileExtension = file.name.split('.').pop() || 'jpg';
-      const uniqueFileName = `profile_${Date.now()}.${fileExtension}`;
-      
-      console.log('Nome único gerado:', uniqueFileName);
-      
-      // Upload para Firebase Storage
-      const storageRef = ref(storage, `profile-photos/${user.uid}/${uniqueFileName}`);
-      console.log('Referência do storage criada:', storageRef.fullPath);
-      
-      console.log('Iniciando upload...');
-      const uploadResult = await uploadBytes(storageRef, file);
-      console.log('Upload concluído com sucesso:', uploadResult);
-      
-      console.log('Obtendo URL de download...');
-      const downloadURL = await getDownloadURL(storageRef);
-      console.log('URL de download obtida:', downloadURL);
+      // Usar a nova API para upload
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('userId', user.uid);
+
+      console.log('Enviando para API...');
+      const response = await fetch('/api/upload-profile-photo', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro no upload');
+      }
+
+      const result = await response.json();
+      console.log('Upload via API concluído:', result);
+
+      const downloadURL = result.url;
 
       // Atualizar perfil do usuário no Firebase Auth
       if (auth && auth.currentUser) {
@@ -320,22 +322,9 @@ export default function PaidDashboardPage() {
     } catch (error: any) {
       console.error('=== ERRO NO UPLOAD ===');
       console.error('Erro completo:', error);
-      console.error('Código do erro:', error.code);
       console.error('Mensagem do erro:', error.message);
       
-      let errorMessage = 'Erro ao fazer upload da foto. Tente novamente.';
-      
-      if (error.code === 'storage/unauthorized') {
-        errorMessage = 'Erro de permissão. Verifique as regras do Firebase Storage.';
-      } else if (error.code === 'storage/quota-exceeded') {
-        errorMessage = 'Limite de armazenamento excedido.';
-      } else if (error.code === 'storage/invalid-format') {
-        errorMessage = 'Formato de arquivo inválido.';
-      } else if (error.message?.includes('Firebase Storage não está inicializado')) {
-        errorMessage = 'Erro de configuração do Firebase Storage.';
-      }
-      
-      setProfileError(errorMessage);
+      setProfileError(error.message || 'Erro ao fazer upload da foto. Tente novamente.');
     } finally {
       setUploadingPhoto(false);
       console.log('Estado de upload resetado');
