@@ -40,7 +40,7 @@ export interface PaymentRecord {
   amount: number
   status: 'approved' | 'pending' | 'rejected'
   created_at?: string
-  method: 'pix' | 'card'
+  method: 'pix' | 'card' | 'admin'
 }
 
 // Interface para usuários
@@ -123,7 +123,15 @@ export async function isUserPaid(email: string): Promise<boolean> {
   
   try {
     const payment = await checkPaymentByEmail(email)
-    return payment?.status === 'approved'
+    
+    // Verificar se é um pagamento aprovado ou usuário criado pelo admin
+    if (payment) {
+      console.log('Pagamento encontrado para:', email, 'Status:', payment.status, 'Método:', payment.method)
+      return payment.status === 'approved' || payment.method === 'admin'
+    }
+    
+    console.log('Nenhum pagamento encontrado para:', email)
+    return false
   } catch (error) {
     console.error('Erro ao verificar se usuário pagou:', error)
     return false
