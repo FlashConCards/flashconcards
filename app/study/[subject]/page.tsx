@@ -478,10 +478,31 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
     setCurrentCardIndex(0)
   }, [filteredFlashcards])
 
+  // Função para mapear slug para nome da matéria
+  const getSubjectNameFromSlug = (slug: string) => {
+    const map: { [key: string]: string } = {
+      'portugues': 'Língua Portuguesa',
+      'lingua-portuguesa': 'Língua Portuguesa',
+      'l-ngua-portuguesa': 'Língua Portuguesa',
+      'informatica': 'Noções de Informática',
+      'noes-de-informatica': 'Noções de Informática',
+      'direito-constitucional': 'Direito Constitucional',
+      'constitucional': 'Direito Constitucional',
+      'direito-administrativo': 'Direito Administrativo',
+      'administrativo': 'Direito Administrativo',
+      'realidade-goias': 'Realidade de Goiás',
+      'realidade-de-goias': 'Realidade de Goiás',
+      'legislacao-alego': 'Legislação ALEGO',
+      'legislação-alego': 'Legislação ALEGO'
+    };
+    return map[slug] || slug;
+  };
+
   // Buscar flashcards do Firebase ao selecionar matéria/tópico
   useEffect(() => {
     if (!params.subject) return;
-    let q = query(collection(db, 'flashcards'), where('subject', '==', getSubjectName(params.subject)));
+    const subjectName = getSubjectNameFromSlug(params.subject);
+    let q = query(collection(db, 'flashcards'), where('subject', '==', subjectName));
     const unsub = onSnapshot(q, (snapshot) => {
       const cards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Flashcard[];
       setFirebaseFlashcards(cards);
