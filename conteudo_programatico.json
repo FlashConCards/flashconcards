@@ -1,0 +1,134 @@
+[
+  {
+    "titulo": "Língua Portuguesa",
+    "topicos": [
+      "Compreensão e interpretação de textos (literários e não literários)",
+      "Tipologia textual (narrativo, dissertativo, descritivo, injuntivo)",
+      "Ortografia oficial (Novo Acordo Ortográfico)",
+      "Acentuação gráfica",
+      "Pontuação",
+      "Morfologia",
+      "  - Classes de palavras: substantivo, adjetivo, verbo, advérbio, pronome, conjunção etc.",
+      "  - Flexão de número, gênero, tempo, modo, pessoa",
+      "Sintaxe",
+      "  - Termos da oração (sujeito, predicado, complementos, adjuntos)",
+      "  - Concordância verbal e nominal",
+      "  - Regência verbal e nominal",
+      "  - Colocação pronominal",
+      "Coesão e coerência textual",
+      "Significação das palavras (sinônimos, antônimos, polissemia, denotação e conotação)",
+      "Figuras de linguagem",
+      "Redação oficial"
+    ]
+  },
+  {
+    "titulo": "Noções de Informática",
+    "topicos": [
+      "Conceitos básicos de informática e sistemas operacionais (Windows)",
+      "Pacote Microsoft Office (Word, Excel, PowerPoint)",
+      "  - Atalhos, fórmulas, formatações, tabelas, gráficos",
+      "Navegadores de internet (Google Chrome, Mozilla Firefox)",
+      "Correio eletrônico (e-mail: uso, anexos, segurança)",
+      "Segurança da informação",
+      "  - Vírus, malware, phishing, firewall",
+      "  - Cuidados com senhas, certificados digitais",
+      "Armazenamento em nuvem (Google Drive, OneDrive)",
+      "Sistemas de backup",
+      "Redes de computadores e internet",
+      "Noções de hardware e software"
+    ]
+  },
+  {
+    "titulo": "Direito Constitucional",
+    "topicos": [
+      "Constituição: conceito, classificações e princípios fundamentais",
+      "Direitos e garantias fundamentais (arts. 5º a 17)",
+      "Organização do Estado",
+      "  - União, Estados, Municípios, DF e Territórios",
+      "  - Administração pública (art. 37)",
+      "Poderes da União",
+      "  - Legislativo, Executivo e Judiciário",
+      "  - Funções essenciais à Justiça",
+      "Controle de constitucionalidade",
+      "Segurança pública (art. 144)",
+      "Emendas constitucionais",
+      "Supremacia da Constituição"
+    ]
+  },
+  {
+    "titulo": "Direito Administrativo",
+    "topicos": [
+      "Administração pública direta e indireta",
+      "Atos administrativos: conceito, atributos, classificação, invalidação e revogação",
+      "Poderes da Administração: hierárquico, disciplinar, regulamentar, de polícia",
+      "Princípios da Administração Pública (legalidade, impessoalidade, moralidade, publicidade, eficiência)",
+      "Servidores públicos",
+      "  - Direitos, deveres, responsabilidades, estabilidade",
+      "Licitação e contratos (noções gerais)",
+      "Lei nº 8.112/1990 (Regime jurídico dos servidores públicos federais – parte geral)",
+      "Responsabilidade civil do Estado"
+    ]
+  },
+  {
+    "titulo": "Realidade Étnica, Social, Histórica, Geográfica, Cultural e Política de Goiás",
+    "topicos": [
+      "Formação histórica e social de Goiás",
+      "Cultura e patrimônio cultural goiano",
+      "Aspectos físicos: relevo, clima, hidrografia e vegetação de Goiás",
+      "Economia do Estado de Goiás: agropecuária, indústria, comércio e serviços",
+      "Movimentos sociais e participação política em Goiás",
+      "Diversidade étnico-cultural",
+      "Organização político-administrativa de Goiás",
+      "Atualidades regionais"
+    ]
+  },
+  {
+    "titulo": "Legislação Específica da ALEGO",
+    "topicos": [
+      "Regimento Interno da ALEGO (Resolução nº 1.073/91)",
+      "  - Estrutura do Poder Legislativo",
+      "  - Comissões, plenário, mesa diretora",
+      "  - Processo legislativo",
+      "  - Atribuições dos deputados",
+      "Estrutura Administrativa da ALEGO (Resolução nº 1.007/1999)",
+      "  - Organização dos órgãos e departamentos internos da ALEGO",
+      "  - Competência das unidades administrativas",
+      "Plano de Cargos e Salários da ALEGO (Resolução nº 1.218/2007) (se for cobrada)"
+    ]
+  },
+  {
+    "titulo": "Noções de Segurança Pública / SUSP",
+    "topicos": [
+      "Lei nº 13.675/2018 (Institui o SUSP – Sistema Único de Segurança Pública)",
+      "Princípios e diretrizes do SUSP",
+      "Integração entre órgãos de segurança",
+      "Segurança pública como dever do Estado, direito e responsabilidade de todos",
+      "Atuação das polícias: Civil, Militar, Federal e Legislativa",
+      "Direitos humanos e uso proporcional da força",
+      "Mediação de conflitos",
+      "Prevenção à violência"
+    ]
+  },
+  {
+    "titulo": "Qualidade na Prestação do Serviço Público / Trabalho em Equipe",
+    "topicos": [
+      "Atendimento ao público no serviço público",
+      "Eficiência, eficácia e efetividade na administração pública",
+      "Comunicação e postura profissional",
+      "Ética e responsabilidade no trabalho",
+      "Trabalho em equipe e cooperação",
+      "Relacionamento interpessoal no ambiente de trabalho",
+      "Gestão de conflitos"
+    ]
+  },
+  {
+    "titulo": "Redação (Prova Discursiva)",
+    "topicos": [
+      "Temas atuais sobre segurança pública, cidadania, política, ética, funcionalismo público",
+      "Estrutura: introdução – desenvolvimento – conclusão",
+      "Coesão e coerência textual",
+      "Gramática e ortografia",
+      "Clareza, objetividade e argumentação"
+    ]
+  }
+] 
