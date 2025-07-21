@@ -1,11 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import conteudoProgramatico from '../../conteudo_programatico.json';
-import { db } from '../lib/firebase';
+import { db, auth } from '../lib/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { collection, addDoc, getDocs, deleteDoc, doc, query, where, onSnapshot } from 'firebase/firestore';
 
-const LOGIN = "70389409103";
-const SENHA = "Gabriel@123";
+const ADMIN_EMAIL = "claudioghabryel7@gmail.com";
 
 export default function AdminPage() {
   const [login, setLogin] = useState("");
@@ -23,13 +23,19 @@ export default function AdminPage() {
   const [carregando, setCarregando] = useState(false);
 
   // Login
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login === LOGIN && senha === SENHA) {
+    // Só permite login com o e-mail do admin, mas o campo é rotulado como CPF
+    if (login.trim().toLowerCase() !== ADMIN_EMAIL) {
+      setErro("Acesso negado. CPF ou senha incorretos.");
+      return;
+    }
+    try {
+      await signInWithEmailAndPassword(auth, login, senha);
       setAutenticado(true);
       setErro("");
-    } else {
-      setErro("Login ou senha incorretos.");
+    } catch (err) {
+      setErro("Acesso negado. CPF ou senha incorretos.");
     }
   };
 
@@ -84,7 +90,7 @@ export default function AdminPage() {
         <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm">
           <h2 className="text-2xl font-bold mb-6 text-center text-gray-900">Painel do Admin</h2>
           <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Login (CPF)</label>
+            <label className="block text-gray-700 mb-2">CPF</label>
             <input type="text" value={login} onChange={e => setLogin(e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div className="mb-4">
