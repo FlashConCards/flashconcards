@@ -7,7 +7,7 @@ export interface PaymentRecord {
   amount: number
   status: 'approved' | 'pending' | 'rejected'
   date: string
-  method: 'pix' | 'card'
+  method: 'pix' | 'card' | 'admin'
 }
 
 // Função para converter PaymentRecord local para Firebase
