@@ -5,6 +5,8 @@ import { motion } from 'framer-motion'
 import { BookOpen, CheckCircle, Trophy, MessageSquare, TrendingUp, User, Calendar, Target, BarChart3, Clock, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import conteudoProgramatico from '../../../conteudo_programatico.json';
+import { db } from '../../../app/lib/firebase';
+import { collection, query, where, getCountFromServer } from 'firebase/firestore';
 
 interface UserStats {
   totalCards: number
@@ -122,19 +124,29 @@ export default function PaidDashboardPage() {
 
   const loadSubjects = async (email: string) => {
     // Carregar matérias do JSON
-    const subjectsData: Subject[] = conteudoProgramatico.map((item, idx) => ({
+    const subjectsData: Subject[] = conteudoProgramatico.map((item) => ({
       id: item.titulo.toLowerCase().replace(/[^a-z0-9]+/gi, '-'),
       name: item.titulo,
       description: item.topicos[0] || '',
-      totalCards: 50 + idx * 10, // Valor fictício, ajuste conforme necessário
+      totalCards: 0, // será atualizado abaixo
       completedCards: 0,
       icon: iconMap[item.titulo] || BookOpen,
       color: colorMap[item.titulo] || 'bg-blue-500'
     }));
 
-    // Buscar progresso real de cada matéria
+    // Buscar total de flashcards reais do Firebase para cada matéria
     const updatedSubjects = await Promise.all(
       subjectsData.map(async (subject) => {
+        let totalCards = 0;
+        try {
+          const q = query(collection(db, 'flashcards'), where('subject', '==', subject.name));
+          const snap = await getCountFromServer(q);
+          totalCards = snap.data().count || 0;
+        } catch (e) {
+          totalCards = 0;
+        }
+        // Buscar progresso real de cada matéria (mantém como antes)
+        let completedCards = 0;
         try {
           const response = await fetch('/api/user/subject-progress', {
             method: 'POST',
@@ -143,22 +155,19 @@ export default function PaidDashboardPage() {
             },
             body: JSON.stringify({ email, subjectId: subject.id })
           })
-
           if (response.ok) {
-            const progressData = await response.json()
-            return {
-              ...subject,
-              completedCards: progressData.completedCards || 0,
-              totalCards: progressData.totalCards || subject.totalCards
-            }
+            const progressData = await response.json();
+            completedCards = progressData.completedCards || 0;
           }
-        } catch (error) {
-          console.error(`Erro ao buscar progresso de ${subject.name}:`, error)
-        }
-        return subject
+        } catch (error) {}
+        return {
+          ...subject,
+          totalCards,
+          completedCards
+        };
       })
-    )
-    setSubjects(updatedSubjects)
+    );
+    setSubjects(updatedSubjects);
   }
 
   const getProgressPercentage = (completed: number, total: number) => {
