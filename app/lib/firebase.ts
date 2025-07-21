@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app'
 import { getFirestore, collection, addDoc, getDocs, query, where, doc, getDoc, updateDoc } from 'firebase/firestore'
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, User } from 'firebase/auth'
+import { getStorage } from 'firebase/storage'
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -16,18 +17,20 @@ const firebaseConfig = {
 let app: any = null
 let db: any = null
 let auth: any = null
+let storage: any = null
 
 try {
   if (process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== 'dummy-key') {
     app = initializeApp(firebaseConfig)
     db = getFirestore(app)
     auth = getAuth(app)
+    storage = getStorage(app)
   }
 } catch (error) {
   console.warn('Firebase não configurado ainda:', error)
 }
 
-export { db, auth }
+export { db, auth, storage }
 
 // Interface para pagamentos
 export interface PaymentRecord {

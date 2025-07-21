@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import conteudoProgramatico from '../../conteudo_programatico.json';
 import { db, auth } from '../lib/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
 import { collection, addDoc, getDocs, deleteDoc, doc, query, where, onSnapshot } from 'firebase/firestore';
 
 const ADMIN_EMAIL = "claudioghabryel7@gmail.com";
@@ -97,6 +97,53 @@ export default function AdminPage() {
     flashcardsPorSubtopico[key].push(fc);
   });
 
+  const [usuarios, setUsuarios] = useState<any[]>([]);
+  const [novoEmail, setNovoEmail] = useState("");
+  const [novaSenha, setNovaSenha] = useState("");
+  const [carregandoUsuarios, setCarregandoUsuarios] = useState(false);
+
+  // Carregar lista de usuários em tempo real
+  useEffect(() => {
+    if (!autenticado) return;
+    setCarregandoUsuarios(true);
+    fetch('/api/admin/list-users')
+      .then(res => res.json())
+      .then(data => {
+        setUsuarios(data.users || []);
+        setCarregandoUsuarios(false);
+      });
+  }, [autenticado]);
+
+  // Adicionar novo usuário
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!novoEmail || !novaSenha) return;
+    await fetch('/api/admin/add-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: novoEmail, password: novaSenha })
+    });
+    setNovoEmail("");
+    setNovaSenha("");
+    // Atualizar lista
+    fetch('/api/admin/list-users')
+      .then(res => res.json())
+      .then(data => setUsuarios(data.users || []));
+  };
+
+  // Excluir usuário
+  const handleDeleteUser = async (uid: string) => {
+    await fetch('/api/admin/delete-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid })
+    });
+    // Atualizar lista
+    fetch('/api/admin/list-users')
+      .then(res => res.json())
+      .then(data => setUsuarios(data.users || []));
+  };
+
   if (!autenticado) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700">
@@ -117,75 +164,98 @@ export default function AdminPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex flex-col items-center py-10">
-      <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl mb-8">
-        <h2 className="text-2xl font-bold mb-4 text-gray-900 text-center">Painel do Admin</h2>
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2">Preparatório</label>
-          <select value={preparatorio} onChange={e => setPreparatorio(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
-            <option value="ALEGO">ALEGO</option>
-            {/* Futuramente, adicionar outros preparatórios aqui */}
-          </select>
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2">Matéria</label>
-          <select value={materia} onChange={e => setMateria(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
-            <option value="">Selecione a matéria</option>
-            {conteudoProgramatico.map((m: any) => (
-              <option key={m.titulo} value={m.titulo}>{m.titulo}</option>
-            ))}
-          </select>
-        </div>
-        {materia && (
-          <>
-            <form onSubmit={handleAddFlashcard} className="mb-6">
-              <div className="mb-2">
-                <label className="block text-gray-700 mb-1">Subtópico</label>
-                <select value={subtopico} onChange={e => setSubtopico(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
-                  <option value="">Selecione o subtópico</option>
-                  {subtitulos.map((sub: string, idx: number) => (
-                    <option key={idx} value={sub}>{sub}</option>
+  if (autenticado) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex flex-col items-center py-10">
+        <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl mb-8">
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 text-center">Painel do Admin</h2>
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-2">Preparatório</label>
+            <select value={preparatorio} onChange={e => setPreparatorio(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
+              <option value="ALEGO">ALEGO</option>
+              {/* Futuramente, adicionar outros preparatórios aqui */}
+            </select>
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-2">Matéria</label>
+            <select value={materia} onChange={e => setMateria(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
+              <option value="">Selecione a matéria</option>
+              {conteudoProgramatico.map((m: any) => (
+                <option key={m.titulo} value={m.titulo}>{m.titulo}</option>
+              ))}
+            </select>
+          </div>
+          {materia && (
+            <>
+              <form onSubmit={handleAddFlashcard} className="mb-6">
+                <div className="mb-2">
+                  <label className="block text-gray-700 mb-1">Subtópico</label>
+                  <select value={subtopico} onChange={e => setSubtopico(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
+                    <option value="">Selecione o subtópico</option>
+                    {subtitulos.map((sub: string, idx: number) => (
+                      <option key={idx} value={sub}>{sub}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="mb-2">
+                  <label className="block text-gray-700 mb-1">Pergunta</label>
+                  <input type="text" value={novaPergunta} onChange={e => setNovaPergunta(e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                </div>
+                <div className="mb-2">
+                  <label className="block text-gray-700 mb-1">Resposta</label>
+                  <input type="text" value={novaResposta} onChange={e => setNovaResposta(e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                </div>
+                <button type="submit" className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors">Adicionar Flashcard</button>
+              </form>
+              <h3 className="text-lg font-bold mb-2">Flashcards cadastrados</h3>
+              {carregando ? (
+                <div>Carregando...</div>
+              ) : (
+                <div>
+                  {Object.keys(flashcardsPorSubtopico).map(sub => (
+                    <div key={sub} className="mb-4">
+                      <div className="font-semibold text-blue-700 mb-1">{sub}</div>
+                      <ul className="space-y-2">
+                        {flashcardsPorSubtopico[sub].map(fc => (
+                          <li key={fc.id} className="flex items-center justify-between bg-gray-100 rounded-lg px-4 py-2">
+                            <div>
+                              <span className="font-semibold">Q:</span> {fc.question}<br />
+                              <span className="font-semibold">A:</span> {fc.answer}
+                            </div>
+                            <button onClick={() => handleDelete(fc.id)} className="ml-4 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700">Remover</button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   ))}
-                </select>
-              </div>
-              <div className="mb-2">
-                <label className="block text-gray-700 mb-1">Pergunta</label>
-                <input type="text" value={novaPergunta} onChange={e => setNovaPergunta(e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
-              </div>
-              <div className="mb-2">
-                <label className="block text-gray-700 mb-1">Resposta</label>
-                <input type="text" value={novaResposta} onChange={e => setNovaResposta(e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
-              </div>
-              <button type="submit" className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors">Adicionar Flashcard</button>
+                  {flashcards.length === 0 && <div className="text-gray-500">Nenhum flashcard cadastrado.</div>}
+                </div>
+              )}
+            </>
+          )}
+          <div className="mt-10">
+            <h3 className="text-lg font-bold mb-2">Gerenciar Usuários</h3>
+            <form onSubmit={handleAddUser} className="flex gap-2 mb-4">
+              <input type="email" placeholder="Novo e-mail" value={novoEmail} onChange={e => setNovoEmail(e.target.value)} className="px-3 py-2 border rounded-lg" />
+              <input type="password" placeholder="Senha" value={novaSenha} onChange={e => setNovaSenha(e.target.value)} className="px-3 py-2 border rounded-lg" />
+              <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700">Adicionar</button>
             </form>
-            <h3 className="text-lg font-bold mb-2">Flashcards cadastrados</h3>
-            {carregando ? (
-              <div>Carregando...</div>
+            {carregandoUsuarios ? (
+              <div>Carregando usuários...</div>
             ) : (
-              <div>
-                {Object.keys(flashcardsPorSubtopico).map(sub => (
-                  <div key={sub} className="mb-4">
-                    <div className="font-semibold text-blue-700 mb-1">{sub}</div>
-                    <ul className="space-y-2">
-                      {flashcardsPorSubtopico[sub].map(fc => (
-                        <li key={fc.id} className="flex items-center justify-between bg-gray-100 rounded-lg px-4 py-2">
-                          <div>
-                            <span className="font-semibold">Q:</span> {fc.question}<br />
-                            <span className="font-semibold">A:</span> {fc.answer}
-                          </div>
-                          <button onClick={() => handleDelete(fc.id)} className="ml-4 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700">Remover</button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+              <ul className="space-y-2">
+                {usuarios.map(u => (
+                  <li key={u.uid} className="flex items-center justify-between bg-gray-100 rounded-lg px-4 py-2">
+                    <span>{u.email}</span>
+                    <button onClick={() => handleDeleteUser(u.uid)} className="ml-4 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700">Excluir</button>
+                  </li>
                 ))}
-                {flashcards.length === 0 && <div className="text-gray-500">Nenhum flashcard cadastrado.</div>}
-              </div>
+                {usuarios.length === 0 && <li className="text-gray-500">Nenhum usuário cadastrado.</li>}
+              </ul>
             )}
-          </>
-        )}
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 } 
