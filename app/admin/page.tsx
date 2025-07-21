@@ -54,13 +54,26 @@ export default function AdminPage() {
   // Subtópicos da matéria selecionada
   const subtitulos = materia ? (conteudoProgramatico.find((m: any) => m.titulo === materia)?.topicos || []) : [];
 
+  // Ao salvar o flashcard, garantir que o campo 'subject' seja o nome completo da matéria
+  const getSubjectName = (subjectId: string) => {
+    const subjects: { [key: string]: string } = {
+      'portugues': 'Língua Portuguesa',
+      'informatica': 'Noções de Informática',
+      'constitucional': 'Direito Constitucional',
+      'administrativo': 'Direito Administrativo',
+      'realidade-goias': 'Realidade de Goiás',
+      'legislacao-alego': 'Legislação ALEGO'
+    };
+    return subjects[subjectId] || subjectId;
+  };
+
   // Adicionar flashcard
   const handleAddFlashcard = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novaPergunta.trim() || !novaResposta.trim() || !subtopico) return;
     await addDoc(collection(db, 'flashcards'), {
       preparatorio,
-      subject: materia,
+      subject: getSubjectName(materia),
       subtopico,
       question: novaPergunta,
       answer: novaResposta,
