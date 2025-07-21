@@ -255,15 +255,15 @@ export default function PaidDashboardPage() {
       console.log('User UID:', user.uid);
       console.log('Arquivo:', { fileName: file.name, fileSize: file.size, fileType: file.type });
 
-      // Verificar se o usuário tem UID
-      if (!user.uid) {
-        throw new Error('Usuário não tem UID válido');
-      }
+      // Gerar UID baseado no email se não existir
+      const userId = user.uid || user.email?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown';
+      
+      console.log('User ID para upload:', userId);
 
       // Usar a nova API para upload
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('userId', user.uid);
+      formData.append('userId', userId);
 
       console.log('Enviando para API...');
       const response = await fetch('/api/upload-profile-photo', {
@@ -295,7 +295,7 @@ export default function PaidDashboardPage() {
       // Atualizar no Firestore
       if (db) {
         console.log('Atualizando dados no Firestore...');
-        const userRef = doc(db, 'users', user.uid);
+        const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, {
           photoURL: downloadURL,
           updated_at: new Date().toISOString()
@@ -310,7 +310,7 @@ export default function PaidDashboardPage() {
       
       // Recarregar dados do usuário
       if (db) {
-        const userRef = doc(db, 'users', user.uid);
+        const userRef = doc(db, 'users', userId);
         const userDoc = await getDoc(userRef);
         if (userDoc.exists()) {
           setUser((prev: any) => ({ ...prev, ...userDoc.data() }));
