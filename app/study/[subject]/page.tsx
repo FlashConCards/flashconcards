@@ -15,6 +15,8 @@ import {
 } from 'lucide-react'
 import { getDashboardUrl } from '../../lib/auth'
 import { saveCardProgress, getTopicProgress } from '../../lib/progress'
+import { db } from '../../lib/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 interface Flashcard {
   id: string
@@ -23,6 +25,7 @@ interface Flashcard {
   category: string
   difficulty: 'easy' | 'medium' | 'hard'
   topic: string
+  subtopico?: string
 }
 
 interface Topic {
@@ -50,6 +53,7 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null)
   const [showTopicSelection, setShowTopicSelection] = useState(true)
   const [cardsSeenSinceLastCompleted, setCardsSeenSinceLastCompleted] = useState(0)
+  const [firebaseFlashcards, setFirebaseFlashcards] = useState<Flashcard[]>([]);
 
   // Flashcards organizados por matéria
   const getFlashcardsBySubject = (subjectId: string): Flashcard[] => {
@@ -461,8 +465,8 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
   
   // Filtrar cards por tópico selecionado
   const filteredFlashcards = selectedTopic 
-    ? flashcards.filter(card => card.topic === selectedTopic)
-    : flashcards
+    ? firebaseFlashcards.filter(card => card.topic === selectedTopic || card.subtopico === selectedTopic)
+    : firebaseFlashcards
   
   const currentCard = sessionCompleted ? null : (remainingCards[currentCardIndex] || filteredFlashcards[0] || null)
 
@@ -473,6 +477,17 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
     // Reset do índice do card quando os cards mudam
     setCurrentCardIndex(0)
   }, [filteredFlashcards])
+
+  // Buscar flashcards do Firebase ao selecionar matéria/tópico
+  useEffect(() => {
+    if (!params.subject) return;
+    let q = query(collection(db, 'flashcards'), where('subject', '==', getSubjectName(params.subject)));
+    const unsub = onSnapshot(q, (snapshot) => {
+      const cards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Flashcard[];
+      setFirebaseFlashcards(cards);
+    });
+    return () => unsub();
+  }, [params.subject]);
 
   // Timer separado para garantir que funcione corretamente
   useEffect(() => {
