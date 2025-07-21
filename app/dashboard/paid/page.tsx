@@ -228,21 +228,51 @@ export default function PaidDashboardPage() {
 
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !user) return;
+    if (!file || !user) {
+      setProfileError('Nenhum arquivo selecionado');
+      return;
+    }
+
+    // Validar tipo de arquivo
+    if (!file.type.startsWith('image/')) {
+      setProfileError('Por favor, selecione apenas arquivos de imagem (JPG, PNG, etc.)');
+      return;
+    }
+
+    // Validar tamanho (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setProfileError('A imagem deve ter no máximo 5MB');
+      return;
+    }
 
     setUploadingPhoto(true);
     setProfileError('');
+    setProfileSuccess('');
 
     try {
-      // Upload para Firebase Storage
-      const storageRef = ref(storage, `profile-photos/${user.uid}/${file.name}`);
-      await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
+      console.log('Iniciando upload da foto...', { fileName: file.name, fileSize: file.size, fileType: file.type });
 
-      // Atualizar perfil do usuário
-      await updateProfile(auth.currentUser!, {
-        photoURL: downloadURL
-      });
+      // Gerar nome único para o arquivo
+      const fileExtension = file.name.split('.').pop();
+      const uniqueFileName = `profile_${Date.now()}.${fileExtension}`;
+      
+      // Upload para Firebase Storage
+      const storageRef = ref(storage, `profile-photos/${user.uid}/${uniqueFileName}`);
+      console.log('Referência do storage:', storageRef.fullPath);
+      
+      const uploadResult = await uploadBytes(storageRef, file);
+      console.log('Upload concluído:', uploadResult);
+      
+      const downloadURL = await getDownloadURL(storageRef);
+      console.log('URL de download obtida:', downloadURL);
+
+      // Atualizar perfil do usuário no Firebase Auth
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, {
+          photoURL: downloadURL
+        });
+        console.log('Perfil do Firebase Auth atualizado');
+      }
 
       // Atualizar no Firestore
       const userRef = doc(db, 'users', user.uid);
@@ -250,19 +280,31 @@ export default function PaidDashboardPage() {
         photoURL: downloadURL,
         updated_at: new Date().toISOString()
       });
+      console.log('Dados do Firestore atualizados');
 
-             setProfileData((prev: any) => ({ ...prev, photoURL: downloadURL }));
-       setProfileSuccess('Foto de perfil atualizada com sucesso!');
-       
-       // Recarregar dados do usuário
-       const userDoc = await getDoc(userRef);
-       if (userDoc.exists()) {
-         setUser((prev: any) => ({ ...prev, ...userDoc.data() }));
-       }
+      setProfileData((prev: any) => ({ ...prev, photoURL: downloadURL }));
+      setProfileSuccess('Foto de perfil atualizada com sucesso!');
+      
+      // Recarregar dados do usuário
+      const userDoc = await getDoc(userRef);
+      if (userDoc.exists()) {
+        setUser((prev: any) => ({ ...prev, ...userDoc.data() }));
+      }
 
     } catch (error: any) {
-      console.error('Erro ao fazer upload da foto:', error);
-      setProfileError('Erro ao fazer upload da foto. Tente novamente.');
+      console.error('Erro detalhado ao fazer upload da foto:', error);
+      
+      let errorMessage = 'Erro ao fazer upload da foto. Tente novamente.';
+      
+      if (error.code === 'storage/unauthorized') {
+        errorMessage = 'Erro de permissão. Verifique as regras do Firebase Storage.';
+      } else if (error.code === 'storage/quota-exceeded') {
+        errorMessage = 'Limite de armazenamento excedido.';
+      } else if (error.code === 'storage/invalid-format') {
+        errorMessage = 'Formato de arquivo inválido.';
+      }
+      
+      setProfileError(errorMessage);
     } finally {
       setUploadingPhoto(false);
     }
