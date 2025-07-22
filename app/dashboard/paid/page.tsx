@@ -65,6 +65,14 @@ export default function PaidDashboardPage() {
     const userInfo = JSON.parse(userData)
     setUser(userInfo)
 
+    // Inicializar profileData com dados do usuário
+    setProfileData({
+      displayName: userInfo.displayName || userInfo.name || '',
+      photoURL: userInfo.photoURL || '',
+      newPassword: '',
+      confirmPassword: ''
+    })
+
     // Buscar dados reais do Firebase
     fetchUserStats(userInfo.email)
     
@@ -294,7 +302,9 @@ export default function PaidDashboardPage() {
         console.warn('Firestore não disponível');
       }
 
+      // Atualizar estado local
       setProfileData((prev: any) => ({ ...prev, photoURL: downloadURL }));
+      setUser((prev: any) => ({ ...prev, photoURL: downloadURL }));
       setProfileSuccess('Foto de perfil atualizada com sucesso!');
       
       // Recarregar dados do usuário
@@ -302,7 +312,13 @@ export default function PaidDashboardPage() {
         const userRef = doc(db, 'users', userId);
         const userDoc = await getDoc(userRef);
         if (userDoc.exists()) {
-          setUser((prev: any) => ({ ...prev, ...userDoc.data() }));
+          const userData = userDoc.data();
+          setUser((prev: any) => ({ ...prev, ...userData }));
+          setProfileData((prev: any) => ({ 
+            ...prev, 
+            displayName: userData.displayName || prev.displayName,
+            photoURL: userData.photoURL || prev.photoURL
+          }));
         }
       }
 
@@ -338,13 +354,21 @@ export default function PaidDashboardPage() {
         updated_at: new Date().toISOString()
       });
 
+      // Atualizar estado local
+      setUser((prev: any) => ({ ...prev, displayName: profileData.displayName }));
       setProfileSuccess('Perfil atualizado com sucesso!');
       setProfileData((prev: any) => ({ ...prev, newPassword: '', confirmPassword: '' }));
 
       // Recarregar dados do usuário
       const userDoc = await getDoc(userRef);
       if (userDoc.exists()) {
-        setUser((prev: any) => ({ ...prev, ...userDoc.data() }));
+        const userData = userDoc.data();
+        setUser((prev: any) => ({ ...prev, ...userData }));
+        setProfileData((prev: any) => ({ 
+          ...prev, 
+          displayName: userData.displayName || prev.displayName,
+          photoURL: userData.photoURL || prev.photoURL
+        }));
       }
 
     } catch (error: any) {
@@ -500,7 +524,7 @@ export default function PaidDashboardPage() {
               <div className="flex items-center space-x-4">
                 <div className="relative">
                   <img
-                    src={user?.photoURL || '/default-avatar.png'}
+                    src={profileData.photoURL || user?.photoURL || '/default-avatar.png'}
                     alt="Foto de perfil"
                     className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
                   />
