@@ -6,7 +6,7 @@ import { BookOpen, CheckCircle, Trophy, MessageSquare, TrendingUp, User, Calenda
 import Link from 'next/link'
 import conteudoProgramatico from '../../../conteudo_programatico.json';
 import { db, storage, auth } from '../../../app/lib/firebase';
-import { collection, query, where, getCountFromServer, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getCountFromServer, getDocs, doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { signOut, updatePassword, updateProfile } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -345,14 +345,43 @@ export default function PaidDashboardPage() {
     setProfileSuccess('');
 
     try {
+      console.log('=== INÍCIO DA ATUALIZAÇÃO DE PERFIL ===');
+      console.log('Usuário:', user);
+      console.log('Profile Data:', profileData);
+
       // Atualizar apenas no Firestore (sem Firebase Auth para evitar problemas)
       const userId = user.uid || user.email?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown';
       const userRef = doc(db, 'users', userId);
       
-      await updateDoc(userRef, {
+      console.log('User ID para atualização:', userId);
+      console.log('Dados a serem salvos:', {
         displayName: profileData.displayName || user.displayName,
+        email: user.email,
         updated_at: new Date().toISOString()
       });
+
+      // Verificar se o documento existe
+      const userDoc = await getDoc(userRef);
+      if (!userDoc.exists()) {
+        console.log('Documento não existe, criando...');
+        // Criar documento se não existir
+        await setDoc(userRef, {
+          displayName: profileData.displayName || user.displayName,
+          email: user.email,
+          photoURL: user.photoURL || '',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+        console.log('Documento criado com sucesso');
+      } else {
+        console.log('Documento existe, atualizando...');
+        // Atualizar documento existente
+        await updateDoc(userRef, {
+          displayName: profileData.displayName || user.displayName,
+          updated_at: new Date().toISOString()
+        });
+        console.log('Documento atualizado com sucesso');
+      }
 
       // Atualizar estado local
       setUser((prev: any) => ({ ...prev, displayName: profileData.displayName }));
@@ -360,9 +389,10 @@ export default function PaidDashboardPage() {
       setProfileData((prev: any) => ({ ...prev, newPassword: '', confirmPassword: '' }));
 
       // Recarregar dados do usuário
-      const userDoc = await getDoc(userRef);
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
+      const updatedUserDoc = await getDoc(userRef);
+      if (updatedUserDoc.exists()) {
+        const userData = updatedUserDoc.data();
+        console.log('Dados atualizados do Firestore:', userData);
         setUser((prev: any) => ({ ...prev, ...userData }));
         setProfileData((prev: any) => ({ 
           ...prev, 
@@ -371,8 +401,12 @@ export default function PaidDashboardPage() {
         }));
       }
 
+      console.log('=== ATUALIZAÇÃO CONCLUÍDA COM SUCESSO ===');
+
     } catch (error: any) {
-      console.error('Erro ao atualizar perfil:', error);
+      console.error('=== ERRO NA ATUALIZAÇÃO ===');
+      console.error('Erro completo:', error);
+      console.error('Mensagem do erro:', error.message);
       setProfileError('Erro ao atualizar perfil. Tente novamente.');
     } finally {
       setUpdatingProfile(false);
