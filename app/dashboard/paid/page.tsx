@@ -498,6 +498,17 @@ export default function PaidDashboardPage() {
               <h1 className="text-2xl font-bold text-gray-900">FlashConCards</h1>
             </div>
             <div className="flex items-center space-x-3">
+              {/* Foto do usuário */}
+              <div className="flex items-center space-x-2">
+                <img
+                  src={user?.photoURL || profileData.photoURL || '/default-avatar.png'}
+                  alt="Foto de perfil"
+                  className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+                />
+                <span className="text-sm text-gray-600 font-medium">
+                  {user?.displayName || profileData.displayName || user?.name || 'Usuário'}
+                </span>
+              </div>
               <button
                 onClick={() => setShowProfile(!showProfile)}
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center"
@@ -518,7 +529,7 @@ export default function PaidDashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold mb-2">
-                  Bem-vindo, {user?.name || 'Usuário'}!
+                  Bem-vindo, {user?.displayName || profileData.displayName || user?.name || 'Usuário'}!
                 </h2>
                 <p className="text-blue-100">
                   Você tem acesso completo a todos os recursos do FlashConCards.
