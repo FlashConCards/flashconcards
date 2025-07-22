@@ -65,13 +65,53 @@ export default function PaidDashboardPage() {
     const userInfo = JSON.parse(userData)
     setUser(userInfo)
 
-    // Inicializar profileData com dados do usuário
-    setProfileData({
-      displayName: userInfo.displayName || userInfo.name || '',
-      photoURL: userInfo.photoURL || '',
-      newPassword: '',
-      confirmPassword: ''
-    })
+    // Carregar dados do Firestore
+    const loadUserData = async () => {
+      try {
+        const userId = userInfo.uid || userInfo.email?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown';
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+        
+        if (userDoc.exists()) {
+          const firestoreData = userDoc.data();
+          console.log('Dados carregados do Firestore:', firestoreData);
+          
+          // Atualizar usuário com dados do Firestore
+          const updatedUser = { ...userInfo, ...firestoreData };
+          setUser(updatedUser);
+          
+          // Atualizar localStorage
+          localStorage.setItem('flashconcards_user', JSON.stringify(updatedUser));
+          
+          // Inicializar profileData com dados atualizados
+          setProfileData({
+            displayName: firestoreData.displayName || userInfo.displayName || userInfo.name || '',
+            photoURL: firestoreData.photoURL || userInfo.photoURL || '',
+            newPassword: '',
+            confirmPassword: ''
+          });
+        } else {
+          // Se não existir no Firestore, usar dados do localStorage
+          setProfileData({
+            displayName: userInfo.displayName || userInfo.name || '',
+            photoURL: userInfo.photoURL || '',
+            newPassword: '',
+            confirmPassword: ''
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados do usuário:', error);
+        // Em caso de erro, usar dados do localStorage
+        setProfileData({
+          displayName: userInfo.displayName || userInfo.name || '',
+          photoURL: userInfo.photoURL || '',
+          newPassword: '',
+          confirmPassword: ''
+        });
+      }
+    };
+
+    loadUserData();
 
     // Buscar dados reais do Firebase
     fetchUserStats(userInfo.email)
@@ -303,8 +343,13 @@ export default function PaidDashboardPage() {
       }
 
       // Atualizar estado local
+      const updatedUser = { ...user, photoURL: downloadURL };
+      setUser(updatedUser);
       setProfileData((prev: any) => ({ ...prev, photoURL: downloadURL }));
-      setUser((prev: any) => ({ ...prev, photoURL: downloadURL }));
+      
+      // Atualizar localStorage
+      localStorage.setItem('flashconcards_user', JSON.stringify(updatedUser));
+      
       setProfileSuccess('Foto de perfil atualizada com sucesso!');
       
       // Recarregar dados do usuário
@@ -313,7 +358,10 @@ export default function PaidDashboardPage() {
         const userDoc = await getDoc(userRef);
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          setUser((prev: any) => ({ ...prev, ...userData }));
+          const finalUser = { ...updatedUser, ...userData };
+          setUser(finalUser);
+          localStorage.setItem('flashconcards_user', JSON.stringify(finalUser));
+          
           setProfileData((prev: any) => ({ 
             ...prev, 
             displayName: userData.displayName || prev.displayName,
@@ -384,7 +432,12 @@ export default function PaidDashboardPage() {
       }
 
       // Atualizar estado local
-      setUser((prev: any) => ({ ...prev, displayName: profileData.displayName }));
+      const updatedUser = { ...user, displayName: profileData.displayName };
+      setUser(updatedUser);
+      
+      // Atualizar localStorage
+      localStorage.setItem('flashconcards_user', JSON.stringify(updatedUser));
+      
       setProfileSuccess('Perfil atualizado com sucesso!');
       setProfileData((prev: any) => ({ ...prev, newPassword: '', confirmPassword: '' }));
 
@@ -393,7 +446,11 @@ export default function PaidDashboardPage() {
       if (updatedUserDoc.exists()) {
         const userData = updatedUserDoc.data();
         console.log('Dados atualizados do Firestore:', userData);
-        setUser((prev: any) => ({ ...prev, ...userData }));
+        
+        const finalUser = { ...updatedUser, ...userData };
+        setUser(finalUser);
+        localStorage.setItem('flashconcards_user', JSON.stringify(finalUser));
+        
         setProfileData((prev: any) => ({ 
           ...prev, 
           displayName: userData.displayName || prev.displayName,
