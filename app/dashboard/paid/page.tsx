@@ -322,50 +322,30 @@ export default function PaidDashboardPage() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !auth.currentUser) return;
+    if (!user) return;
 
     setUpdatingProfile(true);
     setProfileError('');
     setProfileSuccess('');
 
     try {
-      // Validar senhas se fornecidas
-      if (profileData.newPassword) {
-        if (profileData.newPassword !== profileData.confirmPassword) {
-          setProfileError('As senhas não coincidem');
-          return;
-        }
-        if (profileData.newPassword.length < 6) {
-          setProfileError('A senha deve ter pelo menos 6 caracteres');
-          return;
-        }
-      }
-
-      // Atualizar perfil no Firebase Auth
-      await updateProfile(auth.currentUser, {
-        displayName: profileData.displayName || user.displayName
-      });
-
-      // Atualizar senha se fornecida
-      if (profileData.newPassword) {
-        await updatePassword(auth.currentUser, profileData.newPassword);
-      }
-
-      // Atualizar no Firestore
-      const userRef = doc(db, 'users', user.uid);
+      // Atualizar apenas no Firestore (sem Firebase Auth para evitar problemas)
+      const userId = user.uid || user.email?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown';
+      const userRef = doc(db, 'users', userId);
+      
       await updateDoc(userRef, {
         displayName: profileData.displayName || user.displayName,
         updated_at: new Date().toISOString()
       });
 
-             setProfileSuccess('Perfil atualizado com sucesso!');
-       setProfileData((prev: any) => ({ ...prev, newPassword: '', confirmPassword: '' }));
+      setProfileSuccess('Perfil atualizado com sucesso!');
+      setProfileData((prev: any) => ({ ...prev, newPassword: '', confirmPassword: '' }));
 
-       // Recarregar dados do usuário
-       const userDoc = await getDoc(userRef);
-       if (userDoc.exists()) {
-         setUser((prev: any) => ({ ...prev, ...userDoc.data() }));
-       }
+      // Recarregar dados do usuário
+      const userDoc = await getDoc(userRef);
+      if (userDoc.exists()) {
+        setUser((prev: any) => ({ ...prev, ...userDoc.data() }));
+      }
 
     } catch (error: any) {
       console.error('Erro ao atualizar perfil:', error);
@@ -572,41 +552,7 @@ export default function PaidDashboardPage() {
                 </p>
               </div>
 
-              {/* Password Change */}
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                  <Lock className="mr-2" />
-                  Alterar Senha
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nova Senha
-                    </label>
-                    <input
-                      type="password"
-                      value={profileData.newPassword}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, newPassword: e.target.value }))}
-                      placeholder="Deixe em branco para manter a atual"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Confirmar Nova Senha
-                    </label>
-                    <input
-                      type="password"
-                      value={profileData.confirmPassword}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      placeholder="Confirme a nova senha"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-              </div>
+
 
               {/* Submit Button */}
               <div className="flex justify-end space-x-3">
