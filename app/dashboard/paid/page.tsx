@@ -281,18 +281,7 @@ export default function PaidDashboardPage() {
 
       const downloadURL = result.url;
 
-      // Atualizar perfil do usuário no Firebase Auth
-      if (auth && auth.currentUser) {
-        console.log('Atualizando perfil no Firebase Auth...');
-        await updateProfile(auth.currentUser, {
-          photoURL: downloadURL
-        });
-        console.log('Perfil do Firebase Auth atualizado com sucesso');
-      } else {
-        console.warn('Usuário não autenticado no Firebase Auth');
-      }
-
-      // Atualizar no Firestore
+      // Atualizar apenas no Firestore (não no Firebase Auth para evitar erro de URL longa)
       if (db) {
         console.log('Atualizando dados no Firestore...');
         const userRef = doc(db, 'users', userId);
