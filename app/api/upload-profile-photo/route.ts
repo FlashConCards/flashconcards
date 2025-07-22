@@ -1,38 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getStorage } from 'firebase-admin/storage';
-
-// Inicializar Firebase Admin se ainda não foi inicializado
-if (!getApps().length) {
-  initializeApp({
-    credential: cert({
-      projectId: process.env.FIREBASE_PROJECT_ID!,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL!,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY!.replace(/\\n/g, '\n'),
-    }),
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-  });
-}
+import { db } from '@/app/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('=== INÍCIO DA API DE UPLOAD ===');
+    console.log('=== INÍCIO DA API DE UPLOAD SIMPLIFICADA ===');
     
-    // Verificar se as variáveis do Firebase Admin estão configuradas
-    const hasFirebaseAdminConfig = () => {
-      return process.env.FIREBASE_PROJECT_ID && 
-             process.env.FIREBASE_CLIENT_EMAIL && 
-             process.env.FIREBASE_PRIVATE_KEY;
-    };
-
-    if (!hasFirebaseAdminConfig()) {
-      console.error('Firebase Admin SDK não configurado - variáveis de ambiente ausentes');
-      return NextResponse.json(
-        { error: 'Serviço temporariamente indisponível' },
-        { status: 503 }
-      );
-    }
-
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const userId = formData.get('userId') as string;
@@ -56,86 +29,59 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validar tamanho (máximo 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    // Validar tamanho (máximo 2MB para base64)
+    if (file.size > 2 * 1024 * 1024) {
       console.error('Arquivo muito grande:', file.size);
       return NextResponse.json(
-        { error: 'A imagem deve ter no máximo 5MB' },
+        { error: 'A imagem deve ter no máximo 2MB' },
         { status: 400 }
       );
     }
 
-    console.log('=== UPLOAD VIA API ===');
+    console.log('=== UPLOAD SIMPLIFICADO ===');
     console.log('UserId:', userId);
     console.log('Arquivo:', { name: file.name, size: file.size, type: file.type });
 
-    // Converter File para Buffer
-    console.log('Convertendo arquivo para buffer...');
+    // Converter arquivo para base64
+    console.log('Convertendo arquivo para base64...');
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    console.log('Buffer criado, tamanho:', buffer.length);
-
-    // Gerar nome único
-    const fileExtension = file.name.split('.').pop() || 'jpg';
-    const uniqueFileName = `profile_${Date.now()}.${fileExtension}`;
-    const filePath = `profile-photos/${userId}/${uniqueFileName}`;
-
-    console.log('Caminho do arquivo:', filePath);
-
-    // Upload via Firebase Admin SDK
-    console.log('Inicializando Firebase Storage...');
-    const storage = getStorage();
-    console.log('Storage inicializado');
+    const base64 = Buffer.from(bytes).toString('base64');
+    const dataUrl = `data:${file.type};base64,${base64}`;
     
-    const bucket = storage.bucket();
-    console.log('Bucket obtido:', bucket.name);
-    
-    const fileRef = bucket.file(filePath);
-    console.log('Referência do arquivo criada');
+    console.log('Base64 criado, tamanho:', base64.length);
 
-    console.log('Iniciando upload...');
-    await fileRef.save(buffer, {
-      metadata: {
-        contentType: file.type,
-      },
-    });
+    // Salvar no Firestore
+    if (db) {
+      console.log('Salvando no Firestore...');
+      const userRef = doc(db, 'users', userId);
+      
+      await setDoc(userRef, {
+        photoURL: dataUrl,
+        updated_at: new Date().toISOString()
+      }, { merge: true });
 
-    console.log('Upload concluído via API');
+      console.log('Foto salva no Firestore com sucesso');
 
-    // Tornar o arquivo público
-    console.log('Tornando arquivo público...');
-    await fileRef.makePublic();
-
-    // Obter URL pública
-    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
-
-    console.log('URL pública:', publicUrl);
-
-    return NextResponse.json({
-      success: true,
-      url: publicUrl,
-      fileName: uniqueFileName
-    });
+      return NextResponse.json({
+        success: true,
+        url: dataUrl,
+        fileName: file.name
+      });
+    } else {
+      console.error('Firestore não disponível');
+      return NextResponse.json(
+        { error: 'Serviço temporariamente indisponível' },
+        { status: 503 }
+      );
+    }
 
   } catch (error: any) {
-    console.error('=== ERRO NO UPLOAD VIA API ===');
+    console.error('=== ERRO NO UPLOAD SIMPLIFICADO ===');
     console.error('Erro completo:', error);
-    console.error('Código do erro:', error.code);
     console.error('Mensagem do erro:', error.message);
-    console.error('Stack trace:', error.stack);
-    
-    let errorMessage = 'Erro interno do servidor';
-    
-    if (error.code === 'storage/unauthorized') {
-      errorMessage = 'Erro de permissão no Firebase Storage';
-    } else if (error.code === 'storage/quota-exceeded') {
-      errorMessage = 'Limite de armazenamento excedido';
-    } else if (error.message?.includes('Firebase Admin SDK não configurado')) {
-      errorMessage = 'Serviço temporariamente indisponível';
-    }
     
     return NextResponse.json(
-      { error: errorMessage },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     );
   }
