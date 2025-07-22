@@ -6,7 +6,7 @@ import { BookOpen, CheckCircle, Trophy, MessageSquare, TrendingUp, User, Calenda
 import Link from 'next/link'
 import conteudoProgramatico from '../../../conteudo_programatico.json';
 import { db, storage, auth } from '../../../app/lib/firebase';
-import { collection, query, where, getCountFromServer, getDocs, doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, query, where, getCountFromServer, getDocs, doc, updateDoc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { signOut, updatePassword, updateProfile } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -65,43 +65,32 @@ export default function PaidDashboardPage() {
     const userInfo = JSON.parse(userData)
     setUser(userInfo)
 
-    // Carregar dados do Firestore
-    const loadUserData = async () => {
-      try {
-        const userId = userInfo.uid || userInfo.email?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown';
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
+    // Configurar listener em tempo real do Firestore
+    const userId = userInfo.uid || userInfo.email?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown';
+    const userRef = doc(db, 'users', userId);
+    
+    console.log('Configurando listener em tempo real para usuário:', userId);
+    
+    const unsubscribe = onSnapshot(userRef, (doc) => {
+      if (doc.exists()) {
+        const firestoreData = doc.data();
+        console.log('Dados atualizados em tempo real:', firestoreData);
         
-        if (userDoc.exists()) {
-          const firestoreData = userDoc.data();
-          console.log('Dados carregados do Firestore:', firestoreData);
-          
-          // Atualizar usuário com dados do Firestore
-          const updatedUser = { ...userInfo, ...firestoreData };
-          setUser(updatedUser);
-          
-          // Atualizar localStorage
-          localStorage.setItem('flashconcards_user', JSON.stringify(updatedUser));
-          
-          // Inicializar profileData com dados atualizados
-          setProfileData({
-            displayName: firestoreData.displayName || userInfo.displayName || userInfo.name || '',
-            photoURL: firestoreData.photoURL || userInfo.photoURL || '',
-            newPassword: '',
-            confirmPassword: ''
-          });
-        } else {
-          // Se não existir no Firestore, usar dados do localStorage
-          setProfileData({
-            displayName: userInfo.displayName || userInfo.name || '',
-            photoURL: userInfo.photoURL || '',
-            newPassword: '',
-            confirmPassword: ''
-          });
-        }
-      } catch (error) {
-        console.error('Erro ao carregar dados do usuário:', error);
-        // Em caso de erro, usar dados do localStorage
+        // Atualizar usuário com dados do Firestore
+        const updatedUser = { ...userInfo, ...firestoreData };
+        setUser(updatedUser);
+        
+        // Atualizar localStorage
+        localStorage.setItem('flashconcards_user', JSON.stringify(updatedUser));
+        
+        // Atualizar profileData com dados em tempo real
+        setProfileData(prev => ({
+          ...prev,
+          displayName: firestoreData.displayName || userInfo.displayName || userInfo.name || '',
+          photoURL: firestoreData.photoURL || userInfo.photoURL || ''
+        }));
+      } else {
+        console.log('Documento não existe no Firestore, usando dados do localStorage');
         setProfileData({
           displayName: userInfo.displayName || userInfo.name || '',
           photoURL: userInfo.photoURL || '',
@@ -109,9 +98,16 @@ export default function PaidDashboardPage() {
           confirmPassword: ''
         });
       }
-    };
-
-    loadUserData();
+    }, (error) => {
+      console.error('Erro no listener em tempo real:', error);
+      // Em caso de erro, usar dados do localStorage
+      setProfileData({
+        displayName: userInfo.displayName || userInfo.name || '',
+        photoURL: userInfo.photoURL || '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    });
 
     // Buscar dados reais do Firebase
     fetchUserStats(userInfo.email)
@@ -120,6 +116,12 @@ export default function PaidDashboardPage() {
     loadSubjects(userInfo.email)
     // Buscar total de cards e progresso geral em tempo real
     loadDashboardStats(userInfo.email)
+
+    // Cleanup do listener quando componente desmontar
+    return () => {
+      console.log('Removendo listener em tempo real');
+      unsubscribe();
+    };
   }, [])
 
   const fetchUserStats = async (email: string) => {
