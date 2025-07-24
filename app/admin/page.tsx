@@ -196,6 +196,20 @@ export default function AdminPage() {
     setSalvandoAprof(false);
   }
 
+  // Toolbar completa para o ReactQuill
+  const quillModules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'color': [] }, { 'background': [] }],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+      [{ 'align': [] }],
+      ['blockquote', 'code-block'],
+      ['link', 'image', 'video'],
+      ['clean']
+    ]
+  };
+
   if (!autenticado) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700">
@@ -283,7 +297,7 @@ export default function AdminPage() {
                 {subtopicoAprof && (
                   <div className="mb-4">
                     <label className="block text-gray-700 mb-2">Conteúdo de Aprofundamento</label>
-                    <ReactQuill theme="snow" value={conteudoAprof} onChange={setConteudoAprof} className="bg-white" />
+                    <ReactQuill theme="snow" value={conteudoAprof} onChange={setConteudoAprof} className="bg-white" modules={quillModules} />
                     <button onClick={salvarAprofundamento} disabled={salvandoAprof} className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
                       {salvandoAprof ? 'Salvando...' : 'Salvar Conteúdo'}
                     </button>

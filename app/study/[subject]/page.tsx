@@ -859,7 +859,7 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
               <X className="h-5 w-5" />
             </button>
             <h2 className="text-xl font-bold text-gray-900 mb-4">{deepenTitle}</h2>
-            <div className="text-gray-700 whitespace-pre-line">{deepenContent}</div>
+            <div className="text-gray-700 prose max-w-none" dangerouslySetInnerHTML={{ __html: deepenContent }} />
           </div>
         </div>
       )}
