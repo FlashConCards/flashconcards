@@ -495,12 +495,12 @@ export default function PaidDashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-xl p-6 mb-8 shadow-2xl"
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
             <div className="flex items-center">
               <BookOpen className="h-8 w-8 text-blue-600 mr-3" />
               <h1 className="text-2xl font-bold text-gray-900">FlashConCards</h1>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 w-full sm:w-auto">
               {/* Foto do usuário */}
               <div className="flex items-center space-x-2">
                 <img
@@ -514,14 +514,14 @@ export default function PaidDashboardPage() {
               </div>
               <button
                 onClick={() => setShowProfile(!showProfile)}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center"
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center w-full sm:w-auto justify-center"
               >
                 <User className="mr-2" size={16} />
                 {showProfile ? 'Fechar Perfil' : 'Meu Perfil'}
               </button>
               <button
                 onClick={handleLogout}
-                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors w-full sm:w-auto"
               >
                 Sair
               </button>
