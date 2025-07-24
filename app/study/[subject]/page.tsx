@@ -362,9 +362,12 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
   
   // Filtrar cards por tópico selecionado
   const filteredFlashcards = selectedTopic 
-    ? firebaseFlashcards.filter(card => card.topic === selectedTopic || card.subtopico === selectedTopic)
-    : firebaseFlashcards
-  
+    ? (firebaseFlashcards.length > 0
+        ? firebaseFlashcards.filter(card => card.topic === selectedTopic || card.subtopico === selectedTopic)
+        : getFlashcardsBySubject(params.subject).filter(card => card.topic === selectedTopic || card.subtopico === selectedTopic)
+      )
+    : (firebaseFlashcards.length > 0 ? firebaseFlashcards : getFlashcardsBySubject(params.subject));
+
   const currentCard = sessionCompleted ? null : (remainingCards[currentCardIndex] || filteredFlashcards[0] || null)
 
   useEffect(() => {
@@ -457,11 +460,14 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
     
     if (isCorrect) {
       // Se acertou, remove o card da lista de cards restantes
-      setRemainingCards(prev => prev.filter(card => card.id !== currentCardId))
+      setRemainingCards(prev => {
+        const newArr = prev.filter(card => card.id !== currentCardId)
+        // Se não há mais cards, marcar sessão como completa
+        if (newArr.length === 0) setSessionCompleted(true)
+        return newArr
+      })
       setCompletedCards(prev => new Set(Array.from(prev).concat([currentCardId])))
-      // Adicionar à lista de cards completados recentemente (intervalo)
       setRecentlyCompletedCards(prev => new Set(Array.from(prev).concat([currentCardId])))
-      // Salvar progresso no localStorage
       if (selectedTopic) {
         saveCardProgress(params.subject, selectedTopic, currentCardId, filteredFlashcards.length)
       }
@@ -469,16 +475,8 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
         ...prev,
         correctAnswers: prev.correctAnswers + 1
       }))
-      // Reset para próximo card
       setIsFlipped(false)
-      // Verificar se a sessão deve ser marcada como completa
-      if (studySession.correctAnswers + 1 >= studySession.totalCards) {
-        setSessionCompleted(true)
-      } else if (remainingCards.length > 1) {
-        setCurrentCardIndex(0)
-      } else {
-        setCurrentCardIndex(0)
-      }
+      setCurrentCardIndex(0)
     } else {
       // Se errou, move o card para o final da fila
       setRemainingCards(prev => {
@@ -492,7 +490,6 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
         ...prev,
         incorrectAnswers: prev.incorrectAnswers + 1
       }))
-      // Reset para próximo card
       setIsFlipped(false)
       setCurrentCardIndex(0)
     }
