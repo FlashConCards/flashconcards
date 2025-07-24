@@ -71,6 +71,11 @@ function getDynamicDifficulty(subjectId: string, topicId: string, cardId: string
   return 'medium';
 }
 
+// Função para normalizar o ID do subtópico igual ao admin
+function normalizeSubtopicId(name: string) {
+  return name.replace(/[^a-zA-Z0-9_-]/g, '_');
+}
+
 export default function StudyPage({ params }: { params: { subject: string } }) {
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
   const [isFlipped, setIsFlipped] = useState(false)
@@ -544,10 +549,9 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
   // Função para buscar conteúdo adicional do Firestore
   async function fetchDeepenContent(topicId: string) {
     try {
-      // Buscar do Firestore: coleção 'subtopics' (ou ajuste conforme sua estrutura)
       const { doc, getDoc } = await import('firebase/firestore');
       const { db } = await import('../../lib/firebase');
-      const subtopicRef = doc(db, 'subtopics', topicId);
+      const subtopicRef = doc(db, 'subtopics', normalizeSubtopicId(topicId));
       const subtopicSnap = await getDoc(subtopicRef);
       if (subtopicSnap.exists()) {
         const data = subtopicSnap.data();
