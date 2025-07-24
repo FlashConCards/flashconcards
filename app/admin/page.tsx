@@ -4,6 +4,9 @@ import conteudoProgramatico from '../../conteudo_programatico.json';
 import { db, auth } from '../lib/firebase';
 import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
 import { collection, addDoc, getDocs, deleteDoc, doc, query, where, onSnapshot } from 'firebase/firestore';
+import dynamic from 'next/dynamic';
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 const ADMIN_EMAIL = "claudioghabryel7@gmail.com";
 
@@ -144,6 +147,47 @@ export default function AdminPage() {
       .then(data => setUsuarios(data.users || []));
   };
 
+  // Estado para editor de aprofundamento
+  const [subtopicoAprof, setSubtopicoAprof] = useState('');
+  const [conteudoAprof, setConteudoAprof] = useState('');
+  const [salvandoAprof, setSalvandoAprof] = useState(false);
+  const [msgAprof, setMsgAprof] = useState('');
+
+  // Função para carregar conteúdo de aprofundamento
+  async function carregarAprofundamento(sub: string) {
+    setSubtopicoAprof(sub);
+    setMsgAprof('');
+    setConteudoAprof('');
+    try {
+      const { doc, getDoc } = await import('firebase/firestore');
+      const { db } = await import('../lib/firebase');
+      const ref = doc(db, 'subtopics', sub);
+      const snap = await getDoc(ref);
+      if (snap.exists()) setConteudoAprof(snap.data().extraContent || '');
+      else setConteudoAprof('');
+    } catch (e) {
+      setMsgAprof('Erro ao carregar conteúdo.');
+    }
+  }
+  // Função para salvar conteúdo de aprofundamento
+  async function salvarAprofundamento() {
+    setSalvandoAprof(true);
+    setMsgAprof('');
+    try {
+      const { doc, setDoc } = await import('firebase/firestore');
+      const { db } = await import('../lib/firebase');
+      await setDoc(doc(db, 'subtopics', subtopicoAprof), {
+        name: subtopicoAprof,
+        extraContent: conteudoAprof,
+        updated_at: new Date().toISOString()
+      }, { merge: true });
+      setMsgAprof('Conteúdo salvo com sucesso!');
+    } catch (e) {
+      setMsgAprof('Erro ao salvar conteúdo.');
+    }
+    setSalvandoAprof(false);
+  }
+
   if (!autenticado) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700">
@@ -212,6 +256,33 @@ export default function AdminPage() {
                   <button type="submit" className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors">Adicionar Flashcard</button>
                 </div>
               </form>
+            )}
+            {/* Seção de Aprofundamento dos Subtópicos */}
+            {materia && (
+              <div className="mb-10 border-b pb-8">
+                <h3 className="text-xl font-bold mb-4 text-blue-700">Aprofundamento dos Subtópicos</h3>
+                <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-gray-700 mb-2">Selecione o Subtópico</label>
+                    <select value={subtopicoAprof} onChange={e => { carregarAprofundamento(e.target.value); }} className="w-full px-3 py-2 border rounded-lg">
+                      <option value="">Selecione o subtópico</option>
+                      {subtitulos.map((sub: string, idx: number) => (
+                        <option key={idx} value={sub}>{sub}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                {subtopicoAprof && (
+                  <div className="mb-4">
+                    <label className="block text-gray-700 mb-2">Conteúdo de Aprofundamento</label>
+                    <ReactQuill theme="snow" value={conteudoAprof} onChange={setConteudoAprof} className="bg-white" />
+                    <button onClick={salvarAprofundamento} disabled={salvandoAprof} className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                      {salvandoAprof ? 'Salvando...' : 'Salvar Conteúdo'}
+                    </button>
+                    {msgAprof && <div className="mt-2 text-sm text-blue-700">{msgAprof}</div>}
+                  </div>
+                )}
+              </div>
             )}
             <h4 className="text-lg font-bold mb-2 mt-6">Flashcards cadastrados</h4>
             {carregando ? (
