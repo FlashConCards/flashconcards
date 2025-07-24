@@ -174,16 +174,24 @@ export default function AdminPage() {
     setSalvandoAprof(true);
     setMsgAprof('');
     try {
+      if (!subtopicoAprof || !conteudoAprof) {
+        setMsgAprof('Selecione um subtópico e preencha o conteúdo.');
+        setSalvandoAprof(false);
+        return;
+      }
+      // Validar nome do subtópico para ser um ID válido
+      const docId = subtopicoAprof.replace(/[^a-zA-Z0-9_-]/g, '_');
       const { doc, setDoc } = await import('firebase/firestore');
       const { db } = await import('../lib/firebase');
-      await setDoc(doc(db, 'subtopics', subtopicoAprof), {
+      await setDoc(doc(db, 'subtopics', docId), {
         name: subtopicoAprof,
         extraContent: conteudoAprof,
         updated_at: new Date().toISOString()
       }, { merge: true });
       setMsgAprof('Conteúdo salvo com sucesso!');
-    } catch (e) {
-      setMsgAprof('Erro ao salvar conteúdo.');
+    } catch (e: any) {
+      setMsgAprof('Erro ao salvar conteúdo: ' + (e.message || e.toString()));
+      console.error('Erro ao salvar aprofundamento:', e);
     }
     setSalvandoAprof(false);
   }
