@@ -88,6 +88,10 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
   const [showTopicSelection, setShowTopicSelection] = useState(true)
   const [cardsSeenSinceLastCompleted, setCardsSeenSinceLastCompleted] = useState(0)
   const [firebaseFlashcards, setFirebaseFlashcards] = useState<Flashcard[]>([]);
+  // Adicionar estado para modal de aprofundamento
+  const [showDeepenModal, setShowDeepenModal] = useState(false);
+  const [deepenContent, setDeepenContent] = useState<string>('');
+  const [deepenTitle, setDeepenTitle] = useState<string>('');
 
   // Flashcards organizados por matéria
   const getFlashcardsBySubject = (subjectId: string): Flashcard[] => {
@@ -537,6 +541,30 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
 
   const isSessionComplete = sessionCompleted
 
+  // Função para buscar conteúdo adicional do Firestore
+  async function fetchDeepenContent(topicId: string) {
+    try {
+      // Buscar do Firestore: coleção 'subtopics' (ou ajuste conforme sua estrutura)
+      const { doc, getDoc } = await import('firebase/firestore');
+      const { db } = await import('../../lib/firebase');
+      const subtopicRef = doc(db, 'subtopics', topicId);
+      const subtopicSnap = await getDoc(subtopicRef);
+      if (subtopicSnap.exists()) {
+        const data = subtopicSnap.data();
+        setDeepenContent(data.extraContent || '');
+        setDeepenTitle(data.name || 'Aprofundamento');
+      } else {
+        setDeepenContent('Conteúdo de aprofundamento não encontrado.');
+        setDeepenTitle('Aprofundamento');
+      }
+      setShowDeepenModal(true);
+    } catch (e) {
+      setDeepenContent('Erro ao buscar conteúdo de aprofundamento.');
+      setDeepenTitle('Aprofundamento');
+      setShowDeepenModal(true);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -615,13 +643,16 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
                     {topic.description}
                   </p>
                   
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">
-                      {topic.cardCount} cards
-                    </span>
-                    <span className="text-sm font-medium text-primary-600">
-                      Estudar
-                    </span>
+                  <div className="flex justify-between items-center mt-4">
+                    <span className="text-sm text-gray-500">{topic.cardCount} cards</span>
+                    <span className="text-sm font-medium text-primary-600">Estudar</span>
+                    <button
+                      type="button"
+                      className="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold hover:bg-blue-200 transition-colors"
+                      onClick={e => { e.stopPropagation(); fetchDeepenContent(topic.id); }}
+                    >
+                      Aprofundar
+                    </button>
                   </div>
                 </motion.div>
               ))}
@@ -813,6 +844,21 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
           </>
         )}
       </div>
+      {/* Modal de aprofundamento */}
+      {showDeepenModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-xl p-6 max-w-lg w-full shadow-2xl relative">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowDeepenModal(false)}
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">{deepenTitle}</h2>
+            <div className="text-gray-700 whitespace-pre-line">{deepenContent}</div>
+          </div>
+        </div>
+      )}
     </div>
   )
 } 
