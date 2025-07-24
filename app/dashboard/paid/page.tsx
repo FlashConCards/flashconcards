@@ -512,13 +512,11 @@ export default function PaidDashboardPage() {
                   {user?.displayName || profileData.displayName || user?.name || 'Usuário'}
                 </span>
               </div>
-              <button
-                onClick={() => setShowProfile(!showProfile)}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center w-full sm:w-auto justify-center"
-              >
+              {/* No header, trocar o botão de perfil por um link para /perfil */}
+              <Link href="/perfil" className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center w-full sm:w-auto justify-center">
                 <User className="mr-2" size={16} />
-                {showProfile ? 'Fechar Perfil' : 'Meu Perfil'}
-              </button>
+                Meu Perfil
+              </Link>
               <button
                 onClick={handleLogout}
                 className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors w-full sm:w-auto"
