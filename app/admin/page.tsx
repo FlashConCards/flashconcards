@@ -175,6 +175,26 @@ export default function AdminPage() {
   const todosSubtopicos = [...subtitulos, ...subtopicosSalvos.map(s => s.name).filter(Boolean)];
   const subtopicosUnicos = Array.from(new Set(todosSubtopicos));
 
+  // Agrupar subtópicos salvos por matéria
+  const subtopicosPorMateria: Record<string, any[]> = {};
+  subtopicosSalvos.forEach(sub => {
+    // Tentar identificar a matéria baseado no nome do subtópico
+    let materiaIdentificada = 'Outros';
+    
+    // Mapear subtópicos para matérias baseado no conteúdo programático
+    for (const materia of conteudoProgramatico) {
+      if (materia.topicos.includes(sub.name)) {
+        materiaIdentificada = materia.titulo;
+        break;
+      }
+    }
+    
+    if (!subtopicosPorMateria[materiaIdentificada]) {
+      subtopicosPorMateria[materiaIdentificada] = [];
+    }
+    subtopicosPorMateria[materiaIdentificada].push(sub);
+  });
+
   // Função para carregar conteúdo de aprofundamento
   async function carregarAprofundamento(sub: string) {
     setSubtopicoAprof(sub);
@@ -328,23 +348,30 @@ export default function AdminPage() {
                 )}
               </div>
             )}
-            {/* Lista de Subtópicos Salvos */}
+            {/* Lista de Subtópicos Salvos Organizados por Matéria */}
             <h4 className="text-lg font-bold mb-2 mt-6">Subtópicos com Aprofundamento</h4>
             <div className="mb-6">
               {subtopicosSalvos.length > 0 ? (
-                <div className="space-y-2">
-                  {subtopicosSalvos.map(sub => (
-                    <div key={sub.id} className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-4 py-2">
-                      <div>
-                        <span className="font-semibold text-green-700">{sub.name}</span>
-                        <span className="text-sm text-gray-500 ml-2">(Salvo em: {new Date(sub.updated_at).toLocaleDateString()})</span>
+                <div>
+                  {Object.keys(subtopicosPorMateria).map(materia => (
+                    <div key={materia} className="mb-4">
+                      <div className="font-semibold text-blue-700 mb-2 text-lg">{materia}</div>
+                      <div className="space-y-2">
+                        {subtopicosPorMateria[materia].map(sub => (
+                          <div key={sub.id} className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-4 py-2">
+                            <div>
+                              <span className="font-semibold text-green-700">{sub.name}</span>
+                              <span className="text-sm text-gray-500 ml-2">(Salvo em: {new Date(sub.updated_at).toLocaleDateString()})</span>
+                            </div>
+                            <button 
+                              onClick={() => carregarAprofundamento(sub.name)} 
+                              className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+                            >
+                              Editar
+                            </button>
+                          </div>
+                        ))}
                       </div>
-                      <button 
-                        onClick={() => carregarAprofundamento(sub.name)} 
-                        className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
-                      >
-                        Editar
-                      </button>
                     </div>
                   ))}
                 </div>
@@ -357,23 +384,28 @@ export default function AdminPage() {
               <div>Carregando...</div>
             ) : (
               <div>
-                {Object.keys(flashcardsPorSubtopico).map(sub => (
-                  <div key={sub} className="mb-4">
-                    <div className="font-semibold text-blue-700 mb-1">{sub}</div>
-                    <ul className="space-y-2">
-                      {flashcardsPorSubtopico[sub].map(fc => (
-                        <li key={fc.id} className="flex flex-col md:flex-row md:items-center md:justify-between bg-gray-100 rounded-lg px-4 py-2">
-                          <div className="mb-2 md:mb-0">
-                            <span className="font-semibold">Q:</span> {fc.question}<br />
-                            <span className="font-semibold">A:</span> {fc.answer}
-                          </div>
-                          <button onClick={() => handleDelete(fc.id)} className="ml-0 md:ml-4 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 mt-2 md:mt-0">Remover</button>
-                        </li>
-                      ))}
-                    </ul>
+                {Object.keys(flashcardsPorSubtopico).length > 0 ? (
+                  <div>
+                    {Object.keys(flashcardsPorSubtopico).map(sub => (
+                      <div key={sub} className="mb-4">
+                        <div className="font-semibold text-blue-700 mb-2 text-lg">{sub}</div>
+                        <ul className="space-y-2">
+                          {flashcardsPorSubtopico[sub].map(fc => (
+                            <li key={fc.id} className="flex flex-col md:flex-row md:items-center md:justify-between bg-gray-100 rounded-lg px-4 py-2">
+                              <div className="mb-2 md:mb-0">
+                                <span className="font-semibold">Q:</span> {fc.question}<br />
+                                <span className="font-semibold">A:</span> {fc.answer}
+                              </div>
+                              <button onClick={() => handleDelete(fc.id)} className="ml-0 md:ml-4 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 mt-2 md:mt-0">Remover</button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
                   </div>
-                ))}
-                {flashcards.length === 0 && <div className="text-gray-500">Nenhum flashcard cadastrado.</div>}
+                ) : (
+                  <div className="text-gray-500">Nenhum flashcard cadastrado.</div>
+                )}
               </div>
             )}
           </div>
