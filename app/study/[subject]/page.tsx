@@ -370,14 +370,6 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
 
   const currentCard = sessionCompleted ? null : (remainingCards[currentCardIndex] || filteredFlashcards[0] || null)
 
-  useEffect(() => {
-    // Inicializar com cards filtrados por tópico
-    setRemainingCards(filteredFlashcards)
-    setStudySession(prev => ({ ...prev, totalCards: filteredFlashcards.length }))
-    // Reset do índice do card quando os cards mudam
-    setCurrentCardIndex(0)
-  }, [filteredFlashcards])
-
   // Função para mapear slug para nome da matéria
   const getSubjectNameFromSlug = (slug: string) => {
     const map: { [key: string]: string } = {
@@ -441,8 +433,16 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
     setSessionCompleted(false)
     setCompletedCards(new Set())
     setRecentlyCompletedCards(new Set())
+    // Inicializar os cards do tópico selecionado
+    const initialCards = topicId
+      ? (firebaseFlashcards.length > 0
+          ? firebaseFlashcards.filter(card => card.topic === topicId || card.subtopico === topicId)
+          : getFlashcardsBySubject(params.subject).filter(card => card.topic === topicId || card.subtopico === topicId)
+        )
+      : (firebaseFlashcards.length > 0 ? firebaseFlashcards : getFlashcardsBySubject(params.subject));
+    setRemainingCards(initialCards)
     setStudySession({
-      totalCards: 0,
+      totalCards: initialCards.length,
       correctAnswers: 0,
       incorrectAnswers: 0,
       timeSpent: 0
@@ -499,11 +499,18 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
     setCurrentCardIndex(0)
     setIsFlipped(false)
     setSessionCompleted(false)
-    setRemainingCards(filteredFlashcards)
     setCompletedCards(new Set())
     setRecentlyCompletedCards(new Set())
+    // Recarregar os cards do tópico selecionado
+    const initialCards = selectedTopic
+      ? (firebaseFlashcards.length > 0
+          ? firebaseFlashcards.filter(card => card.topic === selectedTopic || card.subtopico === selectedTopic)
+          : getFlashcardsBySubject(params.subject).filter(card => card.topic === selectedTopic || card.subtopico === selectedTopic)
+        )
+      : (firebaseFlashcards.length > 0 ? firebaseFlashcards : getFlashcardsBySubject(params.subject));
+    setRemainingCards(initialCards)
     setStudySession({
-      totalCards: filteredFlashcards.length,
+      totalCards: initialCards.length,
       correctAnswers: 0,
       incorrectAnswers: 0,
       timeSpent: 0
