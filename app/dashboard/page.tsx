@@ -235,14 +235,14 @@ export default function DashboardPage() {
         {/* Subjects Grid */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Matérias</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {subjects.map((subject, index) => (
               <motion.div
                 key={subject.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+                className="bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer flex flex-col justify-between h-full"
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className={`p-3 rounded-lg ${subject.color}`}>
@@ -252,40 +252,38 @@ export default function DashboardPage() {
                     <Play className="h-5 w-5" />
                   </a>
                 </div>
-                
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   {subject.name}
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
                   {subject.description}
                 </p>
-                
-                                 <div className="space-y-3">
-                   <div className="flex justify-between text-sm">
-                     <span className="text-gray-600">Progresso</span>
-                     <span className="font-medium">
-                       {subject.completedCards}/{subject.totalCards}
-                     </span>
-                   </div>
-                   <div className="w-full bg-gray-200 rounded-full h-2">
-                     <div 
-                       className={`h-2 rounded-full transition-all duration-300 ${subject.color.replace('bg-', 'bg-')}`}
-                       style={{ width: `${getProgressPercentage(subject.completedCards, subject.totalCards)}%` }}
-                     ></div>
-                   </div>
-                   <div className="text-right">
-                     <span className="text-sm font-medium text-gray-900">
-                       {getProgressPercentage(subject.completedCards, subject.totalCards)}%
-                     </span>
-                   </div>
-                   {subject.completedCards === 0 && (
-                     <div className="text-center">
-                       <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                         Disponível no upgrade
-                       </span>
-                     </div>
-                   )}
-                 </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Progresso</span>
+                    <span className="font-medium">
+                      {subject.completedCards}/{subject.totalCards}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-300 ${subject.color.replace('bg-', 'bg-')}`}
+                      style={{ width: `${getProgressPercentage(subject.completedCards, subject.totalCards)}%`, minWidth: 0, maxWidth: '100%' }}
+                    ></div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-medium text-gray-900">
+                      {getProgressPercentage(subject.completedCards, subject.totalCards)}%
+                    </span>
+                  </div>
+                  {subject.completedCards === 0 && (
+                    <div className="text-center">
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        Disponível no upgrade
+                      </span>
+                    </div>
+                  )}
+                </div>
               </motion.div>
             ))}
           </div>

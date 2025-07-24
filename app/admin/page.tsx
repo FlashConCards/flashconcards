@@ -169,26 +169,29 @@ export default function AdminPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex flex-col items-center py-10">
         <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl mb-8">
           <h2 className="text-2xl font-bold mb-4 text-gray-900 text-center">Painel do Admin</h2>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Preparatório</label>
-            <select value={preparatorio} onChange={e => setPreparatorio(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
-              <option value="ALEGO">ALEGO</option>
-              {/* Futuramente, adicionar outros preparatórios aqui */}
-            </select>
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Matéria</label>
-            <select value={materia} onChange={e => setMateria(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
-              <option value="">Selecione a matéria</option>
-              {conteudoProgramatico.map((m: any) => (
-                <option key={m.titulo} value={m.titulo}>{m.titulo}</option>
-              ))}
-            </select>
-          </div>
-          {materia && (
-            <>
-              <form onSubmit={handleAddFlashcard} className="mb-6">
-                <div className="mb-2">
+          {/* Seção de Cadastro de Flashcards */}
+          <div className="mb-10 border-b pb-8">
+            <h3 className="text-xl font-bold mb-4 text-blue-700">Cadastro de Flashcards</h3>
+            <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-700 mb-2">Preparatório</label>
+                <select value={preparatorio} onChange={e => setPreparatorio(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
+                  <option value="ALEGO">ALEGO</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-gray-700 mb-2">Matéria</label>
+                <select value={materia} onChange={e => setMateria(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
+                  <option value="">Selecione a matéria</option>
+                  {conteudoProgramatico.map((m: any) => (
+                    <option key={m.titulo} value={m.titulo}>{m.titulo}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            {materia && (
+              <form onSubmit={handleAddFlashcard} className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
                   <label className="block text-gray-700 mb-1">Subtópico</label>
                   <select value={subtopico} onChange={e => setSubtopico(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
                     <option value="">Selecione o subtópico</option>
@@ -197,47 +200,50 @@ export default function AdminPage() {
                     ))}
                   </select>
                 </div>
-                <div className="mb-2">
+                <div>
                   <label className="block text-gray-700 mb-1">Pergunta</label>
                   <input type="text" value={novaPergunta} onChange={e => setNovaPergunta(e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
                 </div>
-                <div className="mb-2">
+                <div className="md:col-span-2">
                   <label className="block text-gray-700 mb-1">Resposta</label>
                   <input type="text" value={novaResposta} onChange={e => setNovaResposta(e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
                 </div>
-                <button type="submit" className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors">Adicionar Flashcard</button>
-              </form>
-              <h3 className="text-lg font-bold mb-2">Flashcards cadastrados</h3>
-              {carregando ? (
-                <div>Carregando...</div>
-              ) : (
-                <div>
-                  {Object.keys(flashcardsPorSubtopico).map(sub => (
-                    <div key={sub} className="mb-4">
-                      <div className="font-semibold text-blue-700 mb-1">{sub}</div>
-                      <ul className="space-y-2">
-                        {flashcardsPorSubtopico[sub].map(fc => (
-                          <li key={fc.id} className="flex items-center justify-between bg-gray-100 rounded-lg px-4 py-2">
-                            <div>
-                              <span className="font-semibold">Q:</span> {fc.question}<br />
-                              <span className="font-semibold">A:</span> {fc.answer}
-                            </div>
-                            <button onClick={() => handleDelete(fc.id)} className="ml-4 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700">Remover</button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                  {flashcards.length === 0 && <div className="text-gray-500">Nenhum flashcard cadastrado.</div>}
+                <div className="md:col-span-2 flex justify-end">
+                  <button type="submit" className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors">Adicionar Flashcard</button>
                 </div>
-              )}
-            </>
-          )}
+              </form>
+            )}
+            <h4 className="text-lg font-bold mb-2 mt-6">Flashcards cadastrados</h4>
+            {carregando ? (
+              <div>Carregando...</div>
+            ) : (
+              <div>
+                {Object.keys(flashcardsPorSubtopico).map(sub => (
+                  <div key={sub} className="mb-4">
+                    <div className="font-semibold text-blue-700 mb-1">{sub}</div>
+                    <ul className="space-y-2">
+                      {flashcardsPorSubtopico[sub].map(fc => (
+                        <li key={fc.id} className="flex flex-col md:flex-row md:items-center md:justify-between bg-gray-100 rounded-lg px-4 py-2">
+                          <div className="mb-2 md:mb-0">
+                            <span className="font-semibold">Q:</span> {fc.question}<br />
+                            <span className="font-semibold">A:</span> {fc.answer}
+                          </div>
+                          <button onClick={() => handleDelete(fc.id)} className="ml-0 md:ml-4 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 mt-2 md:mt-0">Remover</button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+                {flashcards.length === 0 && <div className="text-gray-500">Nenhum flashcard cadastrado.</div>}
+              </div>
+            )}
+          </div>
+          {/* Seção de Gerenciamento de Usuários */}
           <div className="mt-10">
-            <h3 className="text-lg font-bold mb-2">Gerenciar Usuários</h3>
-            <form onSubmit={handleAddUser} className="flex gap-2 mb-4">
-              <input type="email" placeholder="Novo e-mail" value={novoEmail} onChange={e => setNovoEmail(e.target.value)} className="px-3 py-2 border rounded-lg" />
-              <input type="password" placeholder="Senha" value={novaSenha} onChange={e => setNovaSenha(e.target.value)} className="px-3 py-2 border rounded-lg" />
+            <h3 className="text-xl font-bold mb-4 text-blue-700">Gerenciar Usuários</h3>
+            <form onSubmit={handleAddUser} className="flex flex-col md:flex-row gap-2 mb-4">
+              <input type="email" placeholder="Novo e-mail" value={novoEmail} onChange={e => setNovoEmail(e.target.value)} className="px-3 py-2 border rounded-lg w-full md:w-auto" />
+              <input type="password" placeholder="Senha" value={novaSenha} onChange={e => setNovaSenha(e.target.value)} className="px-3 py-2 border rounded-lg w-full md:w-auto" />
               <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700">Adicionar</button>
             </form>
             {carregandoUsuarios ? (
@@ -245,9 +251,9 @@ export default function AdminPage() {
             ) : (
               <ul className="space-y-2">
                 {usuarios.map(u => (
-                  <li key={u.uid} className="flex items-center justify-between bg-gray-100 rounded-lg px-4 py-2">
+                  <li key={u.uid} className="flex flex-col md:flex-row md:items-center md:justify-between bg-gray-100 rounded-lg px-4 py-2">
                     <span>{u.email}</span>
-                    <button onClick={() => handleDeleteUser(u.uid)} className="ml-4 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700">Excluir</button>
+                    <button onClick={() => handleDeleteUser(u.uid)} className="ml-0 md:ml-4 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 mt-2 md:mt-0">Excluir</button>
                   </li>
                 ))}
                 {usuarios.length === 0 && <li className="text-gray-500">Nenhum usuário cadastrado.</li>}

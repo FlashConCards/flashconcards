@@ -3,8 +3,32 @@
 import { motion } from 'framer-motion'
 import { CheckCircle, ArrowLeft, BookOpen, Lock, Mail } from 'lucide-react'
 import Link from 'next/link'
+import { useEffect } from 'react'
 
 export default function PaymentSuccessPage() {
+  useEffect(() => {
+    // Recuperar dados do usuário do localStorage ou sessionStorage
+    const userData = JSON.parse(localStorage.getItem('flashconcards_user') || sessionStorage.getItem('flashconcards_user') || '{}');
+    // Recuperar dados do último pagamento (idealmente salvos no localStorage/sessionStorage após o pagamento)
+    const paymentInfo = JSON.parse(localStorage.getItem('flashconcards_last_payment') || sessionStorage.getItem('flashconcards_last_payment') || '{}');
+    if (userData?.email && userData?.name && paymentInfo?.paymentId && !paymentInfo?.confirmationSent) {
+      fetch('/api/email/send-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: userData.email,
+          name: userData.name,
+          paymentId: paymentInfo.paymentId,
+          amount: paymentInfo.amount || '1,00'
+        })
+      }).then(() => {
+        // Marcar como enviado para não disparar novamente
+        paymentInfo.confirmationSent = true;
+        localStorage.setItem('flashconcards_last_payment', JSON.stringify(paymentInfo));
+      });
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center">
       <motion.div

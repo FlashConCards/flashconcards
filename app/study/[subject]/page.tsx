@@ -37,6 +37,40 @@ interface Topic {
   color: string
 }
 
+// Função utilitária para obter histórico de respostas do usuário para cada card
+function getCardHistory(subjectId: string, topicId: string, cardId: string): string[] {
+  if (typeof window === 'undefined') return [];
+  const key = `flashconcards_history_${subjectId}_${topicId}_${cardId}`;
+  const data = localStorage.getItem(key);
+  return data ? JSON.parse(data) : [];
+}
+
+// Função utilitária para salvar resposta no histórico
+function saveCardHistory(subjectId: string, topicId: string, cardId: string, result: 'acertou' | 'errou') {
+  if (typeof window === 'undefined') return;
+  const key = `flashconcards_history_${subjectId}_${topicId}_${cardId}`;
+  const data = localStorage.getItem(key);
+  const history = data ? JSON.parse(data) : [];
+  history.push(result);
+  localStorage.setItem(key, JSON.stringify(history));
+}
+
+// Função para classificar dificuldade baseada no histórico
+function getDynamicDifficulty(subjectId: string, topicId: string, cardId: string): 'easy' | 'medium' | 'hard' {
+  const history = getCardHistory(subjectId, topicId, cardId);
+  if (history.length === 0) return 'medium';
+  // Se acertou as 2 últimas vezes seguidas
+  if (history.slice(-2).every((r: string) => r === 'acertou')) return 'easy';
+  // Se acertou na segunda tentativa
+  if (history.length >= 2 && history[history.length - 2] === 'errou' && history[history.length - 1] === 'acertou') return 'medium';
+  // Se errou 2 vezes ou mais antes de acertar
+  const errosAntesAcerto = history.join(',').split('acertou').length - 1 < 1 && history.filter((r: string) => r === 'errou').length >= 2;
+  if (errosAntesAcerto) return 'hard';
+  // Se errou a última
+  if (history[history.length - 1] === 'errou') return 'hard';
+  return 'medium';
+}
+
 export default function StudyPage({ params }: { params: { subject: string } }) {
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
   const [isFlipped, setIsFlipped] = useState(false)
@@ -425,39 +459,41 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
       // Se acertou, remove o card da lista de cards restantes
       setRemainingCards(prev => prev.filter(card => card.id !== currentCardId))
       setCompletedCards(prev => new Set(Array.from(prev).concat([currentCardId])))
-      
       // Adicionar à lista de cards completados recentemente (intervalo)
       setRecentlyCompletedCards(prev => new Set(Array.from(prev).concat([currentCardId])))
-      
       // Salvar progresso no localStorage
       if (selectedTopic) {
         saveCardProgress(params.subject, selectedTopic, currentCardId, filteredFlashcards.length)
       }
-      
       setStudySession(prev => ({
         ...prev,
         correctAnswers: prev.correctAnswers + 1
       }))
+      // Reset para próximo card
+      setIsFlipped(false)
+      // Verificar se a sessão deve ser marcada como completa
+      if (studySession.correctAnswers + 1 >= studySession.totalCards) {
+        setSessionCompleted(true)
+      } else if (remainingCards.length > 1) {
+        setCurrentCardIndex(0)
+      } else {
+        setCurrentCardIndex(0)
+      }
     } else {
-      // Se errou, mantém o card na lista e move para o próximo
+      // Se errou, move o card para o final da fila
+      setRemainingCards(prev => {
+        if (prev.length <= 1) return prev
+        const newArr = prev.slice()
+        const [errado] = newArr.splice(currentCardIndex, 1)
+        newArr.push(errado)
+        return newArr
+      })
       setStudySession(prev => ({
         ...prev,
         incorrectAnswers: prev.incorrectAnswers + 1
       }))
-    }
-
-    // Reset para próximo card
-    setIsFlipped(false)
-    
-    // Verificar se a sessão deve ser marcada como completa
-    if (isCorrect && studySession.correctAnswers + 1 >= studySession.totalCards) {
-      // Se acertou o último card, sessão completa
-      setSessionCompleted(true)
-    } else if (remainingCards.length > 1) {
-      // Se ainda há cards restantes, move para o próximo
-      setCurrentCardIndex((currentCardIndex + 1) % remainingCards.length)
-    } else {
-      // Se não há cards restantes, reset para 0
+      // Reset para próximo card
+      setIsFlipped(false)
       setCurrentCardIndex(0)
     }
   }
@@ -633,13 +669,18 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
                               <span className="inline-block bg-primary-100 text-primary-800 text-xs font-medium px-2.5 py-0.5 rounded">
                                 {currentCard.category}
                               </span>
-                              <span className={`ml-2 inline-block text-xs font-medium px-2.5 py-0.5 rounded ${
-                                currentCard.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
-                                currentCard.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
-                              }`}>
-                                {currentCard.difficulty === 'easy' ? 'Fácil' :
-                                 currentCard.difficulty === 'medium' ? 'Médio' : 'Difícil'}
+                              <span className={`ml-2 inline-block text-xs font-medium px-2.5 py-0.5 rounded ${(() => {
+                                const diff = getDynamicDifficulty(params.subject, selectedTopic || currentCard.topic, currentCard.id);
+                                if (diff === 'easy') return 'bg-green-100 text-green-800';
+                                if (diff === 'medium') return 'bg-yellow-100 text-yellow-800';
+                                return 'bg-red-100 text-red-800';
+                              })()}`}> 
+                                {(() => {
+                                  const diff = getDynamicDifficulty(params.subject, selectedTopic || currentCard.topic, currentCard.id);
+                                  if (diff === 'easy') return 'Fácil';
+                                  if (diff === 'medium') return 'Médio';
+                                  return 'Difícil';
+                                })()}
                               </span>
                             </div>
                             <h3 className="text-xl font-semibold text-gray-900 mb-4">
@@ -690,14 +731,14 @@ export default function StudyPage({ params }: { params: { subject: string } }) {
                     className="flex justify-center space-x-4"
                   >
                     <button
-                      onClick={() => handleAnswer(false)}
+                      onClick={() => { handleAnswer(false); saveCardHistory(params.subject, selectedTopic || currentCard.topic, currentCard.id, 'errou'); }}
                       className="flex items-center px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200"
                     >
                       <X className="h-5 w-5 mr-2" />
                       Errei
                     </button>
                     <button
-                      onClick={() => handleAnswer(true)}
+                      onClick={() => { handleAnswer(true); saveCardHistory(params.subject, selectedTopic || currentCard.topic, currentCard.id, 'acertou'); }}
                       className="flex items-center px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200"
                     >
                       <Check className="h-5 w-5 mr-2" />
