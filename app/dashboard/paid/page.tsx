@@ -267,9 +267,12 @@ export default function PaidDashboardPage() {
     setSubjects(updatedSubjects);
   }
 
+  // Função para garantir que o progresso nunca ultrapasse 100% e nunca mostre, por exemplo, 2/1
   const getProgressPercentage = (completed: number, total: number) => {
-    return Math.round((completed / total) * 100)
-  }
+    if (total === 0) return 0;
+    const percent = Math.round((completed / total) * 100);
+    return percent > 100 ? 100 : percent;
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('flashconcards_user')
@@ -743,12 +746,14 @@ export default function PaidDashboardPage() {
                 <div className="mb-4">
                   <div className="flex justify-between text-sm text-gray-600 mb-1">
                     <span>Progresso</span>
-                    <span>{subject.completedCards}/{subject.totalCards}</span>
+                    <span className="font-medium">
+                      {Math.min(subject.completedCards, subject.totalCards)}/{subject.totalCards}
+                    </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${getProgressPercentage(subject.completedCards, subject.totalCards)}%` }}
+                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="h-2 rounded-full transition-all duration-300 bg-blue-500"
+                      style={{ width: `${getProgressPercentage(subject.completedCards, subject.totalCards)}%`, minWidth: 0, maxWidth: '100%' }}
                     ></div>
                   </div>
                 </div>
