@@ -152,6 +152,28 @@ export default function AdminPage() {
   const [conteudoAprof, setConteudoAprof] = useState('');
   const [salvandoAprof, setSalvandoAprof] = useState(false);
   const [msgAprof, setMsgAprof] = useState('');
+  const [subtopicosSalvos, setSubtopicosSalvos] = useState<any[]>([]);
+
+  // Carregar subtópicos salvos do Firestore
+  useEffect(() => {
+    if (!autenticado) return;
+    const carregarSubtopicos = async () => {
+      try {
+        const { collection, getDocs } = await import('firebase/firestore');
+        const { db } = await import('../lib/firebase');
+        const snapshot = await getDocs(collection(db, 'subtopics'));
+        const subtopicos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setSubtopicosSalvos(subtopicos);
+      } catch (error) {
+        console.error('Erro ao carregar subtópicos:', error);
+      }
+    };
+    carregarSubtopicos();
+  }, [autenticado]);
+
+  // Combinar subtópicos do JSON com os salvos no Firestore
+  const todosSubtopicos = [...subtitulos, ...subtopicosSalvos.map(s => s.name).filter(Boolean)];
+  const subtopicosUnicos = Array.from(new Set(todosSubtopicos));
 
   // Função para carregar conteúdo de aprofundamento
   async function carregarAprofundamento(sub: string) {
@@ -288,7 +310,7 @@ export default function AdminPage() {
                     <label className="block text-gray-700 mb-2">Selecione o Subtópico</label>
                     <select value={subtopicoAprof} onChange={e => { carregarAprofundamento(e.target.value); }} className="w-full px-3 py-2 border rounded-lg">
                       <option value="">Selecione o subtópico</option>
-                      {subtitulos.map((sub: string, idx: number) => (
+                      {subtopicosUnicos.map((sub: string, idx: number) => (
                         <option key={idx} value={sub}>{sub}</option>
                       ))}
                     </select>
@@ -306,6 +328,30 @@ export default function AdminPage() {
                 )}
               </div>
             )}
+            {/* Lista de Subtópicos Salvos */}
+            <h4 className="text-lg font-bold mb-2 mt-6">Subtópicos com Aprofundamento</h4>
+            <div className="mb-6">
+              {subtopicosSalvos.length > 0 ? (
+                <div className="space-y-2">
+                  {subtopicosSalvos.map(sub => (
+                    <div key={sub.id} className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-4 py-2">
+                      <div>
+                        <span className="font-semibold text-green-700">{sub.name}</span>
+                        <span className="text-sm text-gray-500 ml-2">(Salvo em: {new Date(sub.updated_at).toLocaleDateString()})</span>
+                      </div>
+                      <button 
+                        onClick={() => carregarAprofundamento(sub.name)} 
+                        className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+                      >
+                        Editar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-gray-500">Nenhum subtópico com aprofundamento salvo.</div>
+              )}
+            </div>
             <h4 className="text-lg font-bold mb-2 mt-6">Flashcards cadastrados</h4>
             {carregando ? (
               <div>Carregando...</div>
