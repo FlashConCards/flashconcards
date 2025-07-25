@@ -7,7 +7,6 @@ if (!accessToken) {
 }
 
 // Configurar o Mercado Pago com suas credenciais
-// Usar o token real fornecido pelo usuário
 const client = new MercadoPagoConfig({ 
   accessToken: accessToken || 'APP_USR-1980247803255472-072422-f04f56e43fba7e2a75a5f79c97214d45-2583165550'
 })
@@ -71,29 +70,22 @@ export async function createCardPayment(paymentData: PaymentData) {
   }
 }
 
-// Função para criar pagamento PIX com fallback
+// Função para criar pagamento PIX REAL
 export async function createPixPayment(paymentData: PixPaymentData) {
   try {
-    console.log('Criando pagamento PIX com dados:', paymentData)
+    console.log('Criando pagamento PIX REAL com dados:', paymentData)
     console.log('Token configurado:', accessToken ? 'Sim' : 'Não')
-    
-    // Para ambiente de desenvolvimento, usar dados de teste
-    const testPayer = {
-      email: paymentData.payer.email,
-      first_name: paymentData.payer.first_name || 'Teste',
-      last_name: paymentData.payer.last_name || 'Usuário'
-    }
     
     const result = await payment.create({
       body: {
         transaction_amount: paymentData.transaction_amount,
         description: paymentData.description,
         payment_method_id: 'pix',
-        payer: testPayer
+        payer: paymentData.payer
       }
     })
 
-    console.log('Resultado do pagamento PIX:', result)
+    console.log('Resultado do pagamento PIX REAL:', result)
 
     // Verificar se o QR code foi gerado
     const qrCode = result.point_of_interaction?.transaction_data?.qr_code
@@ -101,15 +93,9 @@ export async function createPixPayment(paymentData: PixPaymentData) {
     
     if (!qrCode && !qrCodeBase64) {
       console.error('QR code não foi gerado pelo Mercado Pago')
-      
-      // Retornar dados simulados para desenvolvimento
       return {
-        success: true,
-        payment_id: result.id || 'pix-test-' + Date.now(),
-        status: 'pending',
-        qr_code: '00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426614174000520400005303986540599.905802BR5913FlashConCards6009SAO PAULO62070503***6304E2CA',
-        qr_code_base64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-        external_reference: result.external_reference || 'test-ref-' + Date.now()
+        success: false,
+        error: 'QR code não foi gerado. Verifique as permissões do token.'
       }
     }
 
@@ -122,25 +108,9 @@ export async function createPixPayment(paymentData: PixPaymentData) {
       external_reference: result.external_reference
     }
   } catch (error: any) {
-    console.error('Erro detalhado ao criar pagamento PIX:', error)
+    console.error('Erro detalhado ao criar pagamento PIX REAL:', error)
     console.error('Mensagem de erro:', error.message)
     console.error('Stack trace:', error.stack)
-    
-    // Se for erro de permissão, retornar dados simulados para desenvolvimento
-    if (error.message.includes('Collector user without key enabled for QR render') || 
-        error.message.includes('Token sem permissão')) {
-      
-      console.log('Usando dados simulados para desenvolvimento')
-      
-      return {
-        success: true,
-        payment_id: 'pix-simulated-' + Date.now(),
-        status: 'pending',
-        qr_code: '00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426614174000520400005303986540599.905802BR5913FlashConCards6009SAO PAULO62070503***6304E2CA',
-        qr_code_base64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-        external_reference: 'simulated-ref-' + Date.now()
-      }
-    }
     
     return {
       success: false,
@@ -156,8 +126,7 @@ export async function getPaymentStatus(paymentId: string) {
     return {
       success: true,
       status: result.status,
-      status_detail: result.status_detail,
-      external_reference: result.external_reference
+      status_detail: result.status_detail
     }
   } catch (error: any) {
     console.error('Erro ao verificar status do pagamento:', error)
