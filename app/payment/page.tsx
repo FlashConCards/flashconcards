@@ -350,9 +350,10 @@ export default function PaymentPage() {
                         />
                       ) : (
                         <div className="text-center mb-4">
-                          <div className="bg-white rounded-lg p-4 inline-block">
-                            <div className="text-2xl font-bold text-gray-800 mb-2">PIX</div>
+                          <div className="bg-white rounded-lg p-4 inline-block border-2 border-blue-200">
+                            <div className="text-2xl font-bold text-blue-600 mb-2">PIX</div>
                             <div className="text-sm text-gray-600">R$ 99,90</div>
+                            <div className="text-xs text-gray-500 mt-1">Código PIX disponível abaixo</div>
                           </div>
                         </div>
                       )}
@@ -362,24 +363,29 @@ export default function PaymentPage() {
                     </div>
                     
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <span className="text-sm text-gray-600">Código PIX:</span>
-                        <button
-                          onClick={handlePixCopy}
-                          className="flex items-center text-primary-600 hover:text-primary-700"
-                        >
-                          {isPixCopied ? (
-                            <>
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Copiado!
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-4 w-4 mr-1" />
-                              Copiar
-                            </>
-                          )}
-                        </button>
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-blue-800">Código PIX:</span>
+                          <button
+                            onClick={handlePixCopy}
+                            className="flex items-center text-blue-600 hover:text-blue-700 bg-blue-100 px-3 py-1 rounded-lg"
+                          >
+                            {isPixCopied ? (
+                              <>
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Copiado!
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="h-4 w-4 mr-1" />
+                                Copiar
+                              </>
+                            )}
+                          </button>
+                        </div>
+                        <div className="bg-white p-3 rounded border text-sm font-mono text-gray-800 break-all">
+                          {pixData.qr_code || 'Código PIX será gerado aqui...'}
+                        </div>
                       </div>
                       
                       <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
