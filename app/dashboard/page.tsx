@@ -17,6 +17,9 @@ import {
   MessageSquare
 } from 'lucide-react'
 import { isUserLoggedIn, getLoggedInUser } from '../lib/auth'
+import { db } from '../lib/firebase'
+import { doc, getDoc } from 'firebase/firestore'
+import { useRouter } from 'next/navigation'
 
 interface Subject {
   id: string
@@ -34,17 +37,54 @@ export default function DashboardPage() {
     email: 'demo@flashconcards.com',
     progress: 0
   })
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
-    // Verificar se o usuário está logado e redirecionar se necessário
-    if (isUserLoggedIn()) {
-      const loggedInUser = getLoggedInUser()
-      if (loggedInUser) {
-        window.location.href = '/dashboard/paid'
-        return
+    const checkAuth = async () => {
+      try {
+        // Verificar se o usuário está logado
+        if (isUserLoggedIn()) {
+          const loggedInUser = getLoggedInUser()
+          if (loggedInUser) {
+            // Verificar se o usuário tem acesso pago no Firestore
+            const userId = loggedInUser.id || loggedInUser.email?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown';
+            const userRef = doc(db, 'users', userId);
+            const userDoc = await getDoc(userRef);
+            
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              if (userData.isPaid || userData.hasAccess) {
+                console.log('Usuário tem acesso pago, redirecionando para dashboard pago');
+                router.push('/dashboard/paid')
+                return
+              }
+            }
+          }
+        }
+        
+        // Se chegou até aqui, usuário não tem acesso pago ou não está logado
+        setIsCheckingAuth(false)
+      } catch (error) {
+        console.error('Erro na verificação de autenticação:', error);
+        setIsCheckingAuth(false)
       }
-    }
-  }, [])
+    };
+
+    checkAuth();
+  }, [router])
+
+  // Se está verificando autenticação, mostrar loading
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verificando acesso...</p>
+        </div>
+      </div>
+    );
+  }
 
 
   const subjects: Subject[] = [

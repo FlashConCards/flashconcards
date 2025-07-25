@@ -53,76 +53,108 @@ export default function PaidDashboardPage() {
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileSuccess, setProfileSuccess] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter();
 
+  // Verificação de autenticação robusta
   useEffect(() => {
-    // Verificar se usuário está logado
-    const userData = localStorage.getItem('flashconcards_user')
-    if (!userData) {
-      window.location.href = '/login'
-      return
-    }
+    const checkAuth = async () => {
+      try {
+        // Verificar se usuário está logado
+        const userData = localStorage.getItem('flashconcards_user')
+        if (!userData) {
+          console.log('Usuário não encontrado no localStorage, redirecionando para login');
+          router.push('/login')
+          return
+        }
 
-    const userInfo = JSON.parse(userData)
-    setUser(userInfo)
+        const userInfo = JSON.parse(userData)
+        
+        // Verificar se o usuário tem dados válidos
+        if (!userInfo.email || !userInfo.uid) {
+          console.log('Dados de usuário inválidos, redirecionando para login');
+          localStorage.removeItem('flashconcards_user')
+          router.push('/login')
+          return
+        }
 
-    // Configurar listener em tempo real do Firestore
-    const userId = userInfo.uid || userInfo.email?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown';
-    const userRef = doc(db, 'users', userId);
-    
-    console.log('Configurando listener em tempo real para usuário:', userId);
-    
-    const unsubscribe = onSnapshot(userRef, (doc) => {
-      if (doc.exists()) {
-        const firestoreData = doc.data();
-        console.log('Dados atualizados em tempo real:', firestoreData);
+        // Verificar se o usuário existe no Firestore
+        const userId = userInfo.uid || userInfo.email?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown';
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
         
-        // Atualizar usuário com dados do Firestore
-        const updatedUser = { ...userInfo, ...firestoreData };
-        setUser(updatedUser);
+        if (!userDoc.exists()) {
+          console.log('Usuário não encontrado no Firestore, redirecionando para login');
+          localStorage.removeItem('flashconcards_user')
+          router.push('/login')
+          return
+        }
+
+        // Verificar se o usuário tem acesso pago
+        const firestoreData = userDoc.data();
+        if (!firestoreData.isPaid && !firestoreData.hasAccess) {
+          console.log('Usuário não tem acesso pago, redirecionando para dashboard demo');
+          router.push('/dashboard')
+          return
+        }
+
+        // Se chegou até aqui, usuário está autenticado e tem acesso
+        setIsAuthenticated(true)
+        setUser(userInfo)
+
+        // Configurar listener em tempo real do Firestore
+        console.log('Configurando listener em tempo real para usuário:', userId);
         
-        // Atualizar localStorage
-        localStorage.setItem('flashconcards_user', JSON.stringify(updatedUser));
-        
-        // Atualizar profileData com dados em tempo real
-        setProfileData(prev => ({
-          ...prev,
-          displayName: firestoreData.displayName || userInfo.displayName || userInfo.name || '',
-          photoURL: firestoreData.photoURL || userInfo.photoURL || ''
-        }));
-      } else {
-        console.log('Documento não existe no Firestore, usando dados do localStorage');
-        setProfileData({
-          displayName: userInfo.displayName || userInfo.name || '',
-          photoURL: userInfo.photoURL || '',
-          newPassword: '',
-          confirmPassword: ''
+        const unsubscribe = onSnapshot(userRef, (doc) => {
+          if (doc.exists()) {
+            const firestoreData = doc.data();
+            console.log('Dados atualizados em tempo real:', firestoreData);
+            
+            // Atualizar usuário com dados do Firestore
+            const updatedUser = { ...userInfo, ...firestoreData };
+            setUser(updatedUser);
+            
+            // Atualizar localStorage
+            localStorage.setItem('flashconcards_user', JSON.stringify(updatedUser));
+            
+            // Atualizar profileData com dados em tempo real
+            setProfileData(prev => ({
+              ...prev,
+              displayName: firestoreData.displayName || userInfo.displayName || userInfo.name || '',
+              photoURL: firestoreData.photoURL || userInfo.photoURL || ''
+            }));
+          } else {
+            console.log('Documento não existe no Firestore, usando dados do localStorage');
+            setProfileData({
+              displayName: userInfo.displayName || userInfo.name || '',
+              photoURL: userInfo.photoURL || '',
+              newPassword: '',
+              confirmPassword: ''
+            });
+          }
         });
+
+        return () => unsubscribe();
+      } catch (error) {
+        console.error('Erro na verificação de autenticação:', error);
+        router.push('/login')
       }
-    }, (error) => {
-      console.error('Erro no listener em tempo real:', error);
-      // Em caso de erro, usar dados do localStorage
-      setProfileData({
-        displayName: userInfo.displayName || userInfo.name || '',
-        photoURL: userInfo.photoURL || '',
-        newPassword: '',
-        confirmPassword: ''
-      });
-    });
-
-    // Buscar dados reais do Firebase
-    fetchUserStats(userInfo.email)
-    
-    // Carregar matérias disponíveis
-    loadSubjects(userInfo.email)
-    // Buscar total de cards e progresso geral em tempo real
-    loadDashboardStats(userInfo.email)
-
-    // Cleanup do listener quando componente desmontar
-    return () => {
-      console.log('Removendo listener em tempo real');
-      unsubscribe();
     };
-  }, [])
+
+    checkAuth();
+  }, [router]);
+
+  // Se não está autenticado, mostrar loading
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verificando autenticação...</p>
+        </div>
+      </div>
+    );
+  }
 
   const fetchUserStats = async (email: string) => {
     try {
