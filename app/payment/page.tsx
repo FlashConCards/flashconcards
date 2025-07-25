@@ -49,8 +49,8 @@ export default function PaymentPage() {
 
     setIsLoading(true)
     try {
-      // Usar a versão simplificada do PIX
-      const response = await fetch('/api/payment/pix-simple', {
+      // Usar a API real do Mercado Pago para que o dinheiro caia na conta
+      const response = await fetch('/api/payment/pix', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -15,41 +15,59 @@ export async function POST(request: NextRequest) {
     }
 
     const paymentData = {
-              transaction_amount: 99.90,
+      transaction_amount: 99.90,
       description: 'FlashConCards ALEGO - R$ 99,90',
       payment_method_id: 'pix' as const,
       payer: {
-        email,
+        email: email,
         first_name: firstName,
         last_name: lastName
       }
     }
 
-    const result = await createPixPayment(paymentData)
+    console.log('Criando pagamento PIX com dados:', paymentData)
+    console.log('Token configurado:', process.env.MERCADO_PAGO_ACCESS_TOKEN ? 'Sim' : 'Não')
+    
+    // Para ambiente de desenvolvimento, usar dados de teste
+    const testPayer = {
+      email: paymentData.payer.email,
+      first_name: paymentData.payer.first_name || 'Teste',
+      last_name: paymentData.payer.last_name || 'Usuário'
+    }
+    
+    const result = await createPixPayment({
+      ...paymentData,
+      payer: testPayer
+    })
+
+    console.log('Resultado do pagamento PIX:', result)
 
     if (result.success) {
-      // Registrar pagamento para o email
+      // Registrar pagamento no Firebase
       const paymentRecord = {
         email,
         paymentId: result.payment_id?.toString() || 'pix-payment',
         amount: 99.90,
-        status: 'pending' as const,
+        status: (result.status as 'pending' | 'approved' | 'rejected') || 'pending',
         date: new Date().toISOString(),
-        method: 'pix' as const
+        method: 'pix' as const,
+        firstName,
+        lastName
       }
       
       await addPaymentRecord(paymentRecord)
-      
+
       return NextResponse.json({
         success: true,
         payment_id: result.payment_id,
         qr_code: result.qr_code,
         qr_code_base64: result.qr_code_base64,
-        status: result.status
+        status: result.status,
+        external_reference: result.external_reference
       })
     } else {
       return NextResponse.json(
-        { error: result.error },
+        { error: result.error || 'Erro ao gerar PIX' },
         { status: 400 }
       )
     }

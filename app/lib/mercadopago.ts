@@ -7,9 +7,9 @@ if (!accessToken) {
 }
 
 // Configurar o Mercado Pago com suas credenciais
-// Usar token de teste válido se o token de produção não estiver configurado
+// Usar o token real fornecido pelo usuário
 const client = new MercadoPagoConfig({ 
-  accessToken: accessToken || 'TEST-123456789-abcdef-1234567890abcdef'
+  accessToken: accessToken || 'APP_USR-1980247803255472-072422-f04f56e43fba7e2a75a5f79c97214d45-2583165550'
 })
 
 const payment = new Payment(client)
