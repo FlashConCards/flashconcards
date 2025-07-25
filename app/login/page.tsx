@@ -25,33 +25,38 @@ export default function LoginPage() {
     }
     
     try {
-      // Verificar se o usuário pagou no servidor
-      const response = await fetch('/api/payment/status', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email })
-      })
-      
-      const data = await response.json()
-      
-      if (data.success && data.isPaid) {
-        // Usuário pagou, permitir acesso
-        localStorage.setItem('flashconcards_user', JSON.stringify({
-          name: email.split('@')[0],
-          email: email,
-          isPaid: true,
-          loginTime: new Date().toISOString()
-        }))
-        
-        window.location.href = '/dashboard/paid'
-      } else {
-        // Usuário não pagou
-        setError('Acesso restrito. Você precisa fazer o pagamento para acessar o sistema.')
+      // Verificar se o email é válido
+      if (!email || !email.includes('@')) {
+        setError('Por favor, insira um email válido.')
+        setIsLoading(false)
+        return
       }
+      
+      // Criar dados do usuário
+      const userData = {
+        name: email.split('@')[0],
+        email: email,
+        uid: email.replace(/[^a-zA-Z0-9]/g, '_'),
+        isPaid: true,
+        hasAccess: true,
+        loginTime: new Date().toISOString()
+      }
+      
+      // Salvar no localStorage
+      localStorage.setItem('flashconcards_user', JSON.stringify(userData))
+      
+      // Salvar no cookie também para o middleware
+      const userDataString = JSON.stringify(userData)
+      document.cookie = `flashconcards_user=${encodeURIComponent(userDataString)}; path=/; max-age=2592000; secure; samesite=strict`
+      
+      console.log('✅ Login realizado com sucesso:', userData)
+      
+      // Redirecionar para dashboard pago
+      window.location.href = '/dashboard/paid'
+      
     } catch (error) {
-      setError('Erro ao verificar pagamento. Tente novamente.')
+      console.error('Erro no login:', error)
+      setError('Erro ao fazer login. Tente novamente.')
     } finally {
       setIsLoading(false)
     }
@@ -127,7 +132,7 @@ export default function LoginPage() {
             disabled={isLoading}
             className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50"
           >
-            {isLoading ? 'Verificando...' : 'Entrar'}
+            {isLoading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
         
