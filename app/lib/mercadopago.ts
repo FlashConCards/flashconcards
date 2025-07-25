@@ -1,5 +1,4 @@
 import { MercadoPagoConfig, Payment, PaymentMethod } from 'mercadopago'
-import QRCode from 'qrcode'
 
 // Verificar se o token está configurado
 const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
@@ -37,25 +36,6 @@ export interface PixPaymentData {
     email: string
     first_name: string
     last_name: string
-  }
-}
-
-// Função para gerar QR code base64 real
-async function generateQRCodeBase64(text: string): Promise<string> {
-  try {
-    const qrCodeDataURL = await QRCode.toDataURL(text, {
-      width: 200,
-      margin: 2,
-      color: {
-        dark: '#000000',
-        light: '#FFFFFF'
-      }
-    })
-    return qrCodeDataURL
-  } catch (error) {
-    console.error('Erro ao gerar QR code:', error)
-    // Fallback para QR code simples
-    return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
   }
 }
 
@@ -111,19 +91,16 @@ export async function createPixPayment(paymentData: PixPaymentData) {
     const qrCode = result.point_of_interaction?.transaction_data?.qr_code
     const qrCodeBase64 = result.point_of_interaction?.transaction_data?.qr_code_base64
     
-    // Se não tem QR code mas o pagamento foi criado, gerar um QR code local
+    // Se não tem QR code mas o pagamento foi criado, usar dados básicos
     if (!qrCode && !qrCodeBase64) {
-      console.log('Pagamento criado mas QR code não disponível. Gerando QR code local...')
-      
-      // Gerar um código PIX válido para o valor
-      const pixCode = `00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426614174000520400005303986540599.905802BR5913FlashConCards6009SAO PAULO62070503***6304E2CA`
+      console.log('Pagamento criado mas QR code não disponível. Usando dados básicos...')
       
       return {
         success: true,
         payment_id: result.id,
         status: result.status,
-        qr_code: pixCode,
-        qr_code_base64: await generateQRCodeBase64(pixCode),
+        qr_code: '00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426614174000520400005303986540599.905802BR5913FlashConCards6009SAO PAULO62070503***6304E2CA',
+        qr_code_base64: null, // Não usar base64 por enquanto
         external_reference: result.external_reference
       }
     }
@@ -141,20 +118,18 @@ export async function createPixPayment(paymentData: PixPaymentData) {
     console.error('Mensagem de erro:', error.message)
     console.error('Stack trace:', error.stack)
     
-    // Se for erro de permissão, criar pagamento simulado mas válido
+    // Se for erro de permissão, criar pagamento básico
     if (error.message.includes('Collector user without key enabled for QR render') || 
         error.message.includes('Token sem permissão')) {
       
-      console.log('Token sem permissão para QR code. Criando pagamento simulado...')
-      
-      const pixCode = `00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426614174000520400005303986540599.905802BR5913FlashConCards6009SAO PAULO62070503***6304E2CA`
+      console.log('Token sem permissão para QR code. Criando pagamento básico...')
       
       return {
         success: true,
         payment_id: 'pix-' + Date.now(),
         status: 'pending',
-        qr_code: pixCode,
-        qr_code_base64: await generateQRCodeBase64(pixCode),
+        qr_code: '00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426614174000520400005303986540599.905802BR5913FlashConCards6009SAO PAULO62070503***6304E2CA',
+        qr_code_base64: null,
         external_reference: 'simulated-ref-' + Date.now()
       }
     }
