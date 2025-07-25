@@ -78,8 +78,21 @@ export default function PaidDashboardPage() {
           return
         }
 
+        // Verificar se o usuário existe no Firestore
+        const userId = userInfo.uid || userInfo.email?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown';
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+        
+        if (!userDoc.exists()) {
+          console.log('Usuário não encontrado no Firestore, redirecionando para login');
+          localStorage.removeItem('flashconcards_user')
+          router.push('/login')
+          return
+        }
+
         // Verificar se o usuário tem acesso pago
-        if (!userInfo.isPaid && !userInfo.hasAccess) {
+        const firestoreData = userDoc.data();
+        if (!firestoreData.isPaid && !firestoreData.hasAccess) {
           console.log('Usuário não tem acesso pago, redirecionando para dashboard demo');
           router.push('/dashboard')
           return
@@ -90,11 +103,9 @@ export default function PaidDashboardPage() {
         setUser(userInfo)
 
         // Configurar listener em tempo real do Firestore
-        const userId = userInfo.uid || userInfo.email?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown';
-        const userRef = doc(db, 'users', userId);
         console.log('Configurando listener em tempo real para usuário:', userId);
         
-        const unsubscribe = onSnapshot(userRef, (doc: any) => {
+        const unsubscribe = onSnapshot(userRef, (doc) => {
           if (doc.exists()) {
             const firestoreData = doc.data();
             console.log('Dados atualizados em tempo real:', firestoreData);

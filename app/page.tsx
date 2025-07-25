@@ -107,10 +107,9 @@ export default function HomePage() {
             <div className="flex items-center space-x-4">
               <Link 
                 href="/demo" 
-                className="bg-white text-primary-600 hover:bg-gray-100 px-6 py-3 rounded-lg font-semibold transition-colors inline-flex items-center"
+                className="text-white hover:text-blue-200 transition-colors"
               >
                 Demo
-                <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
               <Link 
                 href="/login" 

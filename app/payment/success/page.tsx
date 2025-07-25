@@ -19,7 +19,7 @@ export default function PaymentSuccessPage() {
           email: userData.email,
           name: userData.name,
           paymentId: paymentInfo.paymentId,
-          amount: paymentInfo.amount || '1,00'
+          amount: paymentInfo.amount || '99,90'
         })
       }).then(() => {
         // Marcar como enviado para não disparar novamente
