@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       const paymentRecord = {
         email,
         paymentId: result.payment_id?.toString() || 'pix-payment',
-        amount: 1.00,
+        amount: 99.90,
         status: 'pending' as const,
         date: new Date().toISOString(),
         method: 'pix' as const

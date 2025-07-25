@@ -1,8 +1,14 @@
 import { MercadoPagoConfig, Payment, PaymentMethod } from 'mercadopago'
 
+// Verificar se o token está configurado
+const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
+if (!accessToken) {
+  console.error('MERCADO_PAGO_ACCESS_TOKEN não está configurado!')
+}
+
 // Configurar o Mercado Pago com suas credenciais
 const client = new MercadoPagoConfig({ 
-  accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN! 
+  accessToken: accessToken || 'APP_USR-1980247803255472-072422-f04f56e43fba7e2a75a5f79c97214d45-2583165550'
 })
 
 const payment = new Payment(client)
@@ -67,6 +73,9 @@ export async function createCardPayment(paymentData: PaymentData) {
 // Função para criar pagamento PIX
 export async function createPixPayment(paymentData: PixPaymentData) {
   try {
+    console.log('Criando pagamento PIX com dados:', paymentData)
+    console.log('Token configurado:', accessToken ? 'Sim' : 'Não')
+    
     const result = await payment.create({
       body: {
         transaction_amount: paymentData.transaction_amount,
@@ -75,6 +84,8 @@ export async function createPixPayment(paymentData: PixPaymentData) {
         payer: paymentData.payer
       }
     })
+
+    console.log('Resultado do pagamento PIX:', result)
 
     return {
       success: true,
@@ -85,7 +96,10 @@ export async function createPixPayment(paymentData: PixPaymentData) {
       external_reference: result.external_reference
     }
   } catch (error: any) {
-    console.error('Erro ao criar pagamento PIX:', error)
+    console.error('Erro detalhado ao criar pagamento PIX:', error)
+    console.error('Mensagem de erro:', error.message)
+    console.error('Stack trace:', error.stack)
+    
     return {
       success: false,
       error: error.message || 'Erro ao processar pagamento PIX'

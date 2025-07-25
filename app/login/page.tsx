@@ -17,15 +17,8 @@ export default function LoginPage() {
     setIsLoading(true)
     setError('')
     
-    // Verificar se a senha está correta
-    if (password !== 'souflashconcards') {
-      setError('Senha incorreta. Use a senha fornecida após o pagamento.')
-      setIsLoading(false)
-      return
-    }
-    
     try {
-      // Verificar se o usuário pagou no servidor
+      // Verificar se o usuário existe e tem acesso
       const response = await fetch('/api/payment/status', {
         method: 'POST',
         headers: {
@@ -37,21 +30,46 @@ export default function LoginPage() {
       const data = await response.json()
       
       if (data.success && data.isPaid) {
-        // Usuário pagou, permitir acesso
+        // Usuário tem acesso pago
         localStorage.setItem('flashconcards_user', JSON.stringify({
           name: email.split('@')[0],
           email: email,
           isPaid: true,
+          hasAccess: true,
           loginTime: new Date().toISOString()
         }))
         
         window.location.href = '/dashboard/paid'
       } else {
-        // Usuário não pagou
-        setError('Acesso restrito. Você precisa fazer o pagamento para acessar o sistema.')
+        // Verificar se é um usuário cadastrado (sem pagamento)
+        const userResponse = await fetch('/api/admin/check-user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email })
+        })
+        
+        const userData = await userResponse.json()
+        
+        if (userData.exists) {
+          // Usuário cadastrado, permitir acesso demo
+          localStorage.setItem('flashconcards_user', JSON.stringify({
+            name: email.split('@')[0],
+            email: email,
+            isPaid: false,
+            hasAccess: true,
+            loginTime: new Date().toISOString()
+          }))
+          
+          window.location.href = '/dashboard'
+        } else {
+          // Usuário não encontrado
+          setError('Email não encontrado. Faça o pagamento para acessar o sistema.')
+        }
       }
     } catch (error) {
-      setError('Erro ao verificar pagamento. Tente novamente.')
+      setError('Erro ao verificar acesso. Tente novamente.')
     } finally {
       setIsLoading(false)
     }
