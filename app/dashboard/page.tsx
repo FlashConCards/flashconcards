@@ -14,7 +14,12 @@ import {
   BarChart3,
   ArrowRight,
   Trophy,
-  MessageSquare
+  MessageSquare,
+  Star,
+  Zap,
+  FileText,
+  Users,
+  Calendar
 } from 'lucide-react'
 import { isUserLoggedIn, getLoggedInUser } from '../lib/auth'
 import { db } from '../lib/firebase'
@@ -38,6 +43,14 @@ export default function DashboardPage() {
     progress: 0
   })
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const [demoStats, setDemoStats] = useState({
+    totalCards: 500,
+    cardsStudied: 0,
+    sessionsToday: 0,
+    timeStudied: 0,
+    subjects: 6,
+    demoProgress: 25
+  })
   const router = useRouter()
 
   useEffect(() => {
@@ -85,7 +98,6 @@ export default function DashboardPage() {
       </div>
     );
   }
-
 
   const subjects: Subject[] = [
     {
@@ -148,8 +160,6 @@ export default function DashboardPage() {
     return Math.round((completed / total) * 100)
   }
 
-
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -161,10 +171,10 @@ export default function DashboardPage() {
               <span className="ml-2 text-xl font-bold text-gray-900">FlashConCards - Portal do Aluno</span>
             </div>
             <div className="flex items-center space-x-4">
-                          <div className="flex items-center space-x-2">
-              <User className="h-5 w-5 text-gray-400" />
-              <span className="text-sm text-gray-700">Demo</span>
-            </div>
+              <div className="flex items-center space-x-2">
+                <User className="h-5 w-5 text-gray-400" />
+                <span className="text-sm text-gray-700">Demo</span>
+              </div>
               <button className="text-gray-400 hover:text-gray-600">
                 <LogOut className="h-5 w-5" />
               </button>
@@ -181,24 +191,33 @@ export default function DashboardPage() {
           transition={{ duration: 0.5 }}
           className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-xl p-8 text-white mb-8"
         >
-          <h1 className="text-3xl font-bold mb-2">
-            Bem-vindo ao FlashConCards!
-          </h1>
-          <p className="text-primary-100 mb-6">
-            Esta é uma demonstração do nosso sistema. Para acessar todos os recursos, faça sua assinatura.
-          </p>
-                      <div className="bg-white bg-opacity-20 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Versão Demo</span>
-                <span className="text-sm font-medium">Limitada</span>
-              </div>
-              <div className="w-full bg-white bg-opacity-30 rounded-full h-2">
-                <div 
-                  className="bg-white h-2 rounded-full transition-all duration-300"
-                  style={{ width: '25%' }}
-                ></div>
-              </div>
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-3xl font-bold">
+              Bem-vindo ao FlashConCards!
+            </h1>
+            <div className="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-semibold">
+              VERSÃO DEMO
             </div>
+          </div>
+          <p className="text-primary-100 mb-6">
+            Experimente todas as funcionalidades do nosso sistema de flashcards. 
+            Teste os cards, veja o progresso e descubra como estudar de forma eficiente.
+          </p>
+          <div className="bg-white bg-opacity-20 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Funcionalidades Disponíveis</span>
+              <span className="text-sm font-medium">100%</span>
+            </div>
+            <div className="w-full bg-white bg-opacity-30 rounded-full h-2">
+              <div 
+                className="bg-white h-2 rounded-full transition-all duration-300"
+                style={{ width: '100%' }}
+              ></div>
+            </div>
+            <div className="mt-3 text-sm text-primary-100">
+              ✅ Flashcards interativos • ✅ Progresso em tempo real • ✅ Estatísticas • ✅ Aprofundamento • ✅ Perfil completo
+            </div>
+          </div>
         </motion.div>
 
         {/* Stats Cards */}
@@ -213,10 +232,10 @@ export default function DashboardPage() {
               <div className="p-2 bg-blue-100 rounded-lg">
                 <BookOpen className="h-6 w-6 text-blue-600" />
               </div>
-                             <div className="ml-4">
-                 <p className="text-sm font-medium text-gray-600">Total de Cards</p>
-                 <p className="text-2xl font-bold text-gray-900">500+</p>
-               </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Total de Cards</p>
+                <p className="text-2xl font-bold text-gray-900">{demoStats.totalCards}+</p>
+              </div>
             </div>
           </motion.div>
 
@@ -230,10 +249,10 @@ export default function DashboardPage() {
               <div className="p-2 bg-green-100 rounded-lg">
                 <CheckCircle className="h-6 w-6 text-green-600" />
               </div>
-                             <div className="ml-4">
-                 <p className="text-sm font-medium text-gray-600">Cards Estudados</p>
-                 <p className="text-2xl font-bold text-gray-900">0</p>
-               </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Cards Estudados</p>
+                <p className="text-2xl font-bold text-gray-900">{demoStats.cardsStudied}</p>
+              </div>
             </div>
           </motion.div>
 
@@ -247,10 +266,10 @@ export default function DashboardPage() {
               <div className="p-2 bg-purple-100 rounded-lg">
                 <TrendingUp className="h-6 w-6 text-purple-600" />
               </div>
-                             <div className="ml-4">
-                 <p className="text-sm font-medium text-gray-600">Sessões Hoje</p>
-                 <p className="text-2xl font-bold text-gray-900">0</p>
-               </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Sessões Hoje</p>
+                <p className="text-2xl font-bold text-gray-900">{demoStats.sessionsToday}</p>
+              </div>
             </div>
           </motion.div>
 
@@ -264,17 +283,17 @@ export default function DashboardPage() {
               <div className="p-2 bg-orange-100 rounded-lg">
                 <Clock className="h-6 w-6 text-orange-600" />
               </div>
-                             <div className="ml-4">
-                 <p className="text-sm font-medium text-gray-600">Tempo Estudado</p>
-                 <p className="text-2xl font-bold text-gray-900">0m</p>
-               </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Tempo Estudado</p>
+                <p className="text-2xl font-bold text-gray-900">{demoStats.timeStudied}m</p>
+              </div>
             </div>
           </motion.div>
         </div>
 
         {/* Subjects Grid */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Matérias</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Matérias Disponíveis</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {subjects.map((subject, index) => (
               <motion.div
@@ -316,38 +335,131 @@ export default function DashboardPage() {
                       {getProgressPercentage(subject.completedCards, subject.totalCards)}%
                     </span>
                   </div>
-                  {subject.completedCards === 0 && (
-                    <div className="text-center">
-                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                        Disponível no upgrade
-                      </span>
-                    </div>
-                  )}
+                  <div className="text-center">
+                    <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                      Disponível para teste
+                    </span>
+                  </div>
                 </div>
               </motion.div>
             ))}
           </div>
         </div>
 
-        {/* Upgrade Banner */}
-        <div className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-xl p-6 text-white mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-bold mb-2">Desbloqueie Todo o Conteúdo!</h3>
-              <p className="text-primary-100 mb-4">
-                Acesse todos os 500+ FlashConCards, estatísticas completas e muito mais.
+        {/* Features Demo */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Funcionalidades Disponíveis</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="bg-white rounded-xl p-6 shadow-sm"
+            >
+              <div className="flex items-center mb-4">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Zap className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="ml-3 text-lg font-semibold text-gray-900">Flashcards Interativos</h3>
+              </div>
+              <p className="text-gray-600 mb-4">
+                Teste os flashcards com sistema de memorização espaçada. 
+                Acertou? Passa para o próximo. Errou? Revisa até aprender.
               </p>
+              <a href="/study/portugues" className="text-blue-600 hover:text-blue-700 font-medium">
+                Testar agora →
+              </a>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="bg-white rounded-xl p-6 shadow-sm"
+            >
+              <div className="flex items-center mb-4">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <FileText className="h-6 w-6 text-green-600" />
+                </div>
+                <h3 className="ml-3 text-lg font-semibold text-gray-900">Aprofundamento</h3>
+              </div>
+              <p className="text-gray-600 mb-4">
+                Conteúdo adicional para cada subtópico. 
+                Explicações detalhadas e exemplos práticos.
+              </p>
+              <span className="text-green-600 font-medium">
+                Disponível na versão completa
+              </span>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="bg-white rounded-xl p-6 shadow-sm"
+            >
+              <div className="flex items-center mb-4">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <BarChart3 className="h-6 w-6 text-purple-600" />
+                </div>
+                <h3 className="ml-3 text-lg font-semibold text-gray-900">Estatísticas Detalhadas</h3>
+              </div>
+              <p className="text-gray-600 mb-4">
+                Acompanhe seu progresso com gráficos e relatórios. 
+                Veja onde precisa melhorar.
+              </p>
+              <span className="text-purple-600 font-medium">
+                Disponível na versão completa
+              </span>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Upgrade Banner */}
+        <div className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-xl p-8 text-white mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center mb-4">
+                <Star className="h-8 w-8 text-yellow-400 mr-3" />
+                <h3 className="text-2xl font-bold">Desbloqueie Todo o Conteúdo!</h3>
+              </div>
+              <p className="text-primary-100 mb-6 text-lg">
+                Acesse todos os 500+ FlashConCards, estatísticas completas, 
+                aprofundamento de conteúdo e muito mais por apenas:
+              </p>
+              <div className="mb-6">
+                <div className="text-4xl font-bold mb-2">R$ 99,90</div>
+                <div className="text-primary-100">Pagamento único • Acesso vitalício</div>
+              </div>
+              <div className="flex flex-wrap gap-4 mb-6">
+                <div className="flex items-center text-sm">
+                  <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
+                  <span>500+ Flashcards</span>
+                </div>
+                <div className="flex items-center text-sm">
+                  <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
+                  <span>6 Matérias completas</span>
+                </div>
+                <div className="flex items-center text-sm">
+                  <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
+                  <span>Estatísticas avançadas</span>
+                </div>
+                <div className="flex items-center text-sm">
+                  <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
+                  <span>Conteúdo de aprofundamento</span>
+                </div>
+              </div>
               <a 
                 href="/payment" 
-                className="btn-primary bg-white text-primary-600 hover:bg-gray-100 inline-flex items-center"
+                className="btn-primary bg-white text-primary-600 hover:bg-gray-100 inline-flex items-center px-6 py-3 rounded-lg font-semibold text-lg"
               >
-                Fazer Upgrade
+                Fazer Upgrade por R$ 99,90
                 <ArrowRight className="ml-2 h-5 w-5" />
               </a>
             </div>
-            <div className="hidden md:block">
-              <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                <BookOpen className="h-8 w-8 text-white" />
+            <div className="hidden lg:block ml-8">
+              <div className="w-24 h-24 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <BookOpen className="h-12 w-12 text-white" />
               </div>
             </div>
           </div>
@@ -359,21 +471,19 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <a href="/study/portugues" className="flex items-center justify-center p-4 border-2 border-primary-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors duration-200">
               <Play className="h-5 w-5 text-primary-600 mr-2" />
-              <span className="font-medium text-primary-600">Experimentar Demo</span>
+              <span className="font-medium text-primary-600">Testar Flashcards</span>
             </a>
-            <button className="flex items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-colors duration-200 opacity-50 cursor-not-allowed">
-              <Trophy className="h-5 w-5 text-gray-600 mr-2" />
-              <span className="font-medium text-gray-600">Registrar Resultado</span>
-            </button>
-            <button className="flex items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-colors duration-200 opacity-50 cursor-not-allowed">
-              <MessageSquare className="h-5 w-5 text-gray-600 mr-2" />
-              <span className="font-medium text-gray-600">Enviar Feedback</span>
-            </button>
+            <a href="/payment" className="flex items-center justify-center p-4 border-2 border-green-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors duration-200">
+              <Star className="h-5 w-5 text-green-600 mr-2" />
+              <span className="font-medium text-green-600">Fazer Upgrade</span>
+            </a>
+            <a href="/feedback" className="flex items-center justify-center p-4 border-2 border-blue-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors duration-200">
+              <MessageSquare className="h-5 w-5 text-blue-600 mr-2" />
+              <span className="font-medium text-blue-600">Enviar Feedback</span>
+            </a>
           </div>
         </div>
       </div>
-
-
     </div>
   )
 } 
