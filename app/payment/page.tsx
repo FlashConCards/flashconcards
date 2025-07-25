@@ -342,14 +342,22 @@ export default function PaymentPage() {
                 ) : (
                   <div className="text-center">
                     <div className="bg-gray-100 rounded-lg p-6 mb-4">
-                      <div className="text-center mb-4">
-                        <div className="bg-white rounded-lg p-4 inline-block">
-                          <div className="text-2xl font-bold text-gray-800 mb-2">PIX</div>
-                          <div className="text-sm text-gray-600">R$ 99,90</div>
+                      {pixData.qr_code_base64 ? (
+                        <img 
+                          src={pixData.qr_code_base64}
+                          alt="QR Code PIX"
+                          className="mx-auto w-48 h-48"
+                        />
+                      ) : (
+                        <div className="text-center mb-4">
+                          <div className="bg-white rounded-lg p-4 inline-block">
+                            <div className="text-2xl font-bold text-gray-800 mb-2">PIX</div>
+                            <div className="text-sm text-gray-600">R$ 99,90</div>
+                          </div>
                         </div>
-                      </div>
+                      )}
                       <p className="text-sm text-gray-600 mt-2">
-                        Use o código PIX abaixo no seu app bancário
+                        {pixData.qr_code_base64 ? 'Escaneie o QR Code com seu app bancário' : 'Use o código PIX abaixo no seu app bancário'}
                       </p>
                     </div>
                     

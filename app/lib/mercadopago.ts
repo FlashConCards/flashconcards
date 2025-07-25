@@ -1,12 +1,14 @@
 import { MercadoPagoConfig, Payment, PaymentMethod } from 'mercadopago'
 
-// Verificar se o token está configurado
+// CONFIGURAÇÃO 100% REAL - TOKEN DE PRODUÇÃO
 const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
+
 if (!accessToken) {
-  console.error('MERCADO_PAGO_ACCESS_TOKEN não está configurado!')
+  console.error('❌ ERRO: MERCADO_PAGO_ACCESS_TOKEN não está configurado!')
+  console.error('Configure no Vercel: MERCADO_PAGO_ACCESS_TOKEN = APP_USR-1980247803255472-072422-f04f56e43fba7e2a75a5f79c97214d45-2583165550')
 }
 
-// Configurar o Mercado Pago com suas credenciais
+// Configurar Mercado Pago com token REAL
 const client = new MercadoPagoConfig({ 
   accessToken: accessToken || 'APP_USR-1980247803255472-072422-f04f56e43fba7e2a75a5f79c97214d45-2583165550'
 })
@@ -70,12 +72,14 @@ export async function createCardPayment(paymentData: PaymentData) {
   }
 }
 
-// Função para criar pagamento PIX REAL
+// Função para criar pagamento PIX 100% REAL
 export async function createPixPayment(paymentData: PixPaymentData) {
   try {
-    console.log('Criando pagamento PIX REAL com dados:', paymentData)
-    console.log('Token configurado:', accessToken ? 'Sim' : 'Não')
+    console.log('🚀 CRIANDO PIX 100% REAL...')
+    console.log('Token configurado:', accessToken ? '✅ SIM' : '❌ NÃO')
+    console.log('Dados do pagamento:', paymentData)
     
+    // Criar pagamento REAL no Mercado Pago
     const result = await payment.create({
       body: {
         transaction_amount: paymentData.transaction_amount,
@@ -85,23 +89,21 @@ export async function createPixPayment(paymentData: PixPaymentData) {
       }
     })
 
-    console.log('Resultado do pagamento PIX REAL:', result)
+    console.log('✅ PAGAMENTO CRIADO COM SUCESSO:', result)
 
-    // Verificar se o QR code foi gerado
+    // Pegar QR code REAL do Mercado Pago
     const qrCode = result.point_of_interaction?.transaction_data?.qr_code
     const qrCodeBase64 = result.point_of_interaction?.transaction_data?.qr_code_base64
     
-    // Se não tem QR code mas o pagamento foi criado, usar dados básicos
+    console.log('QR Code:', qrCode ? '✅ DISPONÍVEL' : '❌ NÃO DISPONÍVEL')
+    console.log('QR Code Base64:', qrCodeBase64 ? '✅ DISPONÍVEL' : '❌ NÃO DISPONÍVEL')
+
     if (!qrCode && !qrCodeBase64) {
-      console.log('Pagamento criado mas QR code não disponível. Usando dados básicos...')
-      
+      console.error('❌ ERRO: QR code não foi gerado pelo Mercado Pago')
+      console.error('Verifique se o token tem permissões para PIX')
       return {
-        success: true,
-        payment_id: result.id,
-        status: result.status,
-        qr_code: '00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426614174000520400005303986540599.905802BR5913FlashConCards6009SAO PAULO62070503***6304E2CA',
-        qr_code_base64: null, // Não usar base64 por enquanto
-        external_reference: result.external_reference
+        success: false,
+        error: 'QR code não foi gerado. Verifique as permissões do token.'
       }
     }
 
@@ -114,25 +116,9 @@ export async function createPixPayment(paymentData: PixPaymentData) {
       external_reference: result.external_reference
     }
   } catch (error: any) {
-    console.error('Erro detalhado ao criar pagamento PIX REAL:', error)
-    console.error('Mensagem de erro:', error.message)
-    console.error('Stack trace:', error.stack)
-    
-    // Se for erro de permissão, criar pagamento básico
-    if (error.message.includes('Collector user without key enabled for QR render') || 
-        error.message.includes('Token sem permissão')) {
-      
-      console.log('Token sem permissão para QR code. Criando pagamento básico...')
-      
-      return {
-        success: true,
-        payment_id: 'pix-' + Date.now(),
-        status: 'pending',
-        qr_code: '00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426614174000520400005303986540599.905802BR5913FlashConCards6009SAO PAULO62070503***6304E2CA',
-        qr_code_base64: null,
-        external_reference: 'simulated-ref-' + Date.now()
-      }
-    }
+    console.error('❌ ERRO AO CRIAR PIX:', error)
+    console.error('Mensagem:', error.message)
+    console.error('Stack:', error.stack)
     
     return {
       success: false,
