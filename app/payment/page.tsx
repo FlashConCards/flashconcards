@@ -49,20 +49,26 @@ export default function PaymentPage() {
 
     setIsLoading(true)
     try {
-      const response = await fetch('/api/payment/pix', {
+      // Usar a versão simplificada do PIX
+      const response = await fetch('/api/payment/pix-simple', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(userData),
+        body: JSON.stringify({
+          email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.lastName
+        })
       })
 
-      const result = await response.json()
+      const data = await response.json()
 
-      if (result.success) {
-        setPixData(result)
+      if (data.success) {
+        setPixData(data)
+        setIsPixCopied(false) // Reset copied state
       } else {
-        alert('Erro ao gerar PIX: ' + result.error)
+        alert('Erro ao gerar PIX: ' + data.error)
       }
     } catch (error) {
       console.error('Erro ao criar pagamento PIX:', error)
