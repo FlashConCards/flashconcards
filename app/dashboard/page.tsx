@@ -59,20 +59,10 @@ export default function DashboardPage() {
         // Verificar se o usuário está logado
         if (isUserLoggedIn()) {
           const loggedInUser = getLoggedInUser()
-          if (loggedInUser) {
-            // Verificar se o usuário tem acesso pago no Firestore
-            const userId = loggedInUser.id || loggedInUser.email?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown';
-            const userRef = doc(db, 'users', userId);
-            const userDoc = await getDoc(userRef);
-            
-            if (userDoc.exists()) {
-              const userData = userDoc.data();
-              if (userData.isPaid || userData.hasAccess) {
-                console.log('Usuário tem acesso pago, redirecionando para dashboard pago');
-                router.push('/dashboard/paid')
-                return
-              }
-            }
+          if (loggedInUser && (loggedInUser.isPaid || loggedInUser.hasAccess)) {
+            console.log('Usuário logado com acesso pago, redirecionando para dashboard pago');
+            router.push('/dashboard/paid')
+            return
           }
         }
         

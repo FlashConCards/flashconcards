@@ -2,180 +2,440 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { BookOpen, Lock, Eye, AlertTriangle, CheckCircle } from 'lucide-react'
+import { 
+  BookOpen, 
+  Target, 
+  TrendingUp, 
+  User, 
+  LogOut,
+  Play,
+  CheckCircle,
+  Clock,
+  BarChart3,
+  ArrowRight,
+  Trophy,
+  MessageSquare,
+  Star,
+  Zap,
+  FileText,
+  Users,
+  Calendar,
+  X
+} from 'lucide-react'
 import Link from 'next/link'
 
+interface Subject {
+  id: string
+  name: string
+  description: string
+  totalCards: number
+  completedCards: number
+  icon: any
+  color: string
+}
+
 export default function DemoPage() {
-  const [isLoading, setIsLoading] = useState(true)
-  const [demoData, setDemoData] = useState<any>(null)
+  const [demoStats, setDemoStats] = useState({
+    totalCards: 500,
+    cardsStudied: 0,
+    sessionsToday: 0,
+    timeStudied: 0,
+    subjects: 6,
+    demoProgress: 25
+  })
 
-  useEffect(() => {
-    // Simular carregamento de dados do demo
-    setTimeout(() => {
-      setDemoData({
-        totalFlashcards: 150,
-        subjects: ['Direito Constitucional', 'Direito Administrativo', 'Direito Penal'],
-        sampleFlashcards: [
-          {
-            question: 'O que é Poder Constituinte Originário?',
-            answer: 'É o poder de criar uma nova Constituição, exercido por uma assembleia constituinte eleita pelo povo. É inicial, ilimitado, incondicionado e autônomo, não se submetendo a nenhuma norma anterior.',
-            subject: 'Direito Constitucional'
-          },
-          {
-            question: 'O que é Poder Difuso?',
-            answer: 'É a competência de todos os juízes e tribunais para declarar a inconstitucionalidade de leis ou atos normativos em casos concretos. Qualquer juiz pode declarar uma lei inconstitucional no caso específico que está julgando.',
-            subject: 'Direito Constitucional'
-          },
-          {
-            question: 'O que são Normas de Princípio Programático?',
-            answer: 'São normas constitucionais que estabelecem programas de ação para o Estado, indicando objetivos a serem alcançados. Não têm aplicação imediata, mas orientam a atuação dos poderes públicos.',
-            subject: 'Direito Constitucional'
-          }
-        ]
-      })
-      setIsLoading(false)
-    }, 1000)
-  }, [])
+  const subjects: Subject[] = [
+    {
+      id: 'portugues',
+      name: 'Língua Portuguesa',
+      description: 'Compreensão, interpretação e gramática',
+      totalCards: 120,
+      completedCards: 0,
+      icon: BookOpen,
+      color: 'bg-blue-500'
+    },
+    {
+      id: 'informatica',
+      name: 'Noções de Informática',
+      description: 'Sistemas operacionais e pacote Office',
+      totalCards: 80,
+      completedCards: 0,
+      icon: Target,
+      color: 'bg-green-500'
+    },
+    {
+      id: 'constitucional',
+      name: 'Direito Constitucional',
+      description: 'Constituição e direitos fundamentais',
+      totalCards: 150,
+      completedCards: 0,
+      icon: TrendingUp,
+      color: 'bg-purple-500'
+    },
+    {
+      id: 'administrativo',
+      name: 'Direito Administrativo',
+      description: 'Administração pública e atos administrativos',
+      totalCards: 130,
+      completedCards: 0,
+      icon: BarChart3,
+      color: 'bg-orange-500'
+    },
+    {
+      id: 'realidade-goias',
+      name: 'Realidade de Goiás',
+      description: 'História, cultura e geografia do estado',
+      totalCards: 90,
+      completedCards: 0,
+      icon: Clock,
+      color: 'bg-red-500'
+    },
+    {
+      id: 'legislacao-alego',
+      name: 'Legislação ALEGO',
+      description: 'Regimento interno e estrutura legislativa',
+      totalCards: 70,
+      completedCards: 0,
+      icon: CheckCircle,
+      color: 'bg-indigo-500'
+    }
+  ]
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center">
-        <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center shadow-2xl">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando demonstração...</p>
-        </div>
-      </div>
-    )
+  const getProgressPercentage = (completed: number, total: number) => {
+    return Math.round((completed / total) * 100)
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-6">
+            <div className="flex items-center">
+              <BookOpen className="h-8 w-8 text-primary-600" />
+              <span className="ml-2 text-xl font-bold text-gray-900">FlashConCards - Demo</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <User className="h-5 w-5 text-gray-400" />
+                <span className="text-sm text-gray-700">Visitante</span>
+              </div>
+              <Link href="/" className="text-gray-400 hover:text-gray-600">
+                <X className="h-5 w-5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Welcome Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl p-6 mb-8 shadow-2xl"
+          transition={{ duration: 0.5 }}
+          className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-xl p-8 text-white mb-8"
         >
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center">
-              <BookOpen className="h-8 w-8 text-blue-600 mr-3" />
-              <h1 className="text-2xl font-bold text-gray-900">FlashConCards - DEMO</h1>
-            </div>
-            <div className="flex items-center bg-yellow-100 px-3 py-1 rounded-full">
-              <AlertTriangle className="h-4 w-4 text-yellow-600 mr-1" />
-              <span className="text-sm text-yellow-800 font-semibold">VERSÃO DEMO</span>
+            <h1 className="text-3xl font-bold">
+              FlashConCards - Demonstração
+            </h1>
+            <div className="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-semibold">
+              VERSÃO DEMO
             </div>
           </div>
-          
-          <p className="text-gray-600 mb-4">
-            Esta é uma demonstração limitada do FlashConCards. Para acessar todo o conteúdo, 
-            faça seu cadastro e pagamento.
+          <p className="text-primary-100 mb-6">
+            Esta é uma demonstração completa do nosso sistema de flashcards. 
+            Experimente todas as funcionalidades e veja como estudar de forma eficiente.
           </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{demoData?.totalFlashcards}</div>
-              <div className="text-sm text-blue-800">Flashcards Disponíveis</div>
+          <div className="bg-white bg-opacity-20 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Funcionalidades Disponíveis</span>
+              <span className="text-sm font-medium">100%</span>
             </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{demoData?.subjects?.length}</div>
-              <div className="text-sm text-green-800">Matérias</div>
+            <div className="w-full bg-white bg-opacity-30 rounded-full h-2">
+              <div 
+                className="bg-white h-2 rounded-full transition-all duration-300"
+                style={{ width: '100%' }}
+              ></div>
             </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">3</div>
-              <div className="text-sm text-purple-800">Exemplos Visíveis</div>
+            <div className="mt-3 text-sm text-primary-100">
+              ✅ Flashcards interativos • ✅ Progresso em tempo real • ✅ Estatísticas • ✅ Aprofundamento • ✅ Perfil completo
             </div>
           </div>
         </motion.div>
 
-        {/* Demo Content */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white rounded-xl p-6 mb-8 shadow-2xl"
-        >
-          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-            <Eye className="h-5 w-5 text-blue-600 mr-2" />
-            Exemplos de Flashcards - Direito Constitucional
-          </h2>
-          
-          <div className="space-y-4">
-            {demoData?.sampleFlashcards?.map((flashcard: any, index: number) => (
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="bg-white rounded-xl p-6 shadow-sm"
+          >
+            <div className="flex items-center">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <BookOpen className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Total de Cards</p>
+                <p className="text-2xl font-bold text-gray-900">{demoStats.totalCards}+</p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="bg-white rounded-xl p-6 shadow-sm"
+          >
+            <div className="flex items-center">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Cards Estudados</p>
+                <p className="text-2xl font-bold text-gray-900">{demoStats.cardsStudied}</p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="bg-white rounded-xl p-6 shadow-sm"
+          >
+            <div className="flex items-center">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Sessões Hoje</p>
+                <p className="text-2xl font-bold text-gray-900">{demoStats.sessionsToday}</p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="bg-white rounded-xl p-6 shadow-sm"
+          >
+            <div className="flex items-center">
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <Clock className="h-6 w-6 text-orange-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Tempo Estudado</p>
+                <p className="text-2xl font-bold text-gray-900">{demoStats.timeStudied}m</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Subjects Grid */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Matérias Disponíveis</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {subjects.map((subject, index) => (
               <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 + index * 0.1 }}
-                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                key={subject.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer flex flex-col justify-between h-full"
               >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                    {flashcard.subject}
-                  </span>
-                  <span className="text-xs text-gray-500">Exemplo {index + 1}</span>
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-3 rounded-lg ${subject.color}`}>
+                    <subject.icon className="h-6 w-6 text-white" />
+                  </div>
+                  <a href={`/study/${subject.id}`} className="text-primary-600 hover:text-primary-700">
+                    <Play className="h-5 w-5" />
+                  </a>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{flashcard.question}</h3>
-                <p className="text-gray-600 text-sm">{flashcard.answer}</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {subject.name}
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  {subject.description}
+                </p>
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Progresso</span>
+                    <span className="font-medium">
+                      {subject.completedCards}/{subject.totalCards}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-300 ${subject.color.replace('bg-', 'bg-')}`}
+                      style={{ width: `${getProgressPercentage(subject.completedCards, subject.totalCards)}%`, minWidth: 0, maxWidth: '100%' }}
+                    ></div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-medium text-gray-900">
+                      {getProgressPercentage(subject.completedCards, subject.totalCards)}%
+                    </span>
+                  </div>
+                  <div className="text-center">
+                    <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                      Disponível para teste
+                    </span>
+                  </div>
+                </div>
               </motion.div>
             ))}
           </div>
-        </motion.div>
+        </div>
 
-        {/* Call to Action */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-gradient-to-r from-green-500 to-blue-600 rounded-xl p-6 text-white shadow-2xl"
-        >
-          <div className="text-center">
-            <CheckCircle className="h-12 w-12 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Acesse o Conteúdo Completo!</h2>
-            <p className="text-green-100 mb-6">
-              Desbloqueie mais de 150 flashcards organizados por matéria, 
-              com questões específicas para Policial Legislativo da ALEGO.
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="bg-white bg-opacity-20 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">✅ O que você ganha:</h3>
-                <ul className="text-sm space-y-1">
-                  <li>• 150+ flashcards organizados</li>
-                  <li>• Questões específicas ALEGO</li>
-                  <li>• Acesso ilimitado</li>
-                  <li>• Suporte completo</li>
-                </ul>
+        {/* Features Demo */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Funcionalidades Disponíveis</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="bg-white rounded-xl p-6 shadow-sm"
+            >
+              <div className="flex items-center mb-4">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Zap className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="ml-3 text-lg font-semibold text-gray-900">Flashcards Interativos</h3>
               </div>
-              <div className="bg-white bg-opacity-20 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">🎯 Matérias incluídas:</h3>
-                <ul className="text-sm space-y-1">
-                  <li>• Direito Constitucional</li>
-                  <li>• Direito Administrativo</li>
-                  <li>• Direito Penal</li>
-                  <li>• E muito mais!</li>
-                </ul>
+              <p className="text-gray-600 mb-4">
+                Teste os flashcards com sistema de memorização espaçada. 
+                Acertou? Passa para o próximo. Errou? Revisa até aprender.
+              </p>
+              <a href="/study/portugues" className="text-blue-600 hover:text-blue-700 font-medium">
+                Testar agora →
+              </a>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="bg-white rounded-xl p-6 shadow-sm"
+            >
+              <div className="flex items-center mb-4">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <FileText className="h-6 w-6 text-green-600" />
+                </div>
+                <h3 className="ml-3 text-lg font-semibold text-gray-900">Aprofundamento</h3>
+              </div>
+              <p className="text-gray-600 mb-4">
+                Conteúdo adicional para cada subtópico. 
+                Explicações detalhadas e exemplos práticos.
+              </p>
+              <span className="text-green-600 font-medium">
+                Disponível na versão completa
+              </span>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="bg-white rounded-xl p-6 shadow-sm"
+            >
+              <div className="flex items-center mb-4">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <BarChart3 className="h-6 w-6 text-purple-600" />
+                </div>
+                <h3 className="ml-3 text-lg font-semibold text-gray-900">Estatísticas Detalhadas</h3>
+              </div>
+              <p className="text-gray-600 mb-4">
+                Acompanhe seu progresso com gráficos e relatórios. 
+                Veja onde precisa melhorar.
+              </p>
+              <span className="text-purple-600 font-medium">
+                Disponível na versão completa
+              </span>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Upgrade Banner */}
+        <div className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-xl p-8 text-white mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center mb-4">
+                <Star className="h-8 w-8 text-yellow-400 mr-3" />
+                <h3 className="text-2xl font-bold">Desbloqueie Todo o Conteúdo!</h3>
+              </div>
+              <p className="text-primary-100 mb-6 text-lg">
+                Acesse todos os 500+ FlashConCards, estatísticas completas, 
+                aprofundamento de conteúdo e muito mais por apenas:
+              </p>
+              <div className="mb-6">
+                <div className="text-4xl font-bold mb-2">R$ 99,90</div>
+                <div className="text-primary-100">Pagamento único • Acesso vitalício</div>
+              </div>
+              <div className="flex flex-wrap gap-4 mb-6">
+                <div className="flex items-center text-sm">
+                  <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
+                  <span>500+ Flashcards</span>
+                </div>
+                <div className="flex items-center text-sm">
+                  <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
+                  <span>6 Matérias completas</span>
+                </div>
+                <div className="flex items-center text-sm">
+                  <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
+                  <span>Estatísticas avançadas</span>
+                </div>
+                <div className="flex items-center text-sm">
+                  <CheckCircle className="h-4 w-4 text-green-400 mr-2" />
+                  <span>Conteúdo de aprofundamento</span>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <a 
+                  href="/payment" 
+                  className="btn-primary bg-white text-primary-600 hover:bg-gray-100 inline-flex items-center px-6 py-3 rounded-lg font-semibold text-lg"
+                >
+                  Fazer Upgrade por R$ 99,90
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </a>
+                <Link 
+                  href="/login" 
+                  className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-primary-600 inline-flex items-center px-6 py-3 rounded-lg font-semibold text-lg transition-colors"
+                >
+                  Já tenho conta
+                </Link>
               </div>
             </div>
-            
-            <div className="space-y-3">
-              <Link 
-                href="/payment"
-                className="block w-full bg-white text-blue-600 py-3 px-6 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-              >
-                Fazer Cadastro e Pagamento
-              </Link>
-              
-              <Link 
-                href="/"
-                className="block w-full bg-transparent border border-white text-white py-2 px-6 rounded-lg hover:bg-white hover:text-blue-600 transition-colors"
-              >
-                Voltar para Página Inicial
-              </Link>
+            <div className="hidden lg:block ml-8">
+              <div className="w-24 h-24 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <BookOpen className="h-12 w-12 text-white" />
+              </div>
             </div>
           </div>
-        </motion.div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white rounded-xl p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a href="/study/portugues" className="flex items-center justify-center p-4 border-2 border-primary-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors duration-200">
+              <Play className="h-5 w-5 text-primary-600 mr-2" />
+              <span className="font-medium text-primary-600">Testar Flashcards</span>
+            </a>
+            <a href="/payment" className="flex items-center justify-center p-4 border-2 border-green-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors duration-200">
+              <Star className="h-5 w-5 text-green-600 mr-2" />
+              <span className="font-medium text-green-600">Fazer Upgrade</span>
+            </a>
+            <Link href="/" className="flex items-center justify-center p-4 border-2 border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-colors duration-200">
+              <X className="h-5 w-5 text-gray-600 mr-2" />
+              <span className="font-medium text-gray-600">Sair do Demo</span>
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   )
