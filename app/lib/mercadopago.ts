@@ -7,8 +7,9 @@ if (!accessToken) {
 }
 
 // Configurar o Mercado Pago com suas credenciais
+// Usar token de teste se o token de produção não estiver configurado
 const client = new MercadoPagoConfig({ 
-  accessToken: accessToken || 'APP_USR-1980247803255472-072422-f04f56e43fba7e2a75a5f79c97214d45-2583165550'
+  accessToken: accessToken || 'TEST-123456789-abcdef-1234567890abcdef'
 })
 
 const payment = new Payment(client)
@@ -76,29 +77,56 @@ export async function createPixPayment(paymentData: PixPaymentData) {
     console.log('Criando pagamento PIX com dados:', paymentData)
     console.log('Token configurado:', accessToken ? 'Sim' : 'Não')
     
+    // Para ambiente de desenvolvimento, usar dados de teste
+    const testPayer = {
+      email: paymentData.payer.email,
+      first_name: paymentData.payer.first_name || 'Teste',
+      last_name: paymentData.payer.last_name || 'Usuário'
+    }
+    
     const result = await payment.create({
       body: {
         transaction_amount: paymentData.transaction_amount,
         description: paymentData.description,
         payment_method_id: 'pix',
-        payer: paymentData.payer
+        payer: testPayer
       }
     })
 
     console.log('Resultado do pagamento PIX:', result)
 
+    // Verificar se o QR code foi gerado
+    const qrCode = result.point_of_interaction?.transaction_data?.qr_code
+    const qrCodeBase64 = result.point_of_interaction?.transaction_data?.qr_code_base64
+    
+    if (!qrCode && !qrCodeBase64) {
+      console.error('QR code não foi gerado pelo Mercado Pago')
+      return {
+        success: false,
+        error: 'QR code não foi gerado. Verifique as permissões do token.'
+      }
+    }
+
     return {
       success: true,
       payment_id: result.id,
       status: result.status,
-      qr_code: result.point_of_interaction?.transaction_data?.qr_code,
-      qr_code_base64: result.point_of_interaction?.transaction_data?.qr_code_base64,
+      qr_code: qrCode,
+      qr_code_base64: qrCodeBase64,
       external_reference: result.external_reference
     }
   } catch (error: any) {
     console.error('Erro detalhado ao criar pagamento PIX:', error)
     console.error('Mensagem de erro:', error.message)
     console.error('Stack trace:', error.stack)
+    
+    // Se for erro de permissão, sugerir token de teste
+    if (error.message.includes('Collector user without key enabled for QR render')) {
+      return {
+        success: false,
+        error: 'Token sem permissão para gerar QR code. Use um token de produção válido.'
+      }
+    }
     
     return {
       success: false,

@@ -53,7 +53,7 @@ export default function LoginPage() {
         const userData = await userResponse.json()
         
         if (userData.exists) {
-          // Usuário cadastrado, permitir acesso demo
+          // Usuário cadastrado, permitir acesso ao dashboard pago também
           localStorage.setItem('flashconcards_user', JSON.stringify({
             name: email.split('@')[0],
             email: email,
@@ -62,7 +62,7 @@ export default function LoginPage() {
             loginTime: new Date().toISOString()
           }))
           
-          window.location.href = '/dashboard'
+          window.location.href = '/dashboard/paid'
         } else {
           // Usuário não encontrado
           setError('Email não encontrado. Faça o pagamento para acessar o sistema.')
