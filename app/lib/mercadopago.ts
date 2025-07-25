@@ -1,4 +1,5 @@
 import { MercadoPagoConfig, Payment, PaymentMethod } from 'mercadopago'
+import QRCode from 'qrcode'
 
 // Verificar se o token está configurado
 const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
@@ -36,6 +37,25 @@ export interface PixPaymentData {
     email: string
     first_name: string
     last_name: string
+  }
+}
+
+// Função para gerar QR code base64 real
+async function generateQRCodeBase64(text: string): Promise<string> {
+  try {
+    const qrCodeDataURL = await QRCode.toDataURL(text, {
+      width: 200,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    })
+    return qrCodeDataURL
+  } catch (error) {
+    console.error('Erro ao gerar QR code:', error)
+    // Fallback para QR code simples
+    return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
   }
 }
 
@@ -103,7 +123,7 @@ export async function createPixPayment(paymentData: PixPaymentData) {
         payment_id: result.id,
         status: result.status,
         qr_code: pixCode,
-        qr_code_base64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+        qr_code_base64: await generateQRCodeBase64(pixCode),
         external_reference: result.external_reference
       }
     }
@@ -134,7 +154,7 @@ export async function createPixPayment(paymentData: PixPaymentData) {
         payment_id: 'pix-' + Date.now(),
         status: 'pending',
         qr_code: pixCode,
-        qr_code_base64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+        qr_code_base64: await generateQRCodeBase64(pixCode),
         external_reference: 'simulated-ref-' + Date.now()
       }
     }
