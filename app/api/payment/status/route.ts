@@ -22,8 +22,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: true,
         status: result.status,
-        status_detail: result.status_detail,
-        external_reference: result.external_reference
+        status_detail: result.status_detail
       })
     } else {
       return NextResponse.json(
