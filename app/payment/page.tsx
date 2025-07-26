@@ -372,12 +372,12 @@ export default function PaymentPage() {
                       <p>• Pagamento 100% seguro</p>
                     </div>
                     
-                    {pixData.payment_id && (
-                      <PaymentStatus 
-                        paymentId={pixData.payment_id}
-                        onSuccess={() => window.location.href = '/payment/success'}
-                      />
-                    )}
+                                           {pixData && pixData.payment_id && (
+                         <PaymentStatus 
+                           paymentId={pixData.payment_id}
+                           onSuccess={() => window.location.href = '/payment/success'}
+                         />
+                       )}
                   </div>
                 </div>
               </motion.div>
