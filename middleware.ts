@@ -6,32 +6,31 @@ export function middleware(request: NextRequest) {
 
   // Proteger rota do admin
   if (pathname.startsWith('/admin')) {
-    // Verificar se há cookie de autenticação ou token
-    const authToken = request.cookies.get('auth_token')?.value
-    const userData = request.cookies.get('flashconcards_user')?.value
+    // Verificar se há email na URL
+    const email = request.nextUrl.searchParams.get('email')
     
-    if (!authToken && !userData) {
-      // Se não há autenticação, redirecionar para login
+    if (!email) {
+      // Se não há email, redirecionar para login
       return NextResponse.redirect(new URL('/login', request.url))
     }
   }
 
   // Proteger dashboard pago
   if (pathname.startsWith('/dashboard/paid')) {
-    const userData = request.cookies.get('flashconcards_user')?.value
+    const email = request.nextUrl.searchParams.get('email')
     
-    if (!userData) {
-      // Se não há dados de usuário, redirecionar para login
+    if (!email) {
+      // Se não há email na URL, redirecionar para login
       return NextResponse.redirect(new URL('/login', request.url))
     }
   }
 
   // Proteger rotas de estudo (opcional)
   if (pathname.startsWith('/study')) {
-    const userData = request.cookies.get('flashconcards_user')?.value
+    const email = request.nextUrl.searchParams.get('email')
     
-    if (!userData) {
-      // Se não há dados de usuário, redirecionar para login
+    if (!email) {
+      // Se não há email, redirecionar para login
       return NextResponse.redirect(new URL('/login', request.url))
     }
   }

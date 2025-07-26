@@ -54,41 +54,55 @@ export default function PaidDashboardPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
 
-  // Verificação de autenticação simplificada
+  // Verificação de autenticação direta no Firebase
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        console.log('🔍 Verificando autenticação...')
+        console.log('🔍 Verificando autenticação no Firebase...')
         
-        // Verificar se usuário está logado
-        const userData = localStorage.getItem('flashconcards_user')
-        if (!userData) {
-          console.log('❌ Usuário não encontrado no localStorage, redirecionando para login');
+        // Buscar dados da URL ou sessionStorage temporário
+        const urlParams = new URLSearchParams(window.location.search)
+        const email = urlParams.get('email') || sessionStorage.getItem('temp_email')
+        
+        if (!email) {
+          console.log('❌ Email não encontrado, redirecionando para login')
           router.push('/login')
           return
         }
 
-        const userInfo = JSON.parse(userData)
-        console.log('✅ Dados do usuário encontrados:', userInfo)
+        console.log('📧 Email encontrado:', email)
         
-        // Verificar se o usuário tem dados válidos
-        if (!userInfo.email || !userInfo.uid) {
-          console.log('❌ Dados de usuário inválidos, redirecionando para login');
-          localStorage.removeItem('flashconcards_user')
+        // Verificar se o usuário existe no Firestore
+        const userId = email.replace(/[^a-zA-Z0-9]/g, '_')
+        const userRef = doc(db, 'users', userId)
+        const userDoc = await getDoc(userRef)
+        
+        if (!userDoc.exists()) {
+          console.log('❌ Usuário não encontrado no Firestore, redirecionando para login')
           router.push('/login')
           return
         }
 
-        // Se chegou até aqui, usuário está autenticado
+        const userData = userDoc.data()
+        console.log('📊 Dados do Firestore:', userData)
+        
+        // Verificar se tem acesso pago
+        if (!userData.isPaid && !userData.hasAccess) {
+          console.log('❌ Usuário não tem acesso pago, redirecionando para dashboard demo')
+          router.push('/dashboard')
+          return
+        }
+
+        // Usuário autenticado com sucesso
         console.log('✅ Usuário autenticado com sucesso!')
         setIsAuthenticated(true)
-        setUser(userInfo)
+        setUser({ ...userData, email, uid: userId })
 
         // Carregar dados do dashboard
         console.log('📊 Carregando dados do dashboard...')
         try {
-          await loadDashboardStats(userInfo.email)
-          await loadSubjects(userInfo.email)
+          await loadDashboardStats(email)
+          await loadSubjects(email)
         } catch (error) {
           console.log('⚠️ Erro ao carregar dados do dashboard, usando dados padrão:', error)
         }
@@ -265,7 +279,7 @@ export default function PaidDashboardPage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('flashconcards_user')
+    sessionStorage.removeItem('temp_email')
     window.location.href = '/'
   }
 

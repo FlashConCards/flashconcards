@@ -39,26 +39,9 @@ export default function LoginPage() {
             if (data.success && data.hasAccess) {
         console.log('✅ Login bem-sucedido, redirecionando...')
         
-        // Usuário tem acesso, permitir login
-        const userData = {
-          name: email.split('@')[0],
-          email: email,
-          uid: email.replace(/[^a-zA-Z0-9]/g, '_'),
-          isPaid: true,
-          hasAccess: true,
-          loginTime: new Date().toISOString()
-        }
-        
-        console.log('Dados do usuário:', userData)
-        
-        // Salvar no localStorage e cookie
-        localStorage.setItem('flashconcards_user', JSON.stringify(userData))
-        document.cookie = `flashconcards_user=${encodeURIComponent(JSON.stringify(userData))}; path=/; max-age=2592000; secure; samesite=strict`
-        
-        console.log('Dados salvos, redirecionando para /dashboard/paid')
-        
-        // Redirecionar para o dashboard pago
-        window.location.href = '/dashboard/paid'
+        // Salvar email temporariamente e redirecionar
+        sessionStorage.setItem('temp_email', email)
+        window.location.href = `/dashboard/paid?email=${encodeURIComponent(email)}`
       } else {
         console.log('❌ Usuário não tem acesso:', data)
         // Usuário não tem acesso
