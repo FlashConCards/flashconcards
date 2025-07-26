@@ -56,85 +56,103 @@ export default function PaidDashboardPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
 
-  // Verificação de autenticação robusta
+  // Verificação de autenticação simplificada
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        console.log('🔍 Verificando autenticação...')
+        
         // Verificar se usuário está logado
         const userData = localStorage.getItem('flashconcards_user')
         if (!userData) {
-          console.log('Usuário não encontrado no localStorage, redirecionando para login');
+          console.log('❌ Usuário não encontrado no localStorage, redirecionando para login');
           router.push('/login')
           return
         }
 
         const userInfo = JSON.parse(userData)
+        console.log('✅ Dados do usuário encontrados:', userInfo)
         
         // Verificar se o usuário tem dados válidos
         if (!userInfo.email || !userInfo.uid) {
-          console.log('Dados de usuário inválidos, redirecionando para login');
+          console.log('❌ Dados de usuário inválidos, redirecionando para login');
           localStorage.removeItem('flashconcards_user')
           router.push('/login')
           return
         }
 
-        // Verificar se o usuário existe no Firestore
+        // Verificar se o usuário existe no Firestore (opcional para teste)
         const userId = userInfo.uid || userInfo.email?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown';
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
+        console.log('🔍 Verificando usuário no Firestore:', userId)
         
-        if (!userDoc.exists()) {
-          console.log('Usuário não encontrado no Firestore, redirecionando para login');
-          localStorage.removeItem('flashconcards_user')
-          router.push('/login')
-          return
-        }
-
-        // Verificar se o usuário tem acesso pago
-        const firestoreData = userDoc.data();
-        if (!firestoreData.isPaid && !firestoreData.hasAccess) {
-          console.log('Usuário não tem acesso pago, redirecionando para dashboard demo');
-          router.push('/dashboard')
-          return
+        try {
+          const userRef = doc(db, 'users', userId);
+          const userDoc = await getDoc(userRef);
+          
+          if (userDoc.exists()) {
+            const firestoreData = userDoc.data();
+            console.log('📊 Dados do Firestore:', firestoreData)
+            
+            if (!firestoreData.isPaid && !firestoreData.hasAccess) {
+              console.log('❌ Usuário não tem acesso pago, redirecionando para dashboard demo');
+              router.push('/dashboard')
+              return
+            }
+          } else {
+            console.log('⚠️ Usuário não encontrado no Firestore, mas continuando com dados do localStorage')
+          }
+        } catch (error) {
+          console.log('⚠️ Erro ao verificar Firestore, continuando com dados do localStorage:', error)
         }
 
         // Se chegou até aqui, usuário está autenticado e tem acesso
+        console.log('✅ Usuário autenticado com sucesso!')
         setIsAuthenticated(true)
         setUser(userInfo)
+
+        // Carregar dados do dashboard
+        console.log('📊 Carregando dados do dashboard...')
+        await loadDashboardStats(userInfo.email)
+        await loadSubjects(userInfo.email)
 
         // Configurar listener em tempo real do Firestore
         console.log('Configurando listener em tempo real para usuário:', userId);
         
-        const unsubscribe = onSnapshot(userRef, (doc) => {
-          if (doc.exists()) {
-            const firestoreData = doc.data();
-            console.log('Dados atualizados em tempo real:', firestoreData);
-            
-            // Atualizar usuário com dados do Firestore
-            const updatedUser = { ...userInfo, ...firestoreData };
-            setUser(updatedUser);
-            
-            // Atualizar localStorage
-            localStorage.setItem('flashconcards_user', JSON.stringify(updatedUser));
-            
-            // Atualizar profileData com dados em tempo real
-            setProfileData(prev => ({
-              ...prev,
-              displayName: firestoreData.displayName || userInfo.displayName || userInfo.name || '',
-              photoURL: firestoreData.photoURL || userInfo.photoURL || ''
-            }));
-          } else {
-            console.log('Documento não existe no Firestore, usando dados do localStorage');
-            setProfileData({
-              displayName: userInfo.displayName || userInfo.name || '',
-              photoURL: userInfo.photoURL || '',
-              newPassword: '',
-              confirmPassword: ''
-            });
-          }
-        });
+        try {
+          const userRef = doc(db, 'users', userId);
+          const unsubscribe = onSnapshot(userRef, (doc) => {
+            if (doc.exists()) {
+              const firestoreData = doc.data();
+              console.log('Dados atualizados em tempo real:', firestoreData);
+              
+              // Atualizar usuário com dados do Firestore
+              const updatedUser = { ...userInfo, ...firestoreData };
+              setUser(updatedUser);
+              
+              // Atualizar localStorage
+              localStorage.setItem('flashconcards_user', JSON.stringify(updatedUser));
+              
+              // Atualizar profileData com dados em tempo real
+              setProfileData(prev => ({
+                ...prev,
+                displayName: firestoreData.displayName || userInfo.displayName || userInfo.name || '',
+                photoURL: firestoreData.photoURL || userInfo.photoURL || ''
+              }));
+            } else {
+              console.log('Documento não existe no Firestore, usando dados do localStorage');
+              setProfileData({
+                displayName: userInfo.displayName || userInfo.name || '',
+                photoURL: userInfo.photoURL || '',
+                newPassword: '',
+                confirmPassword: ''
+              });
+            }
+          });
 
-        return () => unsubscribe();
+          return () => unsubscribe();
+        } catch (error) {
+          console.log('⚠️ Erro ao configurar listener, continuando sem listener em tempo real:', error);
+        }
       } catch (error) {
         console.error('Erro na verificação de autenticação:', error);
         router.push('/login')
