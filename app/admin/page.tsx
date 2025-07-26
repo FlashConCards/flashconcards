@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import conteudoProgramatico from '../../conteudo_programatico.json';
 import { db, auth } from '../lib/firebase';
 import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
-import { collection, addDoc, getDocs, deleteDoc, doc, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc, query, where, onSnapshot, setDoc } from 'firebase/firestore';
 import dynamic from 'next/dynamic';
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 import 'react-quill/dist/quill.snow.css';
@@ -176,7 +176,10 @@ export default function AdminPage() {
       
       // Criar documento do usuário no Firestore com acesso pago
       const userId = userCredential.user.uid;
-      await addDoc(collection(db, 'users'), {
+      const normalizedId = novoEmail.replace(/[^a-zA-Z0-9]/g, '_');
+      
+      // Usar setDoc com ID específico para garantir consistência
+      await setDoc(doc(db, 'users', normalizedId), {
         uid: userId,
         email: novoEmail,
         name: novoEmail.split('@')[0],
@@ -187,8 +190,9 @@ export default function AdminPage() {
       });
 
       // Criar pagamento aprovado para o usuário
-      await addDoc(collection(db, 'payments'), {
+      await setDoc(doc(db, 'payments', `payment_${normalizedId}`), {
         email: novoEmail,
+        uid: userId,
         payment_id: `admin_${Date.now()}`,
         amount: 99.90,
         status: 'approved',
