@@ -25,8 +25,8 @@ export default function LoginPage() {
     }
     
     try {
-      // Verificar se o usuário pagou no servidor
-      const response = await fetch('/api/payment/status', {
+      // Verificar se o usuário pagou usando uma API mais simples
+      const response = await fetch('/api/check-user-access', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,22 +36,30 @@ export default function LoginPage() {
       
       const data = await response.json()
       
-      if (data.success && data.isPaid) {
-        // Usuário pagou, permitir acesso
-        localStorage.setItem('flashconcards_user', JSON.stringify({
+      if (data.success && data.hasAccess) {
+        // Usuário tem acesso, permitir login
+        const userData = {
           name: email.split('@')[0],
           email: email,
+          uid: email.replace(/[^a-zA-Z0-9]/g, '_'),
           isPaid: true,
+          hasAccess: true,
           loginTime: new Date().toISOString()
-        }))
+        }
         
+        // Salvar no localStorage e cookie
+        localStorage.setItem('flashconcards_user', JSON.stringify(userData))
+        document.cookie = `flashconcards_user=${encodeURIComponent(JSON.stringify(userData))}; path=/; max-age=2592000; secure; samesite=strict`
+        
+        // Redirecionar para o dashboard pago
         window.location.href = '/dashboard/paid'
       } else {
-        // Usuário não pagou
+        // Usuário não tem acesso
         setError('Acesso restrito. Você precisa fazer o pagamento para acessar o sistema.')
       }
     } catch (error) {
-      setError('Erro ao verificar pagamento. Tente novamente.')
+      console.error('Erro no login:', error)
+      setError('Erro ao verificar acesso. Tente novamente.')
     } finally {
       setIsLoading(false)
     }
