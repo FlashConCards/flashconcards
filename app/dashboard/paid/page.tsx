@@ -72,7 +72,7 @@ export default function PaidDashboardPage() {
 
         console.log('📧 Email encontrado:', email)
         
-        // SIMPLIFICADO: Aceitar qualquer usuário que chegou até aqui
+        // FORÇAR AUTENTICAÇÃO IMEDIATA
         console.log('✅ Usuário autenticado com sucesso!')
         setIsAuthenticated(true)
         setUser({ 
@@ -83,9 +83,6 @@ export default function PaidDashboardPage() {
           hasAccess: true
         })
 
-        // Carregar dados do dashboard
-        console.log('📊 Carregando dados do dashboard...')
-        
         // Dados padrão direto - sem funções problemáticas
         setStats({
           totalCards: 150,
@@ -107,6 +104,8 @@ export default function PaidDashboardPage() {
           color: 'bg-blue-500'
         }));
         setSubjects(subjectsData)
+        
+        console.log('📊 Dashboard carregado com sucesso!')
 
       } catch (error) {
         console.error('Erro na verificação de autenticação:', error);
@@ -123,7 +122,7 @@ export default function PaidDashboardPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Verificando autenticação...</p>
+          <p className="text-gray-600">Carregando dashboard...</p>
         </div>
       </div>
     );
