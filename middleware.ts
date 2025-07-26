@@ -4,16 +4,16 @@ import type { NextRequest } from 'next/server'
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Proteger rota do admin
-  if (pathname.startsWith('/admin')) {
-    // Verificar se há email na URL
-    const email = request.nextUrl.searchParams.get('email')
-    
-    if (!email) {
-      // Se não há email, redirecionar para login
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-  }
+  // Proteger rota do admin (temporariamente desabilitado)
+  // if (pathname.startsWith('/admin')) {
+  //   // Verificar se há email na URL
+  //   const email = request.nextUrl.searchParams.get('email')
+  //   
+  //   if (!email) {
+  //     // Se não há email, redirecionar para login
+  //     return NextResponse.redirect(new URL('/login', request.url))
+  //   }
+  // }
 
   // Proteger dashboard pago
   if (pathname.startsWith('/dashboard/paid')) {
@@ -40,7 +40,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/admin/:path*',
     '/dashboard/paid/:path*',
     '/study/:path*',
     '/perfil/:path*'
