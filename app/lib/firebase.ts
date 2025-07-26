@@ -2,15 +2,16 @@ import { initializeApp } from 'firebase/app'
 import { getFirestore, collection, addDoc, getDocs, query, where, doc, getDoc, updateDoc } from 'firebase/firestore'
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, User } from 'firebase/auth'
 import { getStorage } from 'firebase/storage'
+import { firebaseConfig } from './firebase-config'
 
 // Configuração do Firebase
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'dummy-key',
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'dummy-domain',
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'dummy-project',
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'dummy-bucket',
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '123456789',
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || 'dummy-app-id'
+const config = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || firebaseConfig.apiKey,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || firebaseConfig.authDomain,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || firebaseConfig.projectId,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || firebaseConfig.storageBucket,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || firebaseConfig.messagingSenderId,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || firebaseConfig.appId
 }
 
 // Inicializar Firebase apenas se as variáveis estiverem configuradas
@@ -20,14 +21,13 @@ let auth: any = null
 let storage: any = null
 
 try {
-  if (process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== 'dummy-key') {
-    app = initializeApp(firebaseConfig)
-    db = getFirestore(app)
-    auth = getAuth(app)
-    storage = getStorage(app)
-  }
+  app = initializeApp(config)
+  db = getFirestore(app)
+  auth = getAuth(app)
+  storage = getStorage(app)
+  console.log('Firebase inicializado com sucesso')
 } catch (error) {
-  console.warn('Firebase não configurado ainda:', error)
+  console.warn('Erro ao inicializar Firebase:', error)
 }
 
 export { db, auth, storage }
