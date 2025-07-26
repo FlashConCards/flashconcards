@@ -74,8 +74,13 @@ export default function AdminPage() {
     setCarregandoUsuarios(true);
     const q = query(collection(db, 'users'));
     const unsub = onSnapshot(q, (snapshot) => {
-      setUsuarios(snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() })));
+      const users = snapshot.docs.map(doc => ({ 
+        uid: doc.id, 
+        ...doc.data() 
+      }));
+      setUsuarios(users);
       setCarregandoUsuarios(false);
+      console.log('Usuários carregados:', users);
     });
     return () => unsub();
   }, [autenticado]);
@@ -166,12 +171,32 @@ export default function AdminPage() {
     e.preventDefault();
     if (!novoEmail.trim() || !novaSenha.trim()) return;
     try {
+      // Criar usuário no Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, novoEmail, novaSenha);
+      
+      // Criar documento do usuário no Firestore com acesso pago
+      const userId = userCredential.user.uid;
       await addDoc(collection(db, 'users'), {
-        uid: userCredential.user.uid,
+        uid: userId,
         email: novoEmail,
+        name: novoEmail.split('@')[0],
+        isPaid: true,
+        hasAccess: true,
         created_at: new Date().toISOString(),
+        lastLogin: new Date().toISOString()
       });
+
+      // Criar pagamento aprovado para o usuário
+      await addDoc(collection(db, 'payments'), {
+        email: novoEmail,
+        payment_id: `admin_${Date.now()}`,
+        amount: 99.90,
+        status: 'approved',
+        method: 'admin',
+        created_at: new Date().toISOString()
+      });
+
+      console.log('✅ Usuário criado com acesso pago:', novoEmail);
       setNovoEmail("");
       setNovaSenha("");
     } catch (error: any) {
@@ -181,8 +206,19 @@ export default function AdminPage() {
 
   const handleDeleteUser = async (uid: string) => {
     try {
-      await deleteUser(auth.currentUser!);
+      // Deletar usuário do Firestore
       await deleteDoc(doc(db, 'users', uid));
+      
+      // Deletar pagamentos relacionados
+      const { collection, query, where, getDocs } = await import('firebase/firestore');
+      const paymentsQuery = query(collection(db, 'payments'), where('uid', '==', uid));
+      const paymentsSnapshot = await getDocs(paymentsQuery);
+      
+      for (const paymentDoc of paymentsSnapshot.docs) {
+        await deleteDoc(paymentDoc.ref);
+      }
+      
+      console.log('✅ Usuário deletado com sucesso:', uid);
     } catch (error) {
       console.error('Erro ao deletar usuário:', error);
     }
@@ -645,10 +681,13 @@ export default function AdminPage() {
                 <div className="space-y-3">
                   {usuarios.map(u => (
                     <div key={u.uid} className="flex items-center justify-between bg-gray-50 rounded-lg p-4">
-                      <div>
+                      <div className="flex-1">
                         <div className="font-medium text-gray-900">{u.email}</div>
                         <div className="text-sm text-gray-500">
-                          Criado em: {new Date(u.created_at).toLocaleDateString()}
+                          Nome: {u.name || 'N/A'} | 
+                          Acesso: {u.isPaid || u.hasAccess ? '✅ Pago' : '❌ Pendente'} |
+                          Criado: {new Date(u.created_at).toLocaleDateString()}
+                          {u.lastLogin && ` | Último login: ${new Date(u.lastLogin).toLocaleDateString()}`}
                         </div>
                       </div>
                       <button 

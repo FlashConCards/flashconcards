@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
     await setDoc(userRef, {
       email,
       name,
+      uid: userId,
       isPaid: true,
       hasAccess: true,
       createdAt: new Date().toISOString(),
@@ -42,6 +43,7 @@ export async function POST(request: NextRequest) {
     const paymentRef = doc(db, 'payments', `payment_${userId}`)
     await setDoc(paymentRef, {
       email,
+      uid: userId,
       payment_id: `test_${Date.now()}`,
       amount: 99.90,
       status: 'approved',

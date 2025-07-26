@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/app/lib/firebase'
-import { collection, query, where, getDocs } from 'firebase/firestore'
+import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore'
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +36,13 @@ export async function POST(request: NextRequest) {
       // Se o usuário existe e tem acesso pago
       if (userData.isPaid || userData.hasAccess) {
         console.log('✅ Usuário tem acesso pago')
+        
+        // Atualizar último login
+        const userRef = doc(db, 'users', usersSnapshot.docs[0].id)
+        await updateDoc(userRef, {
+          lastLogin: new Date().toISOString()
+        })
+        
         return NextResponse.json({
           success: true,
           hasAccess: true,
