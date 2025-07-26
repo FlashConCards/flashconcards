@@ -28,17 +28,17 @@ export default function AdminPage() {
   // Login
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Só permite login com o e-mail do admin, mas o campo é rotulado como CPF
-    if (login.trim().toLowerCase() !== ADMIN_EMAIL) {
-      setErro("Acesso negado. CPF ou senha incorretos.");
+    // Verificar se o email está correto
+    if (login.trim().toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+      setErro("Acesso negado. Email ou senha incorretos.");
       return;
     }
     try {
-      await signInWithEmailAndPassword(auth, login, senha);
+      await signInWithEmailAndPassword(auth, login.trim(), senha);
       setAutenticado(true);
       setErro("");
     } catch (err) {
-      setErro("Acesso negado. CPF ou senha incorretos.");
+      setErro("Acesso negado. Email ou senha incorretos.");
     }
   };
 
@@ -258,8 +258,8 @@ export default function AdminPage() {
         <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm">
           <h2 className="text-2xl font-bold mb-6 text-center text-gray-900">Painel do Admin</h2>
           <div className="mb-4">
-            <label className="block text-gray-700 mb-2">CPF</label>
-            <input type="text" value={login} onChange={e => setLogin(e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <label className="block text-gray-700 mb-2">Email</label>
+            <input type="email" value={login} onChange={e => setLogin(e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div className="mb-4">
             <label className="block text-gray-700 mb-2">Senha</label>
