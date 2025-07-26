@@ -3,11 +3,11 @@ import { useState, useEffect } from "react";
 import conteudoProgramatico from '../../conteudo_programatico.json';
 import { db, auth } from '../lib/firebase';
 import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
-import { collection, addDoc, getDocs, deleteDoc, doc, query, where, onSnapshot, setDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc, query, where, onSnapshot } from 'firebase/firestore';
 import dynamic from 'next/dynamic';
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 import 'react-quill/dist/quill.snow.css';
-import { BookOpen, Users, FileText, Settings, LogOut, Plus, Edit, Trash2, CheckCircle } from 'lucide-react';
+import { BookOpen, Users, FileText, Plus, Edit, Trash2, LogOut, Settings } from 'lucide-react';
 
 const ADMIN_EMAIL = "claudioghabryel7@gmail.com";
 
@@ -18,7 +18,7 @@ export default function AdminPage() {
   const [erro, setErro] = useState("");
   const [activeTab, setActiveTab] = useState('flashcards');
 
-  // Estados para flashcards
+  // Painel admin
   const [preparatorio, setPreparatorio] = useState("ALEGO");
   const [materia, setMateria] = useState("");
   const [subtopico, setSubtopico] = useState("");
@@ -27,13 +27,13 @@ export default function AdminPage() {
   const [novaResposta, setNovaResposta] = useState("");
   const [carregando, setCarregando] = useState(false);
 
-  // Estados para usuários
+  // Usuários
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [carregandoUsuarios, setCarregandoUsuarios] = useState(false);
   const [novoEmail, setNovoEmail] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
 
-  // Estados para aprofundamento
+  // Estado para editor de aprofundamento
   const [subtopicoAprof, setSubtopicoAprof] = useState('');
   const [conteudoAprof, setConteudoAprof] = useState('');
   const [salvandoAprof, setSalvandoAprof] = useState(false);
@@ -72,20 +72,23 @@ export default function AdminPage() {
   useEffect(() => {
     if (!autenticado) return;
     setCarregandoUsuarios(true);
-    const q = query(collection(db, 'users'));
-    const unsub = onSnapshot(q, (snapshot) => {
-      const users = snapshot.docs.map(doc => ({ 
-        uid: doc.id, 
-        ...doc.data() 
-      }));
-      setUsuarios(users);
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const { collection, getDocs } = await import('firebase/firestore');
+          const { db } = await import('../lib/firebase');
+          const snapshot = await getDocs(collection(db, 'users'));
+          setUsuarios(snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() })));
+        } catch (error) {
+          console.error('Erro ao carregar usuários:', error);
+        }
+      }
       setCarregandoUsuarios(false);
-      console.log('Usuários carregados:', users);
     });
     return () => unsub();
   }, [autenticado]);
 
-  // Carregar subtópicos salvos
+  // Carregar subtópicos salvos do Firestore
   useEffect(() => {
     if (!autenticado) return;
     const carregarSubtopicos = async () => {
@@ -125,15 +128,7 @@ export default function AdminPage() {
     subtopicosPorMateria[materiaIdentificada].push(sub);
   });
 
-  // Agrupar flashcards por subtópico
-  const flashcardsPorSubtopico: Record<string, any[]> = {};
-  flashcards.forEach(fc => {
-    const key = fc.subtopico || "(Sem subtópico)";
-    if (!flashcardsPorSubtopico[key]) flashcardsPorSubtopico[key] = [];
-    flashcardsPorSubtopico[key].push(fc);
-  });
-
-  // Funções para flashcards
+  // Ao salvar o flashcard, garantir que o campo 'subject' seja o nome completo da matéria
   const getSubjectName = (subjectId: string) => {
     const subjects: { [key: string]: string } = {
       'portugues': 'Língua Portuguesa',
@@ -146,6 +141,7 @@ export default function AdminPage() {
     return subjects[subjectId] || subjectId;
   };
 
+  // Adicionar flashcard
   const handleAddFlashcard = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novaPergunta.trim() || !novaResposta.trim() || !subtopico) return;
@@ -162,45 +158,30 @@ export default function AdminPage() {
     setSubtopico("");
   };
 
+  // Remover flashcard
   const handleDelete = async (id: string) => {
     await deleteDoc(doc(db, 'flashcards', id));
   };
 
-  // Funções para usuários
+  // Agrupar flashcards por subtópico
+  const flashcardsPorSubtopico: Record<string, any[]> = {};
+  flashcards.forEach(fc => {
+    const key = fc.subtopico || "(Sem subtópico)";
+    if (!flashcardsPorSubtopico[key]) flashcardsPorSubtopico[key] = [];
+    flashcardsPorSubtopico[key].push(fc);
+  });
+
+  // Adicionar usuário
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoEmail.trim() || !novaSenha.trim()) return;
     try {
-      // Criar usuário no Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, novoEmail, novaSenha);
-      
-      // Criar documento do usuário no Firestore com acesso pago
-      const userId = userCredential.user.uid;
-      const normalizedId = novoEmail.replace(/[^a-zA-Z0-9]/g, '_');
-      
-      // Usar setDoc com ID específico para garantir consistência
-      await setDoc(doc(db, 'users', normalizedId), {
-        uid: userId,
+      await addDoc(collection(db, 'users'), {
+        uid: userCredential.user.uid,
         email: novoEmail,
-        name: novoEmail.split('@')[0],
-        isPaid: true,
-        hasAccess: true,
         created_at: new Date().toISOString(),
-        lastLogin: new Date().toISOString()
       });
-
-      // Criar pagamento aprovado para o usuário
-      await setDoc(doc(db, 'payments', `payment_${normalizedId}`), {
-        email: novoEmail,
-        uid: userId,
-        payment_id: `admin_${Date.now()}`,
-        amount: 99.90,
-        status: 'approved',
-        method: 'admin',
-        created_at: new Date().toISOString()
-      });
-
-      console.log('✅ Usuário criado com acesso pago:', novoEmail);
       setNovoEmail("");
       setNovaSenha("");
     } catch (error: any) {
@@ -208,27 +189,17 @@ export default function AdminPage() {
     }
   };
 
+  // Remover usuário
   const handleDeleteUser = async (uid: string) => {
     try {
-      // Deletar usuário do Firestore
+      await deleteUser(auth.currentUser!);
       await deleteDoc(doc(db, 'users', uid));
-      
-      // Deletar pagamentos relacionados
-      const { collection, query, where, getDocs } = await import('firebase/firestore');
-      const paymentsQuery = query(collection(db, 'payments'), where('uid', '==', uid));
-      const paymentsSnapshot = await getDocs(paymentsQuery);
-      
-      for (const paymentDoc of paymentsSnapshot.docs) {
-        await deleteDoc(paymentDoc.ref);
-      }
-      
-      console.log('✅ Usuário deletado com sucesso:', uid);
     } catch (error) {
       console.error('Erro ao deletar usuário:', error);
     }
   };
 
-  // Funções para aprofundamento
+  // Função para carregar conteúdo de aprofundamento
   async function carregarAprofundamento(sub: string) {
     setSubtopicoAprof(sub);
     setMsgAprof('');
@@ -245,6 +216,7 @@ export default function AdminPage() {
     }
   }
 
+  // Função para salvar conteúdo de aprofundamento
   async function salvarAprofundamento() {
     setSalvandoAprof(true);
     setMsgAprof('');
@@ -270,7 +242,7 @@ export default function AdminPage() {
     setSalvandoAprof(false);
   }
 
-  // Toolbar para ReactQuill
+  // Toolbar completa para o ReactQuill
   const quillModules = {
     toolbar: [
       [{ 'header': [1, 2, 3, false] }],
@@ -284,20 +256,14 @@ export default function AdminPage() {
     ]
   };
 
-  // Logout
-  const handleLogout = () => {
-    auth.signOut();
-    setAutenticado(false);
-  };
-
   if (!autenticado) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700">
         <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm">
           <div className="text-center mb-6">
-            <Settings className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+            <BookOpen className="h-12 w-12 text-blue-600 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900">Painel Administrativo</h2>
-            <p className="text-gray-600 mt-2">Faça login para continuar</p>
+            <p className="text-gray-600 mt-2">FlashConCards</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -323,9 +289,9 @@ export default function AdminPage() {
             {erro && <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{erro}</div>}
             <button 
               type="submit" 
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200"
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
             >
-              Entrar
+              Entrar no Painel
             </button>
           </form>
         </div>
@@ -336,23 +302,23 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              <Settings className="h-8 w-8 text-blue-600 mr-3" />
-              <h1 className="text-xl font-bold text-gray-900">Painel Administrativo</h1>
+              <BookOpen className="h-8 w-8 text-blue-600 mr-3" />
+              <h1 className="text-xl font-bold text-gray-900">FlashConCards - Admin</h1>
             </div>
             <button 
-              onClick={handleLogout}
-              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              onClick={() => setAutenticado(false)}
+              className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
             >
               <LogOut className="h-5 w-5 mr-2" />
               Sair
             </button>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Navigation Tabs */}
       <div className="bg-white border-b">
@@ -366,7 +332,7 @@ export default function AdminPage() {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              <BookOpen className="h-5 w-5 inline mr-2" />
+              <FileText className="h-5 w-5 inline mr-2" />
               Flashcards
             </button>
             <button
@@ -377,7 +343,7 @@ export default function AdminPage() {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              <FileText className="h-5 w-5 inline mr-2" />
+              <Settings className="h-5 w-5 inline mr-2" />
               Aprofundamento
             </button>
             <button
@@ -396,15 +362,15 @@ export default function AdminPage() {
       </div>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Flashcards Tab */}
         {activeTab === 'flashcards' && (
           <div className="space-y-8">
-            {/* Add Flashcard Form */}
+            {/* Add Flashcard Section */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <Plus className="h-5 w-5 mr-2 text-blue-600" />
-                Adicionar Flashcard
+                Adicionar Novo Flashcard
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
@@ -454,7 +420,7 @@ export default function AdminPage() {
                         type="text" 
                         value={novaPergunta} 
                         onChange={e => setNovaPergunta(e.target.value)} 
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
                         placeholder="Digite a pergunta"
                       />
                     </div>
@@ -465,14 +431,14 @@ export default function AdminPage() {
                       type="text" 
                       value={novaResposta} 
                       onChange={e => setNovaResposta(e.target.value)} 
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
                       placeholder="Digite a resposta"
                     />
                   </div>
                   <div className="flex justify-end">
                     <button 
                       type="submit" 
-                      className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center"
+                      className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Adicionar Flashcard
@@ -485,10 +451,7 @@ export default function AdminPage() {
             {/* Flashcards List */}
             {materia && (
               <div className="bg-white rounded-lg shadow-sm border p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <BookOpen className="h-5 w-5 mr-2 text-blue-600" />
-                  Flashcards Cadastrados
-                </h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Flashcards Cadastrados</h2>
                 {carregando ? (
                   <div className="text-center py-8 text-gray-500">Carregando flashcards...</div>
                 ) : (
@@ -503,19 +466,20 @@ export default function AdminPage() {
                                 <div key={fc.id} className="flex items-start justify-between bg-gray-50 rounded-lg p-4">
                                   <div className="flex-1">
                                     <div className="mb-2">
-                                      <span className="font-semibold text-gray-700">P:</span> 
-                                      <span className="ml-2">{fc.question}</span>
+                                      <span className="font-semibold text-gray-700">Pergunta:</span>
+                                      <p className="text-gray-800 mt-1">{fc.question}</p>
                                     </div>
                                     <div>
-                                      <span className="font-semibold text-gray-700">R:</span> 
-                                      <span className="ml-2">{fc.answer}</span>
+                                      <span className="font-semibold text-gray-700">Resposta:</span>
+                                      <p className="text-gray-800 mt-1">{fc.answer}</p>
                                     </div>
                                   </div>
                                   <button 
                                     onClick={() => handleDelete(fc.id)} 
-                                    className="ml-4 bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-colors"
+                                    className="ml-4 bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 transition-colors flex items-center"
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    Remover
                                   </button>
                                 </div>
                               ))}
@@ -536,24 +500,41 @@ export default function AdminPage() {
         {/* Aprofundamento Tab */}
         {activeTab === 'aprofundamento' && (
           <div className="space-y-8">
-            {/* Add Aprofundamento Form */}
+            {/* Add Aprofundamento Section */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <FileText className="h-5 w-5 mr-2 text-blue-600" />
+                <Settings className="h-5 w-5 mr-2 text-blue-600" />
                 Adicionar Conteúdo de Aprofundamento
               </h2>
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2 font-medium">Selecione o Subtópico</label>
-                <select 
-                  value={subtopicoAprof} 
-                  onChange={e => carregarAprofundamento(e.target.value)} 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Selecione o subtópico</option>
-                  {subtopicosUnicos.map((sub: string, idx: number) => (
-                    <option key={idx} value={sub}>{sub}</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-gray-700 mb-2 font-medium">Matéria</label>
+                  <select 
+                    value={materia} 
+                    onChange={e => setMateria(e.target.value)} 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Selecione a matéria</option>
+                    {conteudoProgramatico.map((m: any) => (
+                      <option key={m.titulo} value={m.titulo}>{m.titulo}</option>
+                    ))}
+                  </select>
+                </div>
+                {materia && (
+                  <div>
+                    <label className="block text-gray-700 mb-2 font-medium">Subtópico</label>
+                    <select 
+                      value={subtopicoAprof} 
+                      onChange={e => carregarAprofundamento(e.target.value)} 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Selecione o subtópico</option>
+                      {subtopicosUnicos.map((sub: string, idx: number) => (
+                        <option key={idx} value={sub}>{sub}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
               
               {subtopicoAprof && (
@@ -572,15 +553,14 @@ export default function AdminPage() {
                     <button 
                       onClick={salvarAprofundamento} 
                       disabled={salvandoAprof} 
-                      className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center disabled:opacity-50"
+                      className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center disabled:opacity-50"
                     >
-                      <CheckCircle className="h-4 w-4 mr-2" />
                       {salvandoAprof ? 'Salvando...' : 'Salvar Conteúdo'}
                     </button>
                   </div>
                   {msgAprof && (
-                    <div className={`p-3 rounded-lg text-sm ${
-                      msgAprof.includes('sucesso') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                    <div className={`mt-2 text-sm p-3 rounded-lg ${
+                      msgAprof.includes('sucesso') ? 'text-green-700 bg-green-50' : 'text-red-700 bg-red-50'
                     }`}>
                       {msgAprof}
                     </div>
@@ -591,10 +571,7 @@ export default function AdminPage() {
 
             {/* Aprofundamento List */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <FileText className="h-5 w-5 mr-2 text-blue-600" />
-                Conteúdos de Aprofundamento Salvos
-              </h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Conteúdos de Aprofundamento</h2>
               {subtopicosSalvos.length > 0 ? (
                 <div className="space-y-6">
                   {Object.keys(subtopicosPorMateria).map(materia => (
@@ -605,15 +582,15 @@ export default function AdminPage() {
                           <div key={sub.id} className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-4">
                             <div className="flex-1">
                               <div className="font-semibold text-green-700">{sub.name}</div>
-                              <div className="text-sm text-gray-500">
+                              <div className="text-sm text-gray-500 mt-1">
                                 Salvo em: {new Date(sub.updated_at).toLocaleDateString()}
                               </div>
                             </div>
                             <button 
                               onClick={() => carregarAprofundamento(sub.name)} 
-                              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center"
+                              className="bg-blue-500 text-white px-4 py-2 rounded text-sm hover:bg-blue-600 transition-colors flex items-center"
                             >
-                              <Edit className="h-4 w-4 mr-2" />
+                              <Edit className="h-4 w-4 mr-1" />
                               Editar
                             </button>
                           </div>
@@ -632,39 +609,37 @@ export default function AdminPage() {
         {/* Usuários Tab */}
         {activeTab === 'usuarios' && (
           <div className="space-y-8">
-            {/* Add User Form */}
+            {/* Add User Section */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Users className="h-5 w-5 mr-2 text-blue-600" />
-                Adicionar Usuário
+                <Plus className="h-5 w-5 mr-2 text-blue-600" />
+                Adicionar Novo Usuário
               </h2>
-              <form onSubmit={handleAddUser} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-gray-700 mb-2 font-medium">E-mail</label>
-                    <input 
-                      type="email" 
-                      value={novoEmail} 
-                      onChange={e => setNovoEmail(e.target.value)} 
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Digite o e-mail"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 mb-2 font-medium">Senha</label>
-                    <input 
-                      type="password" 
-                      value={novaSenha} 
-                      onChange={e => setNovaSenha(e.target.value)} 
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Digite a senha"
-                    />
-                  </div>
+              <form onSubmit={handleAddUser} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-gray-700 mb-2 font-medium">E-mail</label>
+                  <input 
+                    type="email" 
+                    value={novoEmail} 
+                    onChange={e => setNovoEmail(e.target.value)} 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    placeholder="novo@email.com"
+                  />
                 </div>
-                <div className="flex justify-end">
+                <div>
+                  <label className="block text-gray-700 mb-2 font-medium">Senha</label>
+                  <input 
+                    type="password" 
+                    value={novaSenha} 
+                    onChange={e => setNovaSenha(e.target.value)} 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                    placeholder="Senha temporária"
+                  />
+                </div>
+                <div className="flex items-end">
                   <button 
                     type="submit" 
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center"
+                    className="w-full bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Adicionar Usuário
@@ -675,35 +650,32 @@ export default function AdminPage() {
 
             {/* Users List */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Users className="h-5 w-5 mr-2 text-blue-600" />
-                Usuários Cadastrados
-              </h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Usuários Cadastrados</h2>
               {carregandoUsuarios ? (
                 <div className="text-center py-8 text-gray-500">Carregando usuários...</div>
               ) : (
-                <div className="space-y-3">
-                  {usuarios.map(u => (
-                    <div key={u.uid} className="flex items-center justify-between bg-gray-50 rounded-lg p-4">
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900">{u.email}</div>
-                        <div className="text-sm text-gray-500">
-                          Nome: {u.name || 'N/A'} | 
-                          Acesso: {u.isPaid || u.hasAccess ? '✅ Pago' : '❌ Pendente'} |
-                          Criado: {new Date(u.created_at).toLocaleDateString()}
-                          {u.lastLogin && ` | Último login: ${new Date(u.lastLogin).toLocaleDateString()}`}
+                <div>
+                  {usuarios.length > 0 ? (
+                    <div className="space-y-3">
+                      {usuarios.map(u => (
+                        <div key={u.uid} className="flex items-center justify-between bg-gray-50 rounded-lg p-4">
+                          <div>
+                            <div className="font-medium text-gray-900">{u.email}</div>
+                            <div className="text-sm text-gray-500">
+                              Criado em: {new Date(u.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => handleDeleteUser(u.uid)} 
+                            className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 transition-colors flex items-center"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Excluir
+                          </button>
                         </div>
-                      </div>
-                      <button 
-                        onClick={() => handleDeleteUser(u.uid)} 
-                        className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Excluir
-                      </button>
+                      ))}
                     </div>
-                  ))}
-                  {usuarios.length === 0 && (
+                  ) : (
                     <div className="text-center py-8 text-gray-500">Nenhum usuário cadastrado.</div>
                   )}
                 </div>
@@ -711,7 +683,7 @@ export default function AdminPage() {
             </div>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 } 

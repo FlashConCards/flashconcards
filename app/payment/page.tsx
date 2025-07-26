@@ -177,7 +177,7 @@ export default function PaymentPage() {
                       <div className="space-y-4 mb-6">
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Acesso aos FlashConCards ALEGO</span>
-                              <span className="font-medium">R$ 99,90</span>
+              <span className="font-medium">R$ 1,00</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Acesso por 12 meses</span>
@@ -200,11 +200,11 @@ export default function PaymentPage() {
           <div className="border-t pt-4">
             <div className="flex justify-between items-center">
               <span className="text-lg font-bold text-gray-900">Total PIX</span>
-                              <span className="text-2xl font-bold text-primary-600">R$ 99,90</span>
+              <span className="text-2xl font-bold text-primary-600">R$ 1,00</span>
             </div>
             <div className="flex justify-between items-center mt-2">
               <span className="text-lg font-bold text-gray-900">Total Cartão</span>
-                              <span className="text-2xl font-bold text-green-600">R$ 99,90</span>
+              <span className="text-2xl font-bold text-green-600">R$ 1,00</span>
             </div>
             <div className="text-sm text-gray-500 mt-2">
               Economia de 75% no valor total
@@ -285,7 +285,7 @@ export default function PaymentPage() {
                >
                  <QrCode className="h-5 w-5 inline mr-2" />
                  PIX
-                 <span className="text-xs ml-1">R$ 99,90</span>
+                 <span className="text-xs ml-1">R$ 1,00</span>
                </button>
                <button
                  onClick={() => setPaymentMethod('card')}
@@ -329,7 +329,7 @@ export default function PaymentPage() {
                           Gerando PIX...
                         </>
                       ) : (
-                        'Gerar PIX - R$ 99,90'
+                        'Gerar PIX - R$ 1,00'
                       )}
                     </button>
                   </div>
@@ -462,11 +462,11 @@ export default function PaymentPage() {
                        onChange={(e) => setInstallments(e.target.value)}
                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                      >
-                       <option value="1">1x de R$ 99,90 sem juros</option>
-                       <option value="2">2x de R$ 49,95 sem juros</option>
-                       <option value="3">3x de R$ 33,30 sem juros</option>
-                       <option value="6">6x de R$ 16,65 sem juros</option>
-                       <option value="12">12x de R$ 8,33 sem juros</option>
+                       <option value="1">1x de R$ 1,00 sem juros</option>
+                       <option value="2">2x de R$ 0,50 sem juros</option>
+                       <option value="3">3x de R$ 0,33 sem juros</option>
+                       <option value="6">6x de R$ 0,17 sem juros</option>
+                       <option value="12">12x de R$ 0,08 sem juros</option>
                      </select>
                    </div>
 
@@ -481,11 +481,11 @@ export default function PaymentPage() {
                          Processando...
                        </>
                      ) : (
-                                            `Pagar ${installments === '1' ? 'R$ 99,90' : 
-                            installments === '2' ? '2x de R$ 49,95' :
-                            installments === '3' ? '3x de R$ 33,30' :
-                            installments === '6' ? '6x de R$ 16,65' :
-                            '12x de R$ 8,33'}`
+                                            `Pagar ${installments === '1' ? 'R$ 1,00' : 
+                            installments === '2' ? '2x de R$ 0,50' :
+                            installments === '3' ? '3x de R$ 0,33' :
+                            installments === '6' ? '6x de R$ 0,17' :
+                            '12x de R$ 0,08'}`
                      )}
                    </button>
                 </form>

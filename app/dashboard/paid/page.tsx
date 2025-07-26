@@ -5,8 +5,10 @@ import { motion } from 'framer-motion'
 import { BookOpen, CheckCircle, Trophy, MessageSquare, TrendingUp, User, Calendar, Target, BarChart3, Clock, ArrowRight, Calculator, Scale, Building2, MapPin, FileText, Shield, Users, PenTool, Camera, Lock, Save, X } from 'lucide-react'
 import Link from 'next/link'
 import conteudoProgramatico from '../../../conteudo_programatico.json';
-import { db } from '../../../app/lib/firebase';
-import { collection, query, where, getDocs, doc, getDoc, onSnapshot, getCountFromServer, updateDoc, setDoc } from 'firebase/firestore';
+import { db, storage, auth } from '../../../app/lib/firebase';
+import { collection, query, where, getCountFromServer, getDocs, doc, updateDoc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { signOut, updatePassword, updateProfile } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 
 interface UserStats {
@@ -51,82 +53,76 @@ export default function PaidDashboardPage() {
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileSuccess, setProfileSuccess] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const router = useRouter();
 
-  // Verificação de autenticação simplificada
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        console.log('🔍 Verificando autenticação...')
-        
-        // Buscar dados da URL ou sessionStorage temporário
-        const urlParams = new URLSearchParams(window.location.search)
-        const email = urlParams.get('email') || sessionStorage.getItem('temp_email')
-        
-        if (!email) {
-          console.log('❌ Email não encontrado, redirecionando para login')
-          router.push('/login')
-          return
-        }
+    // Verificar se usuário está logado
+    const userData = localStorage.getItem('flashconcards_user')
+    if (!userData) {
+      window.location.href = '/login'
+      return
+    }
 
-        console.log('📧 Email encontrado:', email)
-        
-        // FORÇAR AUTENTICAÇÃO IMEDIATA
-        console.log('✅ Usuário autenticado com sucesso!')
-        setIsAuthenticated(true)
-        setUser({ 
-          email, 
-          uid: email.replace(/[^a-zA-Z0-9]/g, '_'),
-          name: email.split('@')[0],
-          isPaid: true,
-          hasAccess: true
-        })
+    const userInfo = JSON.parse(userData)
+    setUser(userInfo)
 
-        // Dados padrão direto - sem funções problemáticas
-        setStats({
-          totalCards: 150,
-          cardsStudied: 0,
-          generalProgress: 0,
-          daysStudying: 1,
-          lastLogin: new Date().toISOString(),
-          totalSubjects: 10
-        })
+    // Configurar listener em tempo real do Firestore
+    const userId = userInfo.uid || userInfo.email?.replace(/[^a-zA-Z0-9]/g, '_') || 'unknown';
+    const userRef = doc(db, 'users', userId);
+    
+    console.log('Configurando listener em tempo real para usuário:', userId);
+    
+    const unsubscribe = onSnapshot(userRef, (doc) => {
+      if (doc.exists()) {
+        const firestoreData = doc.data();
+        console.log('Dados atualizados em tempo real:', firestoreData);
         
-        // Matérias padrão
-        const subjectsData: Subject[] = conteudoProgramatico.map((item) => ({
-          id: item.titulo.toLowerCase().replace(/[^a-z0-9]+/gi, '-'),
-          name: item.titulo,
-          description: item.topicos[0] || '',
-          totalCards: 15,
-          completedCards: 0,
-          icon: BookOpen,
-          color: 'bg-blue-500'
+        // Atualizar usuário com dados do Firestore
+        const updatedUser = { ...userInfo, ...firestoreData };
+        setUser(updatedUser);
+        
+        // Atualizar localStorage
+        localStorage.setItem('flashconcards_user', JSON.stringify(updatedUser));
+        
+        // Atualizar profileData com dados em tempo real
+        setProfileData(prev => ({
+          ...prev,
+          displayName: firestoreData.displayName || userInfo.displayName || userInfo.name || '',
+          photoURL: firestoreData.photoURL || userInfo.photoURL || ''
         }));
-        setSubjects(subjectsData)
-        
-        console.log('📊 Dashboard carregado com sucesso!')
-
-      } catch (error) {
-        console.error('Erro na verificação de autenticação:', error);
-        router.push('/login')
+      } else {
+        console.log('Documento não existe no Firestore, usando dados do localStorage');
+        setProfileData({
+          displayName: userInfo.displayName || userInfo.name || '',
+          photoURL: userInfo.photoURL || '',
+          newPassword: '',
+          confirmPassword: ''
+        });
       }
+    }, (error) => {
+      console.error('Erro no listener em tempo real:', error);
+      // Em caso de erro, usar dados do localStorage
+      setProfileData({
+        displayName: userInfo.displayName || userInfo.name || '',
+        photoURL: userInfo.photoURL || '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    });
+
+    // Buscar dados reais do Firebase
+    fetchUserStats(userInfo.email)
+    
+    // Carregar matérias disponíveis
+    loadSubjects(userInfo.email)
+    // Buscar total de cards e progresso geral em tempo real
+    loadDashboardStats(userInfo.email)
+
+    // Cleanup do listener quando componente desmontar
+    return () => {
+      console.log('Removendo listener em tempo real');
+      unsubscribe();
     };
-
-    checkAuth();
-  }, [router]);
-
-  // Se não está autenticado, mostrar loading
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando dashboard...</p>
-        </div>
-      </div>
-    );
-  }
+  }, [])
 
   const fetchUserStats = async (email: string) => {
     try {
@@ -169,7 +165,107 @@ export default function PaidDashboardPage() {
     }
   }
 
+  // Atualizar todos os indicadores do dashboard em tempo real
+  const loadDashboardStats = async (email: string) => {
+    // Total de flashcards
+    let totalCards = 0;
+    try {
+      const snap = await getCountFromServer(collection(db, 'flashcards'));
+      totalCards = snap.data().count || 0;
+    } catch (e) {
+      totalCards = 0;
+    }
+    // Cards estudados pelo usuário
+    let cardsStudied = 0;
+    try {
+      const q = query(collection(db, 'userProgress'), where('userId', '==', email));
+      const snap = await getDocs(q);
+      // Considera apenas flashcards únicos estudados
+      const uniqueCards = new Set(snap.docs.map(doc => doc.data().flashcardId));
+      cardsStudied = uniqueCards.size;
+    } catch (e) {
+      cardsStudied = 0;
+    }
+    // Progresso geral
+    const generalProgress = totalCards > 0 ? Math.round((cardsStudied / totalCards) * 100) : 0;
+    setStats(prev => ({
+      ...prev,
+      totalCards,
+      cardsStudied,
+      generalProgress
+    }));
+  }
 
+  const iconMap: Record<string, any> = {
+    'Língua Portuguesa': BookOpen,
+    'Noções de Informática': Target,
+    'Direito Constitucional': TrendingUp,
+    'Direito Administrativo': BarChart3,
+    'Realidade Étnica, Social, Histórica, Geográfica, Cultural e Política de Goiás': Clock,
+    'Legislação Específica da ALEGO': CheckCircle,
+    'Noções de Segurança Pública / SUSP': MessageSquare,
+    'Qualidade na Prestação do Serviço Público / Trabalho em Equipe': User,
+    'Redação (Prova Discursiva)': Trophy
+  };
+  const colorMap: Record<string, string> = {
+    'Língua Portuguesa': 'bg-blue-500',
+    'Noções de Informática': 'bg-green-500',
+    'Direito Constitucional': 'bg-purple-500',
+    'Direito Administrativo': 'bg-orange-500',
+    'Realidade Étnica, Social, Histórica, Geográfica, Cultural e Política de Goiás': 'bg-red-500',
+    'Legislação Específica da ALEGO': 'bg-indigo-500',
+    'Noções de Segurança Pública / SUSP': 'bg-pink-500',
+    'Qualidade na Prestação do Serviço Público / Trabalho em Equipe': 'bg-yellow-500',
+    'Redação (Prova Discursiva)': 'bg-gray-500'
+  };
+
+  const loadSubjects = async (email: string) => {
+    // Carregar matérias do JSON
+    const subjectsData: Subject[] = conteudoProgramatico.map((item) => ({
+      id: item.titulo.toLowerCase().replace(/[^a-z0-9]+/gi, '-'),
+      name: item.titulo,
+      description: item.topicos[0] || '',
+      totalCards: 0, // será atualizado abaixo
+      completedCards: 0,
+      icon: iconMap[item.titulo] || BookOpen,
+      color: colorMap[item.titulo] || 'bg-blue-500'
+    }));
+
+    // Buscar total de flashcards reais do Firebase para cada matéria
+    const updatedSubjects = await Promise.all(
+      subjectsData.map(async (subject) => {
+        let totalCards = 0;
+        try {
+          const q = query(collection(db, 'flashcards'), where('subject', '==', subject.name));
+          const snap = await getCountFromServer(q);
+          totalCards = snap.data().count || 0;
+        } catch (e) {
+          totalCards = 0;
+        }
+        // Buscar progresso real de cada matéria (mantém como antes)
+        let completedCards = 0;
+        try {
+          const response = await fetch('/api/user/subject-progress', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, subjectId: subject.id })
+          })
+          if (response.ok) {
+            const progressData = await response.json();
+            completedCards = progressData.completedCards || 0;
+          }
+        } catch (error) {}
+        return {
+          ...subject,
+          totalCards,
+          completedCards
+        };
+      })
+    );
+    setSubjects(updatedSubjects);
+  }
 
   // Função para garantir que o progresso nunca ultrapasse 100% e nunca mostre, por exemplo, 2/1
   const getProgressPercentage = (completed: number, total: number) => {
@@ -179,7 +275,7 @@ export default function PaidDashboardPage() {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem('temp_email')
+    localStorage.removeItem('flashconcards_user')
     window.location.href = '/'
   }
 
