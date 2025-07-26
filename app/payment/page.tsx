@@ -313,96 +313,73 @@ export default function PaymentPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="space-y-6"
               >
-                {!pixData ? (
-                  <div className="text-center">
-                    <div className="bg-gray-100 rounded-lg p-6 mb-4">
-                      <QrCode className="h-32 w-32 mx-auto text-gray-400" />
-                      <p className="text-sm text-gray-600 mt-2">
-                        Clique no botão abaixo para gerar o PIX
-                      </p>
+                <div className="text-center">
+                  <div className="bg-gray-100 rounded-lg p-6 mb-4">
+                                         {/* QR CODE FIXO - SEMPRE APARECE */}
+                     <div className="text-center mb-4">
+                       <div className="bg-white rounded-lg p-4 inline-block border-2 border-blue-200">
+                         <div className="text-2xl font-bold text-blue-600 mb-2">PIX</div>
+                         <div className="text-sm text-gray-600">R$ 99,90</div>
+                         <div className="text-xs text-gray-500 mt-1">QR Code disponível</div>
+                       </div>
+                     </div>
+                     {/* QR CODE FIXO - IMAGEM */}
+                     <div className="flex justify-center mb-4">
+                       <div className="bg-white p-4 rounded-lg border-2 border-blue-200">
+                         <div className="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                           <div className="text-center text-gray-500">
+                             <QrCode className="h-32 w-32 mx-auto" />
+                             <p className="text-xs mt-2">QR Code PIX</p>
+                           </div>
+                         </div>
+                       </div>
+                     </div>
+                    <p className="text-sm text-gray-600 mt-2">
+                      Escaneie o QR Code com seu app bancário
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-blue-800">Código PIX:</span>
+                        <button
+                          onClick={handlePixCopy}
+                          className="flex items-center text-blue-600 hover:text-blue-700 bg-blue-100 px-3 py-1 rounded-lg"
+                        >
+                          {isPixCopied ? (
+                            <>
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Copiado!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-4 w-4 mr-1" />
+                              Copiar
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <div className="bg-white p-3 rounded border text-sm font-mono text-gray-800 break-all">
+                        {pixData.qr_code || 'Código PIX será gerado aqui...'}
+                      </div>
                     </div>
                     
-                    <button
-                      onClick={createPixPayment}
-                      disabled={isLoading}
-                      className="w-full btn-primary py-3 mt-4 flex items-center justify-center"
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                          Gerando PIX...
-                        </>
-                      ) : (
-                        'Gerar PIX - R$ 99,90'
-                      )}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <div className="bg-gray-100 rounded-lg p-6 mb-4">
-                      {pixData.qr_code_base64 ? (
-                        <img 
-                          src={pixData.qr_code_base64}
-                          alt="QR Code PIX"
-                          className="mx-auto w-48 h-48"
-                        />
-                      ) : (
-                        <div className="text-center mb-4">
-                          <div className="bg-white rounded-lg p-4 inline-block border-2 border-blue-200">
-                            <div className="text-2xl font-bold text-blue-600 mb-2">PIX</div>
-                            <div className="text-sm text-gray-600">R$ 99,90</div>
-                            <div className="text-xs text-gray-500 mt-1">Código PIX disponível abaixo</div>
-                          </div>
-                        </div>
-                      )}
-                      <p className="text-sm text-gray-600 mt-2">
-                        {pixData.qr_code_base64 ? 'Escaneie o QR Code com seu app bancário' : 'Use o código PIX abaixo no seu app bancário'}
-                      </p>
+                    <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
+                      <p>• Pague com PIX e tenha acesso imediato</p>
+                      <p>• Aprovação em até 2 minutos</p>
+                      <p>• Pagamento 100% seguro</p>
                     </div>
                     
-                    <div className="space-y-3">
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-blue-800">Código PIX:</span>
-                          <button
-                            onClick={handlePixCopy}
-                            className="flex items-center text-blue-600 hover:text-blue-700 bg-blue-100 px-3 py-1 rounded-lg"
-                          >
-                            {isPixCopied ? (
-                              <>
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                Copiado!
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="h-4 w-4 mr-1" />
-                                Copiar
-                              </>
-                            )}
-                          </button>
-                        </div>
-                        <div className="bg-white p-3 rounded border text-sm font-mono text-gray-800 break-all">
-                          {pixData.qr_code || 'Código PIX será gerado aqui...'}
-                        </div>
-                      </div>
-                      
-                      <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
-                        <p>• Pague com PIX e tenha acesso imediato</p>
-                        <p>• Aprovação em até 2 minutos</p>
-                        <p>• Pagamento 100% seguro</p>
-                      </div>
-                      
-                      {pixData.payment_id && (
-                        <PaymentStatus 
-                          paymentId={pixData.payment_id}
-                          onSuccess={() => window.location.href = '/payment/success'}
-                        />
-                      )}
-                    </div>
+                    {pixData.payment_id && (
+                      <PaymentStatus 
+                        paymentId={pixData.payment_id}
+                        onSuccess={() => window.location.href = '/payment/success'}
+                      />
+                    )}
                   </div>
-                )}
+                </div>
               </motion.div>
             )}
 
