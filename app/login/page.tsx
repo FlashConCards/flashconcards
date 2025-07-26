@@ -25,32 +25,7 @@ export default function LoginPage() {
     }
     
     try {
-      // Primeiro: Verificar se o usuário foi criado pelo admin
-      const adminUserResponse = await fetch('/api/admin/check-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email })
-      })
-      
-      const adminUserData = await adminUserResponse.json()
-      
-      if (adminUserData.exists) {
-        // Usuário criado pelo admin, permitir acesso
-        localStorage.setItem('flashconcards_user', JSON.stringify({
-          name: email.split('@')[0],
-          email: email,
-          isPaid: true,
-          isAdminUser: true,
-          loginTime: new Date().toISOString()
-        }))
-        
-        window.location.href = '/dashboard/paid'
-        return
-      }
-      
-      // Segundo: Verificar se o usuário pagou no servidor
+      // Verificar se o usuário pagou no servidor
       const response = await fetch('/api/payment/status', {
         method: 'POST',
         headers: {

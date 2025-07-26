@@ -7,7 +7,6 @@ import { collection, addDoc, getDocs, deleteDoc, doc, query, where, onSnapshot }
 import dynamic from 'next/dynamic';
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 import 'react-quill/dist/quill.snow.css';
-import { BookOpen, Users, FileText, Plus, Edit, Trash2, LogOut, Settings } from 'lucide-react';
 
 const ADMIN_EMAIL = "claudioghabryel7@gmail.com";
 
@@ -16,7 +15,6 @@ export default function AdminPage() {
   const [senha, setSenha] = useState("");
   const [autenticado, setAutenticado] = useState(false);
   const [erro, setErro] = useState("");
-  const [activeTab, setActiveTab] = useState('flashcards');
 
   // Painel admin
   const [preparatorio, setPreparatorio] = useState("ALEGO");
@@ -27,22 +25,10 @@ export default function AdminPage() {
   const [novaResposta, setNovaResposta] = useState("");
   const [carregando, setCarregando] = useState(false);
 
-  // Usuários
-  const [usuarios, setUsuarios] = useState<any[]>([]);
-  const [carregandoUsuarios, setCarregandoUsuarios] = useState(false);
-  const [novoEmail, setNovoEmail] = useState("");
-  const [novaSenha, setNovaSenha] = useState("");
-
-  // Estado para editor de aprofundamento
-  const [subtopicoAprof, setSubtopicoAprof] = useState('');
-  const [conteudoAprof, setConteudoAprof] = useState('');
-  const [salvandoAprof, setSalvandoAprof] = useState(false);
-  const [msgAprof, setMsgAprof] = useState('');
-  const [subtopicosSalvos, setSubtopicosSalvos] = useState<any[]>([]);
-
   // Login
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Só permite login com o e-mail do admin, mas o campo é rotulado como CPF
     if (login.trim().toLowerCase() !== ADMIN_EMAIL) {
       setErro("Acesso negado. CPF ou senha incorretos.");
       return;
@@ -68,65 +54,8 @@ export default function AdminPage() {
     return () => unsub();
   }, [materia, preparatorio, autenticado]);
 
-  // Carregar usuários
-  useEffect(() => {
-    if (!autenticado) return;
-    setCarregandoUsuarios(true);
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          const { collection, getDocs } = await import('firebase/firestore');
-          const { db } = await import('../lib/firebase');
-          const snapshot = await getDocs(collection(db, 'users'));
-          setUsuarios(snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() })));
-        } catch (error) {
-          console.error('Erro ao carregar usuários:', error);
-        }
-      }
-      setCarregandoUsuarios(false);
-    });
-    return () => unsub();
-  }, [autenticado]);
-
-  // Carregar subtópicos salvos do Firestore
-  useEffect(() => {
-    if (!autenticado) return;
-    const carregarSubtopicos = async () => {
-      try {
-        const { collection, getDocs } = await import('firebase/firestore');
-        const { db } = await import('../lib/firebase');
-        const snapshot = await getDocs(collection(db, 'subtopics'));
-        const subtopicos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setSubtopicosSalvos(subtopicos);
-      } catch (error) {
-        console.error('Erro ao carregar subtópicos:', error);
-      }
-    };
-    carregarSubtopicos();
-  }, [autenticado]);
-
   // Subtópicos da matéria selecionada
   const subtitulos = materia ? (conteudoProgramatico.find((m: any) => m.titulo === materia)?.topicos || []) : [];
-
-  // Combinar subtópicos do JSON com os salvos no Firestore
-  const todosSubtopicos = [...subtitulos, ...subtopicosSalvos.map(s => s.name).filter(Boolean)];
-  const subtopicosUnicos = Array.from(new Set(todosSubtopicos));
-
-  // Agrupar subtópicos salvos por matéria
-  const subtopicosPorMateria: Record<string, any[]> = {};
-  subtopicosSalvos.forEach(sub => {
-    let materiaIdentificada = 'Outros';
-    for (const materia of conteudoProgramatico) {
-      if (materia.topicos.includes(sub.name)) {
-        materiaIdentificada = materia.titulo;
-        break;
-      }
-    }
-    if (!subtopicosPorMateria[materiaIdentificada]) {
-      subtopicosPorMateria[materiaIdentificada] = [];
-    }
-    subtopicosPorMateria[materiaIdentificada].push(sub);
-  });
 
   // Ao salvar o flashcard, garantir que o campo 'subject' seja o nome completo da matéria
   const getSubjectName = (subjectId: string) => {
@@ -171,33 +100,100 @@ export default function AdminPage() {
     flashcardsPorSubtopico[key].push(fc);
   });
 
-  // Adicionar usuário
+  const [usuarios, setUsuarios] = useState<any[]>([]);
+  const [novoEmail, setNovoEmail] = useState("");
+  const [novaSenha, setNovaSenha] = useState("");
+  const [carregandoUsuarios, setCarregandoUsuarios] = useState(false);
+
+  // Carregar lista de usuários em tempo real
+  useEffect(() => {
+    if (!autenticado) return;
+    setCarregandoUsuarios(true);
+    fetch('/api/admin/list-users')
+      .then(res => res.json())
+      .then(data => {
+        setUsuarios(data.users || []);
+        setCarregandoUsuarios(false);
+      });
+  }, [autenticado]);
+
+  // Adicionar novo usuário
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!novoEmail.trim() || !novaSenha.trim()) return;
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, novoEmail, novaSenha);
-      await addDoc(collection(db, 'users'), {
-        uid: userCredential.user.uid,
-        email: novoEmail,
-        created_at: new Date().toISOString(),
-      });
-      setNovoEmail("");
-      setNovaSenha("");
-    } catch (error: any) {
-      console.error('Erro ao criar usuário:', error);
-    }
+    if (!novoEmail || !novaSenha) return;
+    await fetch('/api/admin/add-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: novoEmail, password: novaSenha })
+    });
+    setNovoEmail("");
+    setNovaSenha("");
+    // Atualizar lista
+    fetch('/api/admin/list-users')
+      .then(res => res.json())
+      .then(data => setUsuarios(data.users || []));
   };
 
-  // Remover usuário
+  // Excluir usuário
   const handleDeleteUser = async (uid: string) => {
-    try {
-      await deleteUser(auth.currentUser!);
-      await deleteDoc(doc(db, 'users', uid));
-    } catch (error) {
-      console.error('Erro ao deletar usuário:', error);
-    }
+    await fetch('/api/admin/delete-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid })
+    });
+    // Atualizar lista
+    fetch('/api/admin/list-users')
+      .then(res => res.json())
+      .then(data => setUsuarios(data.users || []));
   };
+
+  // Estado para editor de aprofundamento
+  const [subtopicoAprof, setSubtopicoAprof] = useState('');
+  const [conteudoAprof, setConteudoAprof] = useState('');
+  const [salvandoAprof, setSalvandoAprof] = useState(false);
+  const [msgAprof, setMsgAprof] = useState('');
+  const [subtopicosSalvos, setSubtopicosSalvos] = useState<any[]>([]);
+
+  // Carregar subtópicos salvos do Firestore
+  useEffect(() => {
+    if (!autenticado) return;
+    const carregarSubtopicos = async () => {
+      try {
+        const { collection, getDocs } = await import('firebase/firestore');
+        const { db } = await import('../lib/firebase');
+        const snapshot = await getDocs(collection(db, 'subtopics'));
+        const subtopicos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setSubtopicosSalvos(subtopicos);
+      } catch (error) {
+        console.error('Erro ao carregar subtópicos:', error);
+      }
+    };
+    carregarSubtopicos();
+  }, [autenticado]);
+
+  // Combinar subtópicos do JSON com os salvos no Firestore
+  const todosSubtopicos = [...subtitulos, ...subtopicosSalvos.map(s => s.name).filter(Boolean)];
+  const subtopicosUnicos = Array.from(new Set(todosSubtopicos));
+
+  // Agrupar subtópicos salvos por matéria
+  const subtopicosPorMateria: Record<string, any[]> = {};
+  subtopicosSalvos.forEach(sub => {
+    // Tentar identificar a matéria baseado no nome do subtópico
+    let materiaIdentificada = 'Outros';
+    
+    // Mapear subtópicos para matérias baseado no conteúdo programático
+    for (const materia of conteudoProgramatico) {
+      if (materia.topicos.includes(sub.name)) {
+        materiaIdentificada = materia.titulo;
+        break;
+      }
+    }
+    
+    if (!subtopicosPorMateria[materiaIdentificada]) {
+      subtopicosPorMateria[materiaIdentificada] = [];
+    }
+    subtopicosPorMateria[materiaIdentificada].push(sub);
+  });
 
   // Função para carregar conteúdo de aprofundamento
   async function carregarAprofundamento(sub: string) {
@@ -215,7 +211,6 @@ export default function AdminPage() {
       setMsgAprof('Erro ao carregar conteúdo.');
     }
   }
-
   // Função para salvar conteúdo de aprofundamento
   async function salvarAprofundamento() {
     setSalvandoAprof(true);
@@ -226,6 +221,7 @@ export default function AdminPage() {
         setSalvandoAprof(false);
         return;
       }
+      // Validar nome do subtópico para ser um ID válido
       const docId = subtopicoAprof.replace(/[^a-zA-Z0-9_-]/g, '_');
       const { doc, setDoc } = await import('firebase/firestore');
       const { db } = await import('../lib/firebase');
@@ -259,338 +255,118 @@ export default function AdminPage() {
   if (!autenticado) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700">
-        <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm">
-          <div className="text-center mb-6">
-            <BookOpen className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900">Painel Administrativo</h2>
-            <p className="text-gray-600 mt-2">FlashConCards</p>
+        <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm">
+          <h2 className="text-2xl font-bold mb-6 text-center text-gray-900">Painel do Admin</h2>
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-2">CPF</label>
+            <input type="text" value={login} onChange={e => setLogin(e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-gray-700 mb-2 font-medium">CPF</label>
-              <input 
-                type="text" 
-                value={login} 
-                onChange={e => setLogin(e.target.value)} 
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                placeholder="Digite seu CPF"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 mb-2 font-medium">Senha</label>
-              <input 
-                type="password" 
-                value={senha} 
-                onChange={e => setSenha(e.target.value)} 
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                placeholder="Digite sua senha"
-              />
-            </div>
-            {erro && <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg">{erro}</div>}
-            <button 
-              type="submit" 
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-            >
-              Entrar no Painel
-            </button>
-          </form>
-        </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-2">Senha</label>
+            <input type="password" value={senha} onChange={e => setSenha(e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          {erro && <div className="mb-4 text-red-600 text-sm">{erro}</div>}
+          <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">Entrar</button>
+        </form>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <BookOpen className="h-8 w-8 text-blue-600 mr-3" />
-              <h1 className="text-xl font-bold text-gray-900">FlashConCards - Admin</h1>
-            </div>
-            <button 
-              onClick={() => setAutenticado(false)}
-              className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              <LogOut className="h-5 w-5 mr-2" />
-              Sair
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation Tabs */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8">
-            <button
-              onClick={() => setActiveTab('flashcards')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'flashcards'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <FileText className="h-5 w-5 inline mr-2" />
-              Flashcards
-            </button>
-            <button
-              onClick={() => setActiveTab('aprofundamento')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'aprofundamento'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <Settings className="h-5 w-5 inline mr-2" />
-              Aprofundamento
-            </button>
-            <button
-              onClick={() => setActiveTab('usuarios')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'usuarios'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <Users className="h-5 w-5 inline mr-2" />
-              Usuários
-            </button>
-          </nav>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Flashcards Tab */}
-        {activeTab === 'flashcards' && (
-          <div className="space-y-8">
-            {/* Add Flashcard Section */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Plus className="h-5 w-5 mr-2 text-blue-600" />
-                Adicionar Novo Flashcard
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-gray-700 mb-2 font-medium">Preparatório</label>
-                  <select 
-                    value={preparatorio} 
-                    onChange={e => setPreparatorio(e.target.value)} 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="ALEGO">ALEGO</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-gray-700 mb-2 font-medium">Matéria</label>
-                  <select 
-                    value={materia} 
-                    onChange={e => setMateria(e.target.value)} 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Selecione a matéria</option>
-                    {conteudoProgramatico.map((m: any) => (
-                      <option key={m.titulo} value={m.titulo}>{m.titulo}</option>
-                    ))}
-                  </select>
-                </div>
+  if (autenticado) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 flex flex-col items-center py-10">
+        <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl mb-8">
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 text-center">Painel do Admin</h2>
+          {/* Seção de Cadastro de Flashcards */}
+          <div className="mb-10 border-b pb-8">
+            <h3 className="text-xl font-bold mb-4 text-blue-700">Cadastro de Flashcards</h3>
+            <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-700 mb-2">Preparatório</label>
+                <select value={preparatorio} onChange={e => setPreparatorio(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
+                  <option value="ALEGO">ALEGO</option>
+                </select>
               </div>
-              
-              {materia && (
-                <form onSubmit={handleAddFlashcard} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-gray-700 mb-2 font-medium">Subtópico</label>
-                      <select 
-                        value={subtopico} 
-                        onChange={e => setSubtopico(e.target.value)} 
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">Selecione o subtópico</option>
-                        {subtitulos.map((sub: string, idx: number) => (
-                          <option key={idx} value={sub}>{sub}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-gray-700 mb-2 font-medium">Pergunta</label>
-                      <input 
-                        type="text" 
-                        value={novaPergunta} 
-                        onChange={e => setNovaPergunta(e.target.value)} 
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        placeholder="Digite a pergunta"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 mb-2 font-medium">Resposta</label>
-                    <input 
-                      type="text" 
-                      value={novaResposta} 
-                      onChange={e => setNovaResposta(e.target.value)} 
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                      placeholder="Digite a resposta"
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <button 
-                      type="submit" 
-                      className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Adicionar Flashcard
-                    </button>
-                  </div>
-                </form>
-              )}
+              <div>
+                <label className="block text-gray-700 mb-2">Matéria</label>
+                <select value={materia} onChange={e => setMateria(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
+                  <option value="">Selecione a matéria</option>
+                  {conteudoProgramatico.map((m: any) => (
+                    <option key={m.titulo} value={m.titulo}>{m.titulo}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-
-            {/* Flashcards List */}
             {materia && (
-              <div className="bg-white rounded-lg shadow-sm border p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Flashcards Cadastrados</h2>
-                {carregando ? (
-                  <div className="text-center py-8 text-gray-500">Carregando flashcards...</div>
-                ) : (
-                  <div>
-                    {Object.keys(flashcardsPorSubtopico).length > 0 ? (
-                      <div className="space-y-6">
-                        {Object.keys(flashcardsPorSubtopico).map(sub => (
-                          <div key={sub} className="border border-gray-200 rounded-lg p-4">
-                            <h3 className="font-semibold text-blue-700 mb-3 text-lg">{sub}</h3>
-                            <div className="space-y-3">
-                              {flashcardsPorSubtopico[sub].map(fc => (
-                                <div key={fc.id} className="flex items-start justify-between bg-gray-50 rounded-lg p-4">
-                                  <div className="flex-1">
-                                    <div className="mb-2">
-                                      <span className="font-semibold text-gray-700">Pergunta:</span>
-                                      <p className="text-gray-800 mt-1">{fc.question}</p>
-                                    </div>
-                                    <div>
-                                      <span className="font-semibold text-gray-700">Resposta:</span>
-                                      <p className="text-gray-800 mt-1">{fc.answer}</p>
-                                    </div>
-                                  </div>
-                                  <button 
-                                    onClick={() => handleDelete(fc.id)} 
-                                    className="ml-4 bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 transition-colors flex items-center"
-                                  >
-                                    <Trash2 className="h-4 w-4 mr-1" />
-                                    Remover
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-gray-500">Nenhum flashcard cadastrado para esta matéria.</div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Aprofundamento Tab */}
-        {activeTab === 'aprofundamento' && (
-          <div className="space-y-8">
-            {/* Add Aprofundamento Section */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Settings className="h-5 w-5 mr-2 text-blue-600" />
-                Adicionar Conteúdo de Aprofundamento
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <form onSubmit={handleAddFlashcard} className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-700 mb-2 font-medium">Matéria</label>
-                  <select 
-                    value={materia} 
-                    onChange={e => setMateria(e.target.value)} 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Selecione a matéria</option>
-                    {conteudoProgramatico.map((m: any) => (
-                      <option key={m.titulo} value={m.titulo}>{m.titulo}</option>
+                  <label className="block text-gray-700 mb-1">Subtópico</label>
+                  <select value={subtopico} onChange={e => setSubtopico(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
+                    <option value="">Selecione o subtópico</option>
+                    {subtitulos.map((sub: string, idx: number) => (
+                      <option key={idx} value={sub}>{sub}</option>
                     ))}
                   </select>
                 </div>
-                {materia && (
+                <div>
+                  <label className="block text-gray-700 mb-1">Pergunta</label>
+                  <input type="text" value={novaPergunta} onChange={e => setNovaPergunta(e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-gray-700 mb-1">Resposta</label>
+                  <input type="text" value={novaResposta} onChange={e => setNovaResposta(e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                </div>
+                <div className="md:col-span-2 flex justify-end">
+                  <button type="submit" className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors">Adicionar Flashcard</button>
+                </div>
+              </form>
+            )}
+            {/* Seção de Aprofundamento dos Subtópicos */}
+            {materia && (
+              <div className="mb-10 border-b pb-8">
+                <h3 className="text-xl font-bold mb-4 text-blue-700">Aprofundamento dos Subtópicos</h3>
+                <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-gray-700 mb-2 font-medium">Subtópico</label>
-                    <select 
-                      value={subtopicoAprof} 
-                      onChange={e => carregarAprofundamento(e.target.value)} 
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
+                    <label className="block text-gray-700 mb-2">Selecione o Subtópico</label>
+                    <select value={subtopicoAprof} onChange={e => { carregarAprofundamento(e.target.value); }} className="w-full px-3 py-2 border rounded-lg">
                       <option value="">Selecione o subtópico</option>
                       {subtopicosUnicos.map((sub: string, idx: number) => (
                         <option key={idx} value={sub}>{sub}</option>
                       ))}
                     </select>
                   </div>
-                )}
-              </div>
-              
-              {subtopicoAprof && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-gray-700 mb-2 font-medium">Conteúdo de Aprofundamento</label>
-                    <ReactQuill 
-                      theme="snow" 
-                      value={conteudoAprof} 
-                      onChange={setConteudoAprof} 
-                      className="bg-white" 
-                      modules={quillModules} 
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <button 
-                      onClick={salvarAprofundamento} 
-                      disabled={salvandoAprof} 
-                      className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center disabled:opacity-50"
-                    >
+                </div>
+                {subtopicoAprof && (
+                  <div className="mb-4">
+                    <label className="block text-gray-700 mb-2">Conteúdo de Aprofundamento</label>
+                    <ReactQuill theme="snow" value={conteudoAprof} onChange={setConteudoAprof} className="bg-white" modules={quillModules} />
+                    <button onClick={salvarAprofundamento} disabled={salvandoAprof} className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
                       {salvandoAprof ? 'Salvando...' : 'Salvar Conteúdo'}
                     </button>
+                    {msgAprof && <div className="mt-2 text-sm text-blue-700">{msgAprof}</div>}
                   </div>
-                  {msgAprof && (
-                    <div className={`mt-2 text-sm p-3 rounded-lg ${
-                      msgAprof.includes('sucesso') ? 'text-green-700 bg-green-50' : 'text-red-700 bg-red-50'
-                    }`}>
-                      {msgAprof}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Aprofundamento List */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Conteúdos de Aprofundamento</h2>
+                )}
+              </div>
+            )}
+            {/* Lista de Subtópicos Salvos Organizados por Matéria */}
+            <h4 className="text-lg font-bold mb-2 mt-6">Subtópicos com Aprofundamento</h4>
+            <div className="mb-6">
               {subtopicosSalvos.length > 0 ? (
-                <div className="space-y-6">
+                <div>
                   {Object.keys(subtopicosPorMateria).map(materia => (
-                    <div key={materia} className="border border-gray-200 rounded-lg p-4">
-                      <h3 className="font-semibold text-blue-700 mb-3 text-lg">{materia}</h3>
-                      <div className="space-y-3">
+                    <div key={materia} className="mb-4">
+                      <div className="font-semibold text-blue-700 mb-2 text-lg">{materia}</div>
+                      <div className="space-y-2">
                         {subtopicosPorMateria[materia].map(sub => (
-                          <div key={sub.id} className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-4">
-                            <div className="flex-1">
-                              <div className="font-semibold text-green-700">{sub.name}</div>
-                              <div className="text-sm text-gray-500 mt-1">
-                                Salvo em: {new Date(sub.updated_at).toLocaleDateString()}
-                              </div>
+                          <div key={sub.id} className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-4 py-2">
+                            <div>
+                              <span className="font-semibold text-green-700">{sub.name}</span>
+                              <span className="text-sm text-gray-500 ml-2">(Salvo em: {new Date(sub.updated_at).toLocaleDateString()})</span>
                             </div>
                             <button 
                               onClick={() => carregarAprofundamento(sub.name)} 
-                              className="bg-blue-500 text-white px-4 py-2 rounded text-sm hover:bg-blue-600 transition-colors flex items-center"
+                              className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
                             >
-                              <Edit className="h-4 w-4 mr-1" />
                               Editar
                             </button>
                           </div>
@@ -600,90 +376,63 @@ export default function AdminPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">Nenhum conteúdo de aprofundamento salvo.</div>
+                <div className="text-gray-500">Nenhum subtópico com aprofundamento salvo.</div>
               )}
             </div>
+            <h4 className="text-lg font-bold mb-2 mt-6">Flashcards cadastrados</h4>
+            {carregando ? (
+              <div>Carregando...</div>
+            ) : (
+              <div>
+                {Object.keys(flashcardsPorSubtopico).length > 0 ? (
+                  <div>
+                    {Object.keys(flashcardsPorSubtopico).map(sub => (
+                      <div key={sub} className="mb-4">
+                        <div className="font-semibold text-blue-700 mb-2 text-lg">{sub}</div>
+                        <ul className="space-y-2">
+                          {flashcardsPorSubtopico[sub].map(fc => (
+                            <li key={fc.id} className="flex flex-col md:flex-row md:items-center md:justify-between bg-gray-100 rounded-lg px-4 py-2">
+                              <div className="mb-2 md:mb-0">
+                                <span className="font-semibold">Q:</span> {fc.question}<br />
+                                <span className="font-semibold">A:</span> {fc.answer}
+                              </div>
+                              <button onClick={() => handleDelete(fc.id)} className="ml-0 md:ml-4 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 mt-2 md:mt-0">Remover</button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-gray-500">Nenhum flashcard cadastrado.</div>
+                )}
+              </div>
+            )}
           </div>
-        )}
-
-        {/* Usuários Tab */}
-        {activeTab === 'usuarios' && (
-          <div className="space-y-8">
-            {/* Add User Section */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Plus className="h-5 w-5 mr-2 text-blue-600" />
-                Adicionar Novo Usuário
-              </h2>
-              <form onSubmit={handleAddUser} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-gray-700 mb-2 font-medium">E-mail</label>
-                  <input 
-                    type="email" 
-                    value={novoEmail} 
-                    onChange={e => setNovoEmail(e.target.value)} 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                    placeholder="novo@email.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 mb-2 font-medium">Senha</label>
-                  <input 
-                    type="password" 
-                    value={novaSenha} 
-                    onChange={e => setNovaSenha(e.target.value)} 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                    placeholder="Senha temporária"
-                  />
-                </div>
-                <div className="flex items-end">
-                  <button 
-                    type="submit" 
-                    className="w-full bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Usuário
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* Users List */}
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Usuários Cadastrados</h2>
-              {carregandoUsuarios ? (
-                <div className="text-center py-8 text-gray-500">Carregando usuários...</div>
-              ) : (
-                <div>
-                  {usuarios.length > 0 ? (
-                    <div className="space-y-3">
-                      {usuarios.map(u => (
-                        <div key={u.uid} className="flex items-center justify-between bg-gray-50 rounded-lg p-4">
-                          <div>
-                            <div className="font-medium text-gray-900">{u.email}</div>
-                            <div className="text-sm text-gray-500">
-                              Criado em: {new Date(u.created_at).toLocaleDateString()}
-                            </div>
-                          </div>
-                          <button 
-                            onClick={() => handleDeleteUser(u.uid)} 
-                            className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 transition-colors flex items-center"
-                          >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Excluir
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">Nenhum usuário cadastrado.</div>
-                  )}
-                </div>
-              )}
-            </div>
+          {/* Seção de Gerenciamento de Usuários */}
+          <div className="mt-10">
+            <h3 className="text-xl font-bold mb-4 text-blue-700">Gerenciar Usuários</h3>
+            <form onSubmit={handleAddUser} className="flex flex-col md:flex-row gap-2 mb-4">
+              <input type="email" placeholder="Novo e-mail" value={novoEmail} onChange={e => setNovoEmail(e.target.value)} className="px-3 py-2 border rounded-lg w-full md:w-auto" />
+              <input type="password" placeholder="Senha" value={novaSenha} onChange={e => setNovaSenha(e.target.value)} className="px-3 py-2 border rounded-lg w-full md:w-auto" />
+              <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700">Adicionar</button>
+            </form>
+            {carregandoUsuarios ? (
+              <div>Carregando usuários...</div>
+            ) : (
+              <ul className="space-y-2">
+                {usuarios.map(u => (
+                  <li key={u.uid} className="flex flex-col md:flex-row md:items-center md:justify-between bg-gray-100 rounded-lg px-4 py-2">
+                    <span>{u.email}</span>
+                    <button onClick={() => handleDeleteUser(u.uid)} className="ml-0 md:ml-4 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700 mt-2 md:mt-0">Excluir</button>
+                  </li>
+                ))}
+                {usuarios.length === 0 && <li className="text-gray-500">Nenhum usuário cadastrado.</li>}
+              </ul>
+            )}
           </div>
-        )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 } 
