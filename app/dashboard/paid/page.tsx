@@ -85,12 +85,28 @@ export default function PaidDashboardPage() {
 
         // Carregar dados do dashboard
         console.log('📊 Carregando dados do dashboard...')
-        try {
-          await loadDashboardStats(email)
-          await loadSubjects(email)
-        } catch (error) {
-          console.log('⚠️ Erro ao carregar dados do dashboard, usando dados padrão:', error)
-        }
+        
+        // Dados padrão direto - sem funções problemáticas
+        setStats({
+          totalCards: 150,
+          cardsStudied: 0,
+          generalProgress: 0,
+          daysStudying: 1,
+          lastLogin: new Date().toISOString(),
+          totalSubjects: 10
+        })
+        
+        // Matérias padrão
+        const subjectsData: Subject[] = conteudoProgramatico.map((item) => ({
+          id: item.titulo.toLowerCase().replace(/[^a-z0-9]+/gi, '-'),
+          name: item.titulo,
+          description: item.topicos[0] || '',
+          totalCards: 15,
+          completedCards: 0,
+          icon: BookOpen,
+          color: 'bg-blue-500'
+        }));
+        setSubjects(subjectsData)
 
       } catch (error) {
         console.error('Erro na verificação de autenticação:', error);
@@ -154,60 +170,7 @@ export default function PaidDashboardPage() {
     }
   }
 
-  // Atualizar todos os indicadores do dashboard em tempo real
-  const loadDashboardStats = async (email: string) => {
-    console.log('📊 Carregando estatísticas do dashboard...')
-    
-    // Dados padrão para evitar erros
-    setStats({
-      totalCards: 150,
-      cardsStudied: 0,
-      generalProgress: 0,
-      daysStudying: 1,
-      lastLogin: new Date().toISOString(),
-      totalSubjects: 10
-    })
-  }
 
-  const iconMap: Record<string, any> = {
-    'Língua Portuguesa': BookOpen,
-    'Noções de Informática': Target,
-    'Direito Constitucional': TrendingUp,
-    'Direito Administrativo': BarChart3,
-    'Realidade Étnica, Social, Histórica, Geográfica, Cultural e Política de Goiás': Clock,
-    'Legislação Específica da ALEGO': CheckCircle,
-    'Noções de Segurança Pública / SUSP': MessageSquare,
-    'Qualidade na Prestação do Serviço Público / Trabalho em Equipe': User,
-    'Redação (Prova Discursiva)': Trophy
-  };
-  const colorMap: Record<string, string> = {
-    'Língua Portuguesa': 'bg-blue-500',
-    'Noções de Informática': 'bg-green-500',
-    'Direito Constitucional': 'bg-purple-500',
-    'Direito Administrativo': 'bg-orange-500',
-    'Realidade Étnica, Social, Histórica, Geográfica, Cultural e Política de Goiás': 'bg-red-500',
-    'Legislação Específica da ALEGO': 'bg-indigo-500',
-    'Noções de Segurança Pública / SUSP': 'bg-pink-500',
-    'Qualidade na Prestação do Serviço Público / Trabalho em Equipe': 'bg-yellow-500',
-    'Redação (Prova Discursiva)': 'bg-gray-500'
-  };
-
-  const loadSubjects = async (email: string) => {
-    console.log('📚 Carregando matérias...')
-    
-    // Carregar matérias do JSON com dados padrão
-    const subjectsData: Subject[] = conteudoProgramatico.map((item) => ({
-      id: item.titulo.toLowerCase().replace(/[^a-z0-9]+/gi, '-'),
-      name: item.titulo,
-      description: item.topicos[0] || '',
-      totalCards: 15, // Dados padrão
-      completedCards: 0,
-      icon: iconMap[item.titulo] || BookOpen,
-      color: colorMap[item.titulo] || 'bg-blue-500'
-    }));
-    
-    setSubjects(subjectsData);
-  }
 
   // Função para garantir que o progresso nunca ultrapasse 100% e nunca mostre, por exemplo, 2/1
   const getProgressPercentage = (completed: number, total: number) => {
