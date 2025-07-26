@@ -34,7 +34,7 @@ export default function PaymentPage() {
   })
 
   const handlePixCopy = () => {
-    if (pixData?.qr_code) {
+    if (pixData && pixData.qr_code) {
       navigator.clipboard.writeText(pixData.qr_code)
       setIsPixCopied(true)
       setTimeout(() => setIsPixCopied(false), 2000)
@@ -361,9 +361,9 @@ export default function PaymentPage() {
                           )}
                         </button>
                       </div>
-                      <div className="bg-white p-3 rounded border text-sm font-mono text-gray-800 break-all">
-                        {pixData.qr_code || 'Código PIX será gerado aqui...'}
-                      </div>
+                                               <div className="bg-white p-3 rounded border text-sm font-mono text-gray-800 break-all">
+                           {pixData && pixData.qr_code ? pixData.qr_code : 'Código PIX será gerado aqui...'}
+                         </div>
                     </div>
                     
                     <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
