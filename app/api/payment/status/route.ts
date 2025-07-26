@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPaymentStatus } from '@/app/lib/mercadopago'
 import { isUserPaid } from '@/app/lib/payments'
-import { db } from '@/app/lib/firebase'
-import { collection, query, where, getDocs } from 'firebase/firestore'
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +20,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: true,
         status: result.status,
-        status_detail: result.status_detail
+        status_detail: result.status_detail,
+        external_reference: result.external_reference
       })
     } else {
       return NextResponse.json(
@@ -51,53 +50,109 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar se o usuário existe na coleção de pagamentos
-    const paymentsRef = collection(db, 'payments')
-    const q = query(paymentsRef, where('email', '==', email))
+    console.log('=== VERIFICAÇÃO DE PAGAMENTO ===')
+    console.log('Email:', email)
+
+    // PRIMEIRO: Verificar status real no Mercado Pago
+    const { db } = await import('@/app/lib/firebase')
+    const { collection, query, where, getDocs } = await import('firebase/firestore')
+    
+    if (!db) {
+      console.log('ERRO: Firebase não inicializado')
+      return NextResponse.json(
+        { error: 'Firebase não inicializado' },
+        { status: 500 }
+      )
+    }
+
+    // Buscar pagamento pelo email
+    const q = query(collection(db, 'payments'), where('email', '==', email))
     const querySnapshot = await getDocs(q)
-
+    
+    console.log('Pagamentos encontrados:', querySnapshot.size)
+    
     if (!querySnapshot.empty) {
-      // Usuário tem pagamento registrado
-      const paymentDoc = querySnapshot.docs[0]
-      const paymentData = paymentDoc.data()
+      const payment = querySnapshot.docs[0].data()
+      const paymentId = payment.payment_id
       
-      // Verificar se o pagamento foi aprovado
-      if (paymentData.status === 'approved' || paymentData.status === 'pending') {
+      console.log('Payment ID encontrado:', paymentId)
+      console.log('Dados do pagamento:', payment)
+      
+      // Verificar status real no Mercado Pago
+      const result = await getPaymentStatus(paymentId)
+      
+      if (result.success) {
+        const realStatus = result.status
+        console.log('Status real do pagamento:', realStatus)
+        
+        // Se foi aprovado, atualizar no Firebase e enviar email
+        if (realStatus === 'approved') {
+          console.log('✅ PAGAMENTO APROVADO - Enviando email...')
+          
+          const { updatePaymentStatus } = await import('@/app/lib/firebase')
+          await updatePaymentStatus(paymentId, 'approved')
+          console.log('Status atualizado no Firebase')
+          
+          // Enviar email de confirmação
+          try {
+            console.log('Enviando email para:', email)
+            console.log('URL do site:', process.env.NEXT_PUBLIC_SITE_URL)
+            
+            const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://flashconcards.vercel.app'}/api/email/send-confirmation`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email,
+                name: payment.first_name || 'Usuário',
+                paymentId,
+                amount: payment.amount || '99,90'
+              })
+            })
+            
+            console.log('Resposta do email:', emailResponse.status)
+            
+            if (emailResponse.ok) {
+              const emailResult = await emailResponse.json()
+              console.log('✅ Email de confirmação enviado com sucesso:', emailResult)
+            } else {
+              const errorText = await emailResponse.text()
+              console.error('❌ Erro ao enviar email de confirmação:', errorText)
+            }
+          } catch (emailError) {
+            console.error('❌ Erro ao enviar email:', emailError)
+          }
+        } else {
+          console.log('❌ Pagamento não aprovado. Status:', realStatus)
+        }
+        
         return NextResponse.json({
           success: true,
-          isPaid: true,
-          paymentData
+          isPaid: realStatus === 'approved',
+          email,
+          realStatus,
+          paymentId
         })
+      } else {
+        console.log('❌ Erro ao verificar status no Mercado Pago:', result.error)
       }
+    } else {
+      console.log('❌ Nenhum pagamento encontrado para o email:', email)
     }
 
-    // Verificar se o usuário existe na coleção de usuários
-    const usersRef = collection(db, 'users')
-    const userQuery = query(usersRef, where('email', '==', email))
-    const userSnapshot = await getDocs(userQuery)
+    // SEGUNDO: Verificar se o usuário pagou (fallback)
+    const isPaid = await isUserPaid(email)
+    
+    console.log('Resultado final da verificação:', { email, isPaid })
 
-    if (!userSnapshot.empty) {
-      const userDoc = userSnapshot.docs[0]
-      const userData = userDoc.data()
-      
-      // Verificar se o usuário tem acesso pago
-      if (userData.isPaid || userData.hasAccess) {
-        return NextResponse.json({
-          success: true,
-          isPaid: true,
-          userData
-        })
-      }
-    }
-
-    // Se chegou até aqui, usuário não tem acesso
     return NextResponse.json({
       success: true,
-      isPaid: false
+      isPaid,
+      email
     })
-
   } catch (error: any) {
-    console.error('Erro ao verificar status do pagamento:', error)
+    console.error('❌ Erro ao verificar pagamento por email:', error)
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }

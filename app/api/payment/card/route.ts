@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     const paymentData = {
               transaction_amount: 99.90,
-      description: 'FlashConCards ALEGO - R$ 99,90',
+              description: 'FlashConCards ALEGO - R$ 99,90',
       payment_method_id: paymentMethodId,
       token,
       installments: parseInt(installments),
