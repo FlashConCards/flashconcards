@@ -512,7 +512,7 @@ export const getTestimonials = async (status: string = 'approved') => {
     return testimonialsSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }))
+    })) as any[]
   } catch (error) {
     console.error('Error getting testimonials:', error)
     return []
@@ -525,9 +525,9 @@ export const getAllUsers = async () => {
   try {
     const usersSnapshot = await getDocs(collection(db, 'users'))
     return usersSnapshot.docs.map(doc => ({
-      id: doc.id,
+      uid: doc.id,
       ...doc.data()
-    }))
+    })) as any[]
   } catch (error) {
     console.error('Error getting all users:', error)
     return []
