@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 
 export default function LoginForm() {
-  const { signIn } = useAuth()
+  const { login } = useAuth()
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,14 +20,10 @@ export default function LoginForm() {
     setError('')
 
     try {
-      const success = await signIn(email, password)
-      if (success) {
-        router.push('/dashboard')
-      } else {
-        setError('Email ou senha incorretos')
-      }
+      await login(email, password)
+      router.push('/dashboard')
     } catch (error) {
-      setError('Erro ao fazer login. Tente novamente.')
+      setError('Email ou senha incorretos')
     } finally {
       setLoading(false)
     }
