@@ -43,16 +43,16 @@ const features = [
   }
 ]
 
-// Estados para dados reais
-const [courses, setCourses] = useState<any[]>([])
-const [testimonials, setTestimonials] = useState<any[]>([])
-const [loading, setLoading] = useState(true)
-
 export default function HomePage() {
   const { user } = useAuth()
   const router = useRouter()
   const [activeTestimonial, setActiveTestimonial] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
+  
+  // Estados para dados reais
+  const [courses, setCourses] = useState<any[]>([])
+  const [testimonials, setTestimonials] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   // Carregar dados reais do Firebase
   useEffect(() => {
