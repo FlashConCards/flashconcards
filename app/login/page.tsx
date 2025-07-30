@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -12,8 +12,22 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const router = useRouter();
+
+  // Verificar se o usuário já está logado e redirecionar
+  useEffect(() => {
+    if (user) {
+      console.log('User already logged in:', user.email, 'isAdmin:', user.isAdmin);
+      if (user.isAdmin) {
+        console.log('Redirecting admin to /admin');
+        router.push('/admin');
+      } else {
+        console.log('Redirecting user to /dashboard');
+        router.push('/dashboard');
+      }
+    }
+  }, [user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +36,12 @@ export default function LoginPage() {
     try {
       await login(email, password);
       toast.success('Login realizado com sucesso!');
-      router.push('/dashboard');
+      
+      // Aguardar um pouco para o AuthProvider atualizar o user
+      setTimeout(() => {
+        // O useEffect acima vai cuidar do redirecionamento
+      }, 100);
+      
     } catch (error: any) {
       toast.error(error.message || 'Erro ao fazer login');
     } finally {
@@ -100,7 +119,7 @@ export default function LoginPage() {
             <p className="text-sm text-gray-600">
               Não tem uma conta?{' '}
               <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-                Cadastre-se
+                Registre-se
               </Link>
             </p>
           </div>
