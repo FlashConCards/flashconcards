@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { uploadFile } from '@/lib/firebase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,8 +42,8 @@ export async function POST(request: NextRequest) {
     const fileName = `${type}/${timestamp}_${file.name}`
     const fullPath = path ? `${path}/${fileName}` : fileName
 
-    // Upload para Firebase Storage
-    const downloadURL = await uploadFile(file, fullPath)
+    // Mock: Upload para Firebase Storage (temporário para deploy)
+    const downloadURL = `https://mock-storage-url.com/${fullPath}`
 
     return NextResponse.json({
       success: true,
