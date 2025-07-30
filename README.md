@@ -75,8 +75,57 @@ No console do Firebase, vá para **Firestore Database** > **Rules** e substitua 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permitir acesso total temporariamente para desenvolvimento
+    // Permitir acesso total para desenvolvimento
     match /{document=**} {
+      allow read, write: if true;
+    }
+    
+    // Regras específicas para cada coleção
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+    
+    match /admin-users/{userId} {
+      allow read, write: if true;
+    }
+    
+    match /testimonials/{testimonialId} {
+      allow read, write: if true;
+    }
+    
+    match /courses/{courseId} {
+      allow read, write: if true;
+    }
+    
+    match /subjects/{subjectId} {
+      allow read, write: if true;
+    }
+    
+    match /topics/{topicId} {
+      allow read, write: if true;
+    }
+    
+    match /subtopics/{subtopicId} {
+      allow read, write: if true;
+    }
+    
+    match /flashcards/{flashcardId} {
+      allow read, write: if true;
+    }
+    
+    match /deepenings/{deepeningId} {
+      allow read, write: if true;
+    }
+    
+    match /study-sessions/{sessionId} {
+      allow read, write: if true;
+    }
+    
+    match /payments/{paymentId} {
+      allow read, write: if true;
+    }
+    
+    match /cards/{cardId} {
       allow read, write: if true;
     }
   }
@@ -154,4 +203,4 @@ npm run lint         # Linting
 
 ## 📄 Licença
 
-Este projeto está sob a licença MIT. 
+Este projeto está sob a licença MIT.

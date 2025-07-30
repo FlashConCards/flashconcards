@@ -200,43 +200,82 @@ export const createUserByAdmin = async (userData: any) => {
   try {
     console.log('Creating user by admin:', userData.email)
     
-    // Create user in Firebase Auth
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
-      userData.email,
-      userData.password || '123456'
-    )
+    // Verificar se o email já existe
+    try {
+      // Tentar criar usuário no Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        userData.email,
+        userData.password || '123456'
+      )
 
-    console.log('User created in Auth:', userCredential.user.uid)
+      console.log('User created in Auth:', userCredential.user.uid)
 
-    // Update profile
-    await updateProfile(userCredential.user, {
-      displayName: userData.displayName
-    })
+      // Update profile
+      await updateProfile(userCredential.user, {
+        displayName: userData.displayName
+      })
 
-    // Create user document in /admin-users collection
-    const userDoc = {
-      uid: userCredential.user.uid,
-      email: userData.email,
-      displayName: userData.displayName,
-      photoURL: '',
-      isAdmin: userData.isAdmin || false,
-      isPaid: userData.isPaid || false,
-      isActive: userData.isActive || true,
-      studyTime: userData.studyTime || 0,
-      cardsStudied: userData.cardsStudied || 0,
-      cardsCorrect: userData.cardsCorrect || 0,
-      cardsWrong: userData.cardsWrong || 0,
-      createdByAdmin: true,
-      lastLoginAt: serverTimestamp(),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      // Create user document in /admin-users collection
+      const userDoc = {
+        uid: userCredential.user.uid,
+        email: userData.email,
+        displayName: userData.displayName,
+        photoURL: '',
+        isAdmin: userData.isAdmin || false,
+        isPaid: userData.isPaid || false,
+        isActive: userData.isActive || true,
+        studyTime: userData.studyTime || 0,
+        cardsStudied: userData.cardsStudied || 0,
+        cardsCorrect: userData.cardsCorrect || 0,
+        cardsWrong: userData.cardsWrong || 0,
+        createdByAdmin: true,
+        lastLoginAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }
+
+      await setDoc(doc(db, 'admin-users', userCredential.user.uid), userDoc)
+      console.log('Admin user document created:', userCredential.user.uid)
+
+      return userCredential.user.uid
+    } catch (authError: any) {
+      if (authError.code === 'auth/email-already-in-use') {
+        console.log('Email already exists, checking if user is in admin-users collection')
+        
+        // Se o email já existe, verificar se está na coleção admin-users
+        const existingUser = await getUserById(userData.email)
+        if (existingUser) {
+          throw new Error('Usuário já existe no sistema')
+        }
+        
+        // Se não está na coleção admin-users, criar apenas o documento
+        const tempUid = `admin_${Date.now()}`
+        const userDoc = {
+          uid: tempUid,
+          email: userData.email,
+          displayName: userData.displayName,
+          photoURL: '',
+          isAdmin: userData.isAdmin || false,
+          isPaid: userData.isPaid || false,
+          isActive: userData.isActive || true,
+          studyTime: userData.studyTime || 0,
+          cardsStudied: userData.cardsStudied || 0,
+          cardsCorrect: userData.cardsCorrect || 0,
+          cardsWrong: userData.cardsWrong || 0,
+          createdByAdmin: true,
+          lastLoginAt: serverTimestamp(),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        }
+
+        await setDoc(doc(db, 'admin-users', tempUid), userDoc)
+        console.log('Admin user document created for existing email:', tempUid)
+        return tempUid
+      } else {
+        throw authError
+      }
     }
-
-    await setDoc(doc(db, 'admin-users', userCredential.user.uid), userDoc)
-    console.log('Admin user document created:', userCredential.user.uid)
-
-    return userCredential.user.uid
   } catch (error) {
     console.error('Error creating user by admin:', error)
     throw error
