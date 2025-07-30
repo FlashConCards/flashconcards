@@ -24,6 +24,16 @@ export const useAuth = () => {
   return context;
 };
 
+// Função para verificar se o email é de admin
+const isAdminEmail = (email: string) => {
+  const adminEmails = [
+    'claudioghabryel.cg@gmail.com',
+    'natalhia775@gmail.com',
+    'claudioghabryel7@gmail.com'
+  ];
+  return adminEmails.includes(email);
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,17 +42,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
+          console.log('Firebase user authenticated:', firebaseUser.email);
+          
           // Buscar dados do usuário na coleção users
           const userData = await getUserData(firebaseUser.uid)
           
           if (userData) {
-            console.log('User data found:', userData.email)
+            console.log('User data found in database:', userData.email);
             setUser({
               uid: firebaseUser.uid,
               email: userData.email || firebaseUser.email || '',
               displayName: userData.displayName || firebaseUser.displayName || '',
               photoURL: userData.photoURL || firebaseUser.photoURL || '',
-              isAdmin: userData.isAdmin || false,
+              isAdmin: userData.isAdmin || isAdminEmail(userData.email || firebaseUser.email || ''),
               isPaid: userData.isPaid || false,
               isActive: userData.isActive || true,
               studyTime: userData.studyTime || 0,
@@ -56,14 +68,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               updatedAt: userData.updatedAt || null
             })
           } else {
-            console.log('User not found in database, creating temp user')
+            console.log('User not found in database, creating temp user');
+            const userEmail = firebaseUser.email || '';
+            const isAdmin = isAdminEmail(userEmail);
+            
             // Criar usuário temporário se não encontrar
             const tempUser = {
               uid: firebaseUser.uid,
-              email: firebaseUser.email || '',
+              email: userEmail,
               displayName: firebaseUser.displayName || '',
               photoURL: firebaseUser.photoURL || '',
-              isAdmin: false,
+              isAdmin: isAdmin, // Verificar se é admin pelo email
               isPaid: true, // Dar acesso como se fosse pago
               isActive: true,
               studyTime: 0,
@@ -76,17 +91,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               createdAt: new Date(),
               updatedAt: new Date()
             }
+            console.log('Created temp user with admin status:', isAdmin);
             setUser(tempUser)
           }
         } catch (error) {
           console.error('Error getting user data:', error)
+          const userEmail = firebaseUser.email || '';
+          const isAdmin = isAdminEmail(userEmail);
+          
           // Fallback to basic user data
           setUser({
             uid: firebaseUser.uid,
-            email: firebaseUser.email || '',
+            email: userEmail,
             displayName: firebaseUser.displayName || '',
             photoURL: firebaseUser.photoURL || '',
-            isAdmin: false,
+            isAdmin: isAdmin, // Verificar se é admin pelo email
             isPaid: true, // Dar acesso como se fosse pago
             isActive: true,
             studyTime: 0,
@@ -101,6 +120,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           })
         }
       } else {
+        console.log('No Firebase user, setting user to null');
         setUser(null)
       }
       setLoading(false);
@@ -111,6 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
+      console.log('Attempting login with:', email);
       await signInUser(email, password);
     } catch (error) {
       console.error('Login error:', error);

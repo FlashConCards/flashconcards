@@ -71,10 +71,18 @@ export default function AdminPage() {
 
   // Check if user is admin
   useEffect(() => {
+    console.log('Admin page - User state:', user);
+    console.log('Admin page - User isAdmin:', user?.isAdmin);
+    console.log('Admin page - User email:', user?.email);
+    
     if (user && !user.isAdmin) {
+      console.log('User is not admin, redirecting to dashboard');
       router.push('/dashboard');
     } else if (!user) {
+      console.log('No user, redirecting to login');
       router.push('/login');
+    } else if (user && user.isAdmin) {
+      console.log('User is admin, loading admin data');
     }
   }, [user, router]);
 
