@@ -70,6 +70,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Use setDoc to create the document if it doesn't exist
             await setDoc(doc(db, 'users', firebaseUser.uid), newUserData);
             setUser(newUserData);
+            
+            // Debug: Log the admin status
+            console.log('User email:', firebaseUser.email);
+            console.log('Is admin:', newUserData.isAdmin);
           }
         } catch (error) {
           console.error('Error getting user data:', error);
