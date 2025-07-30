@@ -240,7 +240,8 @@ export default function DashboardPage() {
 
     // Save study session
     if (user && selectedCourse && selectedSubject && selectedTopic && selectedSubTopic) {
-      createStudySession(user.uid, {
+      createStudySession({
+        uid: user.uid,
         courseId: selectedCourse.id,
         courseName: selectedCourse.name,
         subjectId: selectedSubject.id,
@@ -251,7 +252,7 @@ export default function DashboardPage() {
         subTopicName: selectedSubTopic.name,
         flashcardsCount: flashcards.length,
         startTime: new Date()
-      });
+      })
     }
 
     router.push('/study');
