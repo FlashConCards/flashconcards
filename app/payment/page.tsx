@@ -43,37 +43,16 @@ export default function PaymentPage() {
       isAdmin: user.isAdmin
     })
 
-    // Verificar se o usuário tem acesso (pago OU criado pelo admin)
-    if (user.isPaid || (user as any).createdByAdmin) {
-      console.log('User has access, redirecting to dashboard')
+    // FORÇAR redirecionamento para dashboard se usuário existe
+    if (user) {
+      console.log('User exists, redirecting to dashboard')
       router.push('/dashboard')
       return
     }
 
-    console.log('User needs payment, staying on payment page')
-
-    // Carregar cursos do Firebase
-    const loadCourses = async () => {
-      try {
-        setLoading(true)
-        const coursesData = await getCourses()
-        setCourses(coursesData || [])
-        
-        // Se há um courseId na URL, selecionar o curso correspondente
-        if (courseId) {
-          const course = coursesData?.find((c: any) => c.id === courseId)
-          if (course) {
-            setSelectedCourse(course)
-          }
-        }
-      } catch (error) {
-        console.error('Erro ao carregar cursos:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadCourses()
+    // Se chegou aqui, não há usuário
+    console.log('No user, redirecting to login')
+    router.push('/login')
   }, [user, courseId])
 
   useEffect(() => {
