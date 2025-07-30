@@ -34,7 +34,8 @@ export default function PaymentPage() {
       return
     }
 
-    if (user.isPaid) {
+    // Verificar se o usuário tem acesso (pago OU criado pelo admin)
+    if (user.isPaid || (user as any).createdByAdmin) {
       router.push('/dashboard')
       return
     }

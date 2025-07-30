@@ -90,8 +90,8 @@ export default function HomePage() {
       router.push('/login')
       return
     }
-    if (!user.isPaid) {
-      router.push(`/payment?course=${courseId}`)
+    if (!user.isPaid && !(user as any).createdByAdmin) {
+      router.push('/payment')
       return
     }
     router.push('/dashboard')
@@ -100,7 +100,7 @@ export default function HomePage() {
   const handleViewAllCourses = () => {
     if (!user) {
       router.push('/login')
-    } else if (!user.isPaid) {
+    } else if (!user.isPaid && !(user as any).createdByAdmin) {
       router.push('/payment')
     } else {
       router.push('/dashboard')
@@ -181,7 +181,7 @@ export default function HomePage() {
                 onClick={() => {
                   if (!user) {
                     router.push('/register')
-                  } else if (!user.isPaid) {
+                  } else if (!user.isPaid && !(user as any).createdByAdmin) {
                     router.push('/payment')
                   } else {
                     router.push('/dashboard')
@@ -490,7 +490,7 @@ export default function HomePage() {
                 onClick={() => {
                   if (!user) {
                     router.push('/register')
-                  } else if (!user.isPaid) {
+                  } else if (!user.isPaid && !(user as any).createdByAdmin) {
                     router.push('/payment')
                   } else {
                     router.push('/dashboard')

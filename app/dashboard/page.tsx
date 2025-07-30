@@ -54,9 +54,9 @@ export default function DashboardPage() {
 
   // Check if user has access
   useEffect(() => {
-    if (user && !user.isPaid && !user.isAdmin) {
-      toast.error('Você precisa fazer o pagamento para acessar o dashboard');
-      router.push('/payment');
+    if (user && !user.isPaid && !user.isAdmin && !(user as any).createdByAdmin) {
+      router.push('/payment')
+      return
     }
   }, [user, router]);
 
