@@ -42,6 +42,20 @@ export const auth = getAuth(app)
 export const db = getFirestore(app)
 export const storage = getStorage(app)
 
+// ===== ESTRUTURA ORGANIZADA DO FIREBASE =====
+// /users - Usuários registrados
+// /admin-users - Usuários criados pelo admin
+// /testimonials - Depoimentos
+// /courses - Cursos
+// /subjects - Matérias
+// /topics - Tópicos
+// /subtopics - Sub-tópicos
+// /flashcards - Flashcards
+// /deepenings - Aprofundamentos
+// /study-sessions - Sessões de estudo
+// /payments - Pagamentos
+// /cards - Cards de estudo
+
 // Auth functions
 export const signIn = async (email: string, password: string) => {
   try {
@@ -64,7 +78,7 @@ export const signUp = async (email: string, password: string, displayName: strin
       displayName: displayName
     })
 
-    // Create user document in Firestore
+    // Create user document in /users collection
     await setDoc(doc(db, 'users', userCredential.user.uid), {
       uid: userCredential.user.uid,
       email: email,
@@ -113,6 +127,7 @@ export const onAuthStateChange = (callback: (user: FirebaseUser | null) => void)
 // Alias for backward compatibility
 export { onAuthStateChanged }
 
+// ===== USUÁRIOS REGISTRADOS (/users) =====
 export const getAllUsers = async () => {
   try {
     const querySnapshot = await getDocs(collection(db, 'users'))
@@ -124,7 +139,6 @@ export const getAllUsers = async () => {
     return users
   } catch (error: any) {
     console.error('Error getting all users:', error)
-    // Return empty array if permission denied
     if (error.code === 'permission-denied') {
       console.warn('Permission denied for users collection, returning empty array')
       return []
@@ -149,7 +163,6 @@ export const getUserById = async (uid: string) => {
   }
 }
 
-// Alias for backward compatibility
 export const getUserData = async (uid: string) => {
   try {
     const docRef = doc(db, 'users', uid)
@@ -182,17 +195,7 @@ export const updateUser = async (uid: string, data: any) => {
 // Alias for backward compatibility
 export const updateUserData = updateUser
 
-export const deleteUserByAdmin = async (uid: string) => {
-  try {
-    // Delete from Firestore
-    await deleteDoc(doc(db, 'users', uid))
-    console.log('User document deleted from Firestore:', uid)
-  } catch (error) {
-    console.error('Error deleting user:', error)
-    throw error
-  }
-}
-
+// ===== USUÁRIOS CRIADOS PELO ADMIN (/admin-users) =====
 export const createUserByAdmin = async (userData: any) => {
   try {
     console.log('Creating user by admin:', userData.email)
@@ -201,7 +204,7 @@ export const createUserByAdmin = async (userData: any) => {
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       userData.email,
-      userData.password || '123456' // Default password if not provided
+      userData.password || '123456'
     )
 
     console.log('User created in Auth:', userCredential.user.uid)
@@ -211,7 +214,7 @@ export const createUserByAdmin = async (userData: any) => {
       displayName: userData.displayName
     })
 
-    // Create user document in Firestore
+    // Create user document in /admin-users collection
     const userDoc = {
       uid: userCredential.user.uid,
       email: userData.email,
@@ -224,13 +227,14 @@ export const createUserByAdmin = async (userData: any) => {
       cardsStudied: userData.cardsStudied || 0,
       cardsCorrect: userData.cardsCorrect || 0,
       cardsWrong: userData.cardsWrong || 0,
+      createdByAdmin: true,
       lastLoginAt: serverTimestamp(),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     }
 
-    await setDoc(doc(db, 'users', userCredential.user.uid), userDoc)
-    console.log('User document created in Firestore:', userCredential.user.uid)
+    await setDoc(doc(db, 'admin-users', userCredential.user.uid), userDoc)
+    console.log('Admin user document created:', userCredential.user.uid)
 
     return userCredential.user.uid
   } catch (error) {
@@ -239,7 +243,37 @@ export const createUserByAdmin = async (userData: any) => {
   }
 }
 
-// Testimonial functions
+export const deleteUserByAdmin = async (uid: string) => {
+  try {
+    // Delete from admin-users collection
+    await deleteDoc(doc(db, 'admin-users', uid))
+    console.log('Admin user deleted:', uid)
+  } catch (error) {
+    console.error('Error deleting admin user:', error)
+    throw error
+  }
+}
+
+export const getAllAdminUsers = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'admin-users'))
+    const adminUsers = querySnapshot.docs.map(doc => ({
+      uid: doc.id,
+      ...doc.data()
+    })) as any[]
+    console.log('Admin users loaded:', adminUsers.length)
+    return adminUsers
+  } catch (error: any) {
+    console.error('Error getting admin users:', error)
+    if (error.code === 'permission-denied') {
+      console.warn('Permission denied for admin-users collection, returning empty array')
+      return []
+    }
+    throw error
+  }
+}
+
+// ===== DEPOIMENTOS (/testimonials) =====
 export const getTestimonials = async (status?: 'pending' | 'approved' | 'rejected' | 'all') => {
   try {
     let q: Query | CollectionReference = collection(db, 'testimonials')
@@ -257,7 +291,6 @@ export const getTestimonials = async (status?: 'pending' | 'approved' | 'rejecte
     return testimonials
   } catch (error: any) {
     console.error('Error getting testimonials:', error)
-    // Return empty array if permission denied
     if (error.code === 'permission-denied') {
       console.warn('Permission denied for testimonials collection, returning empty array')
       return []
@@ -296,7 +329,7 @@ export const createTestimonial = async (testimonialData: any) => {
   }
 }
 
-// Course functions
+// ===== CURSOS (/courses) =====
 export const getCourses = async () => {
   try {
     const querySnapshot = await getDocs(collection(db, 'courses'))
@@ -308,7 +341,6 @@ export const getCourses = async () => {
     return courses
   } catch (error: any) {
     console.error('Error getting courses:', error)
-    // Return empty array if permission denied
     if (error.code === 'permission-denied') {
       console.warn('Permission denied for courses collection, returning empty array')
       return []
@@ -343,7 +375,7 @@ export const deleteCourse = async (courseId: string) => {
   }
 }
 
-// Subject functions
+// ===== MATÉRIAS (/subjects) =====
 export const getSubjects = async (courseId?: string) => {
   try {
     let q: Query | CollectionReference = collection(db, 'subjects')
@@ -361,7 +393,6 @@ export const getSubjects = async (courseId?: string) => {
     return subjects
   } catch (error: any) {
     console.error('Error getting subjects:', error)
-    // Return empty array if permission denied
     if (error.code === 'permission-denied') {
       console.warn('Permission denied for subjects collection, returning empty array')
       return []
@@ -408,7 +439,7 @@ export const deleteSubject = async (subjectId: string) => {
   }
 }
 
-// Topic functions
+// ===== TÓPICOS (/topics) =====
 export const getTopics = async (subjectId?: string) => {
   try {
     let q: Query | CollectionReference = collection(db, 'topics')
@@ -426,7 +457,6 @@ export const getTopics = async (subjectId?: string) => {
     return topics
   } catch (error: any) {
     console.error('Error getting topics:', error)
-    // Return empty array if permission denied
     if (error.code === 'permission-denied') {
       console.warn('Permission denied for topics collection, returning empty array')
       return []
@@ -473,10 +503,10 @@ export const deleteTopic = async (topicId: string) => {
   }
 }
 
-// SubTopic functions
+// ===== SUB-TÓPICOS (/subtopics) =====
 export const getSubTopics = async (topicId?: string) => {
   try {
-    let q: Query | CollectionReference = collection(db, 'subTopics')
+    let q: Query | CollectionReference = collection(db, 'subtopics')
     
     if (topicId) {
       q = query(q, where('topicId', '==', topicId))
@@ -491,9 +521,8 @@ export const getSubTopics = async (topicId?: string) => {
     return subTopics
   } catch (error: any) {
     console.error('Error getting subTopics:', error)
-    // Return empty array if permission denied
     if (error.code === 'permission-denied') {
-      console.warn('Permission denied for subTopics collection, returning empty array')
+      console.warn('Permission denied for subtopics collection, returning empty array')
       return []
     }
     throw error
@@ -503,7 +532,7 @@ export const getSubTopics = async (topicId?: string) => {
 export const createSubTopic = async (subTopicData: any) => {
   try {
     console.log('Creating subTopic:', subTopicData.name)
-    const docRef = await addDoc(collection(db, 'subTopics'), {
+    const docRef = await addDoc(collection(db, 'subtopics'), {
       ...subTopicData,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
@@ -518,7 +547,7 @@ export const createSubTopic = async (subTopicData: any) => {
 
 export const updateSubTopic = async (subTopicId: string, data: any) => {
   try {
-    const subTopicRef = doc(db, 'subTopics', subTopicId)
+    const subTopicRef = doc(db, 'subtopics', subTopicId)
     await updateDoc(subTopicRef, {
       ...data,
       updatedAt: serverTimestamp()
@@ -531,14 +560,14 @@ export const updateSubTopic = async (subTopicId: string, data: any) => {
 
 export const deleteSubTopic = async (subTopicId: string) => {
   try {
-    await deleteDoc(doc(db, 'subTopics', subTopicId))
+    await deleteDoc(doc(db, 'subtopics', subTopicId))
   } catch (error) {
     console.error('Error deleting subTopic:', error)
     throw error
   }
 }
 
-// Flashcard functions
+// ===== FLASHCARDS (/flashcards) =====
 export const getFlashcards = async (subTopicId?: string) => {
   try {
     let q: Query | CollectionReference = collection(db, 'flashcards')
@@ -556,7 +585,6 @@ export const getFlashcards = async (subTopicId?: string) => {
     return flashcards
   } catch (error: any) {
     console.error('Error getting flashcards:', error)
-    // Return empty array if permission denied
     if (error.code === 'permission-denied') {
       console.warn('Permission denied for flashcards collection, returning empty array')
       return []
@@ -565,7 +593,7 @@ export const getFlashcards = async (subTopicId?: string) => {
   }
 }
 
-// Deepening functions
+// ===== APROFUNDAMENTOS (/deepenings) =====
 export const getDeepenings = async (flashcardId?: string) => {
   try {
     let q: Query | CollectionReference = collection(db, 'deepenings')
@@ -583,7 +611,6 @@ export const getDeepenings = async (flashcardId?: string) => {
     return deepenings
   } catch (error: any) {
     console.error('Error getting deepenings:', error)
-    // Return empty array if permission denied
     if (error.code === 'permission-denied') {
       console.warn('Permission denied for deepenings collection, returning empty array')
       return []
@@ -592,11 +619,11 @@ export const getDeepenings = async (flashcardId?: string) => {
   }
 }
 
-// Study session functions
+// ===== SESSÕES DE ESTUDO (/study-sessions) =====
 export const createStudySession = async (sessionData: any) => {
   try {
     console.log('Creating study session:', sessionData)
-    const docRef = await addDoc(collection(db, 'studySessions'), {
+    const docRef = await addDoc(collection(db, 'study-sessions'), {
       ...sessionData,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
@@ -605,6 +632,65 @@ export const createStudySession = async (sessionData: any) => {
     return docRef.id
   } catch (error) {
     console.error('Error creating study session:', error)
+    throw error
+  }
+}
+
+// ===== PAGAMENTOS (/payments) =====
+export const createPayment = async (paymentData: any) => {
+  try {
+    console.log('Creating payment:', paymentData)
+    const docRef = await addDoc(collection(db, 'payments'), {
+      ...paymentData,
+      status: 'pending',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    })
+    console.log('Payment created successfully:', docRef.id)
+    return docRef.id
+  } catch (error) {
+    console.error('Error creating payment:', error)
+    throw error
+  }
+}
+
+export const updatePaymentStatus = async (paymentId: string, status: string) => {
+  try {
+    console.log('Updating payment status:', paymentId, status)
+    const paymentRef = doc(db, 'payments', paymentId)
+    await updateDoc(paymentRef, {
+      status: status,
+      updatedAt: serverTimestamp()
+    })
+    console.log('Payment status updated successfully')
+  } catch (error) {
+    console.error('Error updating payment status:', error)
+    throw error
+  }
+}
+
+// ===== CARDS (/cards) =====
+export const getCards = async (category?: string) => {
+  try {
+    let q: Query | CollectionReference = collection(db, 'cards')
+    
+    if (category) {
+      q = query(q, where('category', '==', category))
+    }
+    
+    const querySnapshot = await getDocs(q)
+    const cards = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as any[]
+    console.log('Cards loaded:', cards.length)
+    return cards
+  } catch (error: any) {
+    console.error('Error getting cards:', error)
+    if (error.code === 'permission-denied') {
+      console.warn('Permission denied for cards collection, returning empty array')
+      return []
+    }
     throw error
   }
 }
@@ -659,12 +745,29 @@ export const onUsersChange = (callback: (data: any[]) => void) => {
       callback(users)
     }, (error) => {
       console.error('Error in users listener:', error)
-      // Call callback with empty array on error
       callback([])
     })
   } catch (error) {
     console.error('Error setting up users listener:', error)
-    // Return empty function if setup fails
+    return () => {}
+  }
+}
+
+export const onAdminUsersChange = (callback: (data: any[]) => void) => {
+  try {
+    return onSnapshot(collection(db, 'admin-users'), (snapshot) => {
+      const adminUsers = snapshot.docs.map(doc => ({
+        uid: doc.id,
+        ...doc.data()
+      })) as any[]
+      console.log('Admin users real-time update:', adminUsers.length)
+      callback(adminUsers)
+    }, (error) => {
+      console.error('Error in admin users listener:', error)
+      callback([])
+    })
+  } catch (error) {
+    console.error('Error setting up admin users listener:', error)
     return () => {}
   }
 }
@@ -680,12 +783,10 @@ export const onTestimonialsChange = (callback: (data: any[]) => void) => {
       callback(testimonials)
     }, (error) => {
       console.error('Error in testimonials listener:', error)
-      // Call callback with empty array on error
       callback([])
     })
   } catch (error) {
     console.error('Error setting up testimonials listener:', error)
-    // Return empty function if setup fails
     return () => {}
   }
 }
@@ -701,12 +802,10 @@ export const onCoursesChange = (callback: (data: any[]) => void) => {
       callback(courses)
     }, (error) => {
       console.error('Error in courses listener:', error)
-      // Call callback with empty array on error
       callback([])
     })
   } catch (error) {
     console.error('Error setting up courses listener:', error)
-    // Return empty function if setup fails
     return () => {}
   }
 }

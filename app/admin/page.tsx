@@ -20,11 +20,13 @@ import {
 } from '@heroicons/react/24/outline'
 import { 
   getAllUsers, 
+  getAllAdminUsers,
   getTestimonials, 
   updateTestimonialStatus, 
   deleteUserByAdmin,
   createUserByAdmin,
   onUsersChange,
+  onAdminUsersChange,
   onTestimonialsChange
 } from '@/lib/firebase'
 import { User, Testimonial } from '@/types'
@@ -58,19 +60,26 @@ export default function AdminPage() {
         setLoading(true)
         console.log('Loading admin data...')
         
-        // Carregar usuários
+        // Carregar usuários registrados
         const usersData = await getAllUsers()
-        console.log('Users loaded in admin:', usersData?.length || 0)
-        setUsers(usersData || [])
+        console.log('Regular users loaded in admin:', usersData?.length || 0)
+        
+        // Carregar usuários criados pelo admin
+        const adminUsersData = await getAllAdminUsers()
+        console.log('Admin users loaded in admin:', adminUsersData?.length || 0)
+        
+        // Combinar usuários regulares e admin
+        const allUsers = [...(usersData || []), ...(adminUsersData || [])]
+        setUsers(allUsers)
+        console.log('Total users in admin:', allUsers.length)
         
         // Carregar depoimentos
-        const allTestimonials = await getTestimonials('all') // Buscar todos os depoimentos
+        const allTestimonials = await getTestimonials('all')
         console.log('Testimonials loaded in admin:', allTestimonials?.length || 0)
         setTestimonials(allTestimonials || [])
         
       } catch (error) {
         console.error('Erro ao carregar dados:', error)
-        // Em caso de erro, inicializar com arrays vazios
         setUsers([])
         setTestimonials([])
       } finally {
@@ -87,21 +96,36 @@ export default function AdminPage() {
   useEffect(() => {
     if (!isAdmin) return
 
-    // Listener para mudanças nos usuários
+    // Listener para mudanças nos usuários regulares
     const unsubscribeUsers = onUsersChange((data: any[]) => {
-      setUsers(data || [])
+      console.log('Regular users real-time update:', data.length)
+      // Combinar com admin users existentes
+      const adminUsers = users.filter((u: any) => u.createdByAdmin)
+      const allUsers = [...data, ...adminUsers]
+      setUsers(allUsers)
+    })
+
+    // Listener para mudanças nos usuários admin
+    const unsubscribeAdminUsers = onAdminUsersChange((data: any[]) => {
+      console.log('Admin users real-time update:', data.length)
+      // Combinar com regular users existentes
+      const regularUsers = users.filter((u: any) => !u.createdByAdmin)
+      const allUsers = [...regularUsers, ...data]
+      setUsers(allUsers)
     })
 
     // Listener para mudanças nos depoimentos
     const unsubscribeTestimonials = onTestimonialsChange((data: any[]) => {
+      console.log('Testimonials real-time update:', data.length)
       setTestimonials(data || [])
     })
 
     return () => {
       unsubscribeUsers()
+      unsubscribeAdminUsers()
       unsubscribeTestimonials()
     }
-  }, [isAdmin])
+  }, [isAdmin, users])
 
   if (!user) {
     return (
@@ -175,7 +199,9 @@ export default function AdminPage() {
       
       // Recarregar dados após adicionar usuário
       const updatedUsers = await getAllUsers()
-      setUsers(updatedUsers || [])
+      const updatedAdminUsers = await getAllAdminUsers()
+      const allUpdatedUsers = [...(updatedUsers || []), ...(updatedAdminUsers || [])]
+      setUsers(allUpdatedUsers)
       
     } catch (error: any) {
       console.error('Erro ao adicionar usuário:', error)
