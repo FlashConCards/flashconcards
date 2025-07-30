@@ -161,30 +161,18 @@ export default function StudyPage() {
     // Save session data
     try {
       if (courseId && subjectId && topicId && subTopicId) {
-        await createStudySession(user.uid, {
+        await createStudySession({
+          uid: user.uid,
           courseId,
           subjectId,
           topicId,
           subTopicId,
-          flashcardsCount: finalStats.totalCards,
-          correctCards: finalStats.correctCards,
-          wrongCards: finalStats.wrongCards,
-          studyTime: finalStats.studyTime,
-          startTime: sessionStartTime,
-          endTime: new Date()
-        });
-
-        // Update user progress
-        await updateUserProgress(user.uid, courseId, {
-          studyTime: (user.studyTime || 0) + finalStats.studyTime,
-          cardsStudied: (user.cardsStudied || 0) + finalStats.totalCards,
-          cardsCorrect: (user.cardsCorrect || 0) + finalStats.correctCards,
-          cardsWrong: (user.cardsWrong || 0) + finalStats.wrongCards,
-          lastStudyDate: new Date()
-        });
+          flashcardsCount: flashcards.length,
+          startTime: new Date()
+        })
       }
     } catch (error) {
-      console.error('Error saving session:', error);
+      console.error('Error creating study session:', error)
     }
   };
 
