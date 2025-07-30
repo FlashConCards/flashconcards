@@ -23,6 +23,7 @@ import {
   getTestimonials, 
   updateTestimonialStatus, 
   deleteUserByAdmin,
+  createUserByAdmin,
   onUsersChange,
   onTestimonialsChange
 } from '@/lib/firebase'
@@ -121,17 +122,33 @@ export default function AdminPage() {
     )
   }
 
-  const handleAddUser = () => {
+  const handleAddUser = async () => {
     if (!newUser.name || !newUser.email || !newUser.password) {
       alert('Por favor, preencha todos os campos.')
       return
     }
 
-    // Implementar criação de usuário via Firebase
-    console.log('Adicionando usuário:', newUser)
-    setNewUser({ name: '', email: '', password: '', isPaid: false, isAdmin: false })
-    setShowAddUserModal(false)
-    alert('Funcionalidade em desenvolvimento!')
+    try {
+      const userData = {
+        displayName: newUser.name,
+        email: newUser.email,
+        isPaid: newUser.isPaid,
+        isAdmin: newUser.isAdmin,
+        isActive: true,
+        studyTime: 0,
+        cardsStudied: 0,
+        cardsCorrect: 0,
+        cardsWrong: 0
+      }
+
+      await createUserByAdmin(userData)
+      setNewUser({ name: '', email: '', password: '', isPaid: false, isAdmin: false })
+      setShowAddUserModal(false)
+      alert('Usuário adicionado com sucesso!')
+    } catch (error) {
+      console.error('Erro ao adicionar usuário:', error)
+      alert('Erro ao adicionar usuário. Tente novamente.')
+    }
   }
 
   const handleApproveTestimonial = async (testimonialId: string) => {

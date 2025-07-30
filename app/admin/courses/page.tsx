@@ -16,6 +16,8 @@ import {
   getSubTopics, 
   getFlashcards, 
   getDeepenings,
+  createCourse,
+  deleteCourse,
   onCoursesChange
 } from '@/lib/firebase'
 
@@ -202,11 +204,29 @@ export default function AdminCoursesPage() {
     setShowAddCourseModal(true)
   }
 
-  const handleSaveCourse = () => {
-    // Aqui você implementaria a lógica para salvar o curso
-    console.log('Salvando curso:', newCourse)
-    setShowAddCourseModal(false)
-    setNewCourse({ name: '', description: '', price: 99.90, image: '/api/placeholder/400/200' })
+  const handleSaveCourse = async () => {
+    try {
+      if (!newCourse.name || !newCourse.description) {
+        alert('Por favor, preencha todos os campos obrigatórios.')
+        return
+      }
+
+      const courseData = {
+        name: newCourse.name,
+        description: newCourse.description,
+        price: newCourse.price,
+        image: newCourse.image,
+        isActive: true
+      }
+
+      await createCourse(courseData)
+      setShowAddCourseModal(false)
+      setNewCourse({ name: '', description: '', price: 99.90, image: '/api/placeholder/400/200' })
+      alert('Curso adicionado com sucesso!')
+    } catch (error) {
+      console.error('Erro ao adicionar curso:', error)
+      alert('Erro ao adicionar curso. Tente novamente.')
+    }
   }
 
   const handleDeleteCourse = (course: Course) => {
@@ -214,11 +234,18 @@ export default function AdminCoursesPage() {
     setShowDeleteCourseModal(true)
   }
 
-  const confirmDeleteCourse = () => {
-    // Aqui você implementaria a lógica para deletar o curso
-    console.log('Deletando curso:', courseToDelete)
-    setShowDeleteCourseModal(false)
-    setCourseToDelete(null)
+  const confirmDeleteCourse = async () => {
+    try {
+      if (!courseToDelete) return
+      
+      await deleteCourse(courseToDelete.id)
+      setShowDeleteCourseModal(false)
+      setCourseToDelete(null)
+      alert('Curso excluído com sucesso!')
+    } catch (error) {
+      console.error('Erro ao excluir curso:', error)
+      alert('Erro ao excluir curso. Tente novamente.')
+    }
   }
 
   const renderBreadcrumb = () => (

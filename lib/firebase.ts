@@ -226,6 +226,27 @@ export const createSubject = async (courseId: string, subjectData: any) => {
   }
 }
 
+export const updateSubject = async (courseId: string, subjectId: string, subjectData: any) => {
+  try {
+    await updateDoc(doc(db, 'courses', courseId, 'subjects', subjectId), {
+      ...subjectData,
+      updatedAt: serverTimestamp(),
+    })
+  } catch (error) {
+    console.error('Error updating subject:', error)
+    throw error
+  }
+}
+
+export const deleteSubject = async (courseId: string, subjectId: string) => {
+  try {
+    await deleteDoc(doc(db, 'courses', courseId, 'subjects', subjectId))
+  } catch (error) {
+    console.error('Error deleting subject:', error)
+    throw error
+  }
+}
+
 export const getSubjects = async (courseId: string) => {
   try {
     const subjectsSnapshot = await getDocs(collection(db, 'courses', courseId, 'subjects'))
@@ -255,6 +276,27 @@ export const createTopic = async (courseId: string, subjectId: string, topicData
   }
 }
 
+export const updateTopic = async (courseId: string, subjectId: string, topicId: string, topicData: any) => {
+  try {
+    await updateDoc(doc(db, 'courses', courseId, 'subjects', subjectId, 'topics', topicId), {
+      ...topicData,
+      updatedAt: serverTimestamp(),
+    })
+  } catch (error) {
+    console.error('Error updating topic:', error)
+    throw error
+  }
+}
+
+export const deleteTopic = async (courseId: string, subjectId: string, topicId: string) => {
+  try {
+    await deleteDoc(doc(db, 'courses', courseId, 'subjects', subjectId, 'topics', topicId))
+  } catch (error) {
+    console.error('Error deleting topic:', error)
+    throw error
+  }
+}
+
 export const getTopics = async (courseId: string, subjectId: string) => {
   try {
     const topicsSnapshot = await getDocs(collection(db, 'courses', courseId, 'subjects', subjectId, 'topics'))
@@ -280,6 +322,27 @@ export const createSubTopic = async (courseId: string, subjectId: string, topicI
     return subTopicRef.id
   } catch (error) {
     console.error('Error creating subtopic:', error)
+    throw error
+  }
+}
+
+export const updateSubTopic = async (courseId: string, subjectId: string, topicId: string, subTopicId: string, subTopicData: any) => {
+  try {
+    await updateDoc(doc(db, 'courses', courseId, 'subjects', subjectId, 'topics', topicId, 'subtopics', subTopicId), {
+      ...subTopicData,
+      updatedAt: serverTimestamp(),
+    })
+  } catch (error) {
+    console.error('Error updating subtopic:', error)
+    throw error
+  }
+}
+
+export const deleteSubTopic = async (courseId: string, subjectId: string, topicId: string, subTopicId: string) => {
+  try {
+    await deleteDoc(doc(db, 'courses', courseId, 'subjects', subjectId, 'topics', topicId, 'subtopics', subTopicId))
+  } catch (error) {
+    console.error('Error deleting subtopic:', error)
     throw error
   }
 }
