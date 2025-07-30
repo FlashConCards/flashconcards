@@ -50,6 +50,9 @@ export const auth = getAuth(app)
 export const db = getFirestore(app)
 export const storage = getStorage(app)
 
+// Export Firebase functions
+export { onAuthStateChanged } from 'firebase/auth'
+
 // ===== AUTHENTICATION FUNCTIONS =====
 
 export const signInUser = async (email: string, password: string) => {
