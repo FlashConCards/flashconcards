@@ -97,9 +97,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
+      // Primeiro tentar login normal
       await signInUser(email, password);
     } catch (error) {
-      console.error('Login error:', error);
+      console.log('Normal login failed, checking admin users...');
+      
+      // Se falhar, verificar se é um usuário criado pelo admin
+      try {
+        const adminUsers = await getAllAdminUsers();
+        const adminUser = adminUsers.find((u: any) => u.email === email);
+        
+        if (adminUser && adminUser.password === password) {
+          console.log('Admin user found, creating session...');
+          
+          // Criar uma sessão local para o usuário admin
+          const userData = {
+            uid: adminUser.uid,
+            email: adminUser.email,
+            displayName: adminUser.displayName,
+            photoURL: adminUser.photoURL || '',
+            isAdmin: adminUser.isAdmin || false,
+            isPaid: adminUser.isPaid || false,
+            isActive: adminUser.isActive || true,
+            studyTime: adminUser.studyTime || 0,
+            cardsStudied: adminUser.cardsStudied || 0,
+            cardsCorrect: adminUser.cardsCorrect || 0,
+            cardsWrong: adminUser.cardsWrong || 0,
+            createdByAdmin: adminUser.createdByAdmin || true,
+            selectedCourse: adminUser.selectedCourse || '',
+            lastLoginAt: adminUser.lastLoginAt || null,
+            createdAt: adminUser.createdAt || null,
+            updatedAt: adminUser.updatedAt || null
+          };
+          
+          setUser(userData);
+          return;
+        }
+      } catch (adminError) {
+        console.error('Error checking admin users:', adminError);
+      }
+      
+      // Se não for usuário admin, re-throw o erro original
       throw error;
     }
   };
