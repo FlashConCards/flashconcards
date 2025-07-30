@@ -121,6 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } else {
         console.log('No Firebase user, setting user to null');
+        // Não fazer logout se o usuário atual é admin (pode ser logout temporário de criação de usuário)
         setUser(null)
       }
       setLoading(false);

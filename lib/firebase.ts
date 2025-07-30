@@ -184,6 +184,14 @@ export const createUserByAdmin = async (userData: any) => {
   try {
     console.log('Creating user by admin:', userData.email)
     
+    // Verificar se o email já existe
+    const existingUsers = await getAllUsers()
+    const existingUser = existingUsers.find((u: any) => u.email === userData.email)
+    
+    if (existingUser) {
+      throw new Error('Email já está sendo usado')
+    }
+    
     // Criar usuário no Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(
       auth,
@@ -220,6 +228,10 @@ export const createUserByAdmin = async (userData: any) => {
 
     await setDoc(doc(db, 'users', userCredential.user.uid), userDoc)
     console.log('Admin user document created:', userCredential.user.uid)
+
+    // IMPORTANTE: Fazer logout do usuário criado para não ficar logado
+    await signOut(auth)
+    console.log('Logged out from created user to prevent auto-login')
 
     return userCredential.user.uid
   } catch (error) {
