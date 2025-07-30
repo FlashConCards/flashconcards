@@ -330,6 +330,16 @@ export const createSubject = async (subjectData: any) => {
   }
 }
 
+export const deleteSubject = async (subjectId: string) => {
+  try {
+    await deleteDoc(doc(db, 'subjects', subjectId))
+    console.log('Subject deleted successfully:', subjectId)
+  } catch (error) {
+    console.error('Error deleting subject:', error)
+    throw error
+  }
+}
+
 // ===== TÓPICOS (/topics) =====
 export const getTopics = async (subjectId?: string) => {
   try {
@@ -364,6 +374,16 @@ export const createTopic = async (topicData: any) => {
     return docRef.id
   } catch (error) {
     console.error('Error creating topic:', error)
+    throw error
+  }
+}
+
+export const deleteTopic = async (topicId: string) => {
+  try {
+    await deleteDoc(doc(db, 'topics', topicId))
+    console.log('Topic deleted successfully:', topicId)
+  } catch (error) {
+    console.error('Error deleting topic:', error)
     throw error
   }
 }
