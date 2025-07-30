@@ -99,19 +99,21 @@ export default function AdminPage() {
     // Listener para mudanças nos usuários regulares
     const unsubscribeUsers = onUsersChange((data: any[]) => {
       console.log('Regular users real-time update:', data.length)
-      // Combinar com admin users existentes
-      const adminUsers = users.filter((u: any) => u.createdByAdmin)
-      const allUsers = [...data, ...adminUsers]
-      setUsers(allUsers)
+      setUsers(prevUsers => {
+        // Combinar com admin users existentes
+        const adminUsers = prevUsers.filter((u: any) => u.createdByAdmin)
+        return [...data, ...adminUsers]
+      })
     })
 
     // Listener para mudanças nos usuários admin
     const unsubscribeAdminUsers = onAdminUsersChange((data: any[]) => {
       console.log('Admin users real-time update:', data.length)
-      // Combinar com regular users existentes
-      const regularUsers = users.filter((u: any) => !u.createdByAdmin)
-      const allUsers = [...regularUsers, ...data]
-      setUsers(allUsers)
+      setUsers(prevUsers => {
+        // Combinar com regular users existentes
+        const regularUsers = prevUsers.filter((u: any) => !u.createdByAdmin)
+        return [...regularUsers, ...data]
+      })
     })
 
     // Listener para mudanças nos depoimentos
@@ -125,7 +127,7 @@ export default function AdminPage() {
       unsubscribeAdminUsers()
       unsubscribeTestimonials()
     }
-  }, [isAdmin, users])
+  }, [isAdmin]) // Removida a dependência 'users' que causava o loop
 
   if (!user) {
     return (
