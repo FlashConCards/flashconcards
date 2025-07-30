@@ -599,12 +599,36 @@ export const getAllUsers = async () => {
 
 export const createUserByAdmin = async (userData: any) => {
   try {
-    const userRef = await addDoc(collection(db, 'users'), {
-      ...userData,
+    // Criar usuário no Authentication primeiro
+    const userCredential = await createUserWithEmailAndPassword(
+      auth, 
+      userData.email, 
+      userData.password || '123456' // Senha padrão se não fornecida
+    )
+    
+    // Atualizar perfil do usuário
+    await updateProfile(userCredential.user, {
+      displayName: userData.displayName
+    })
+    
+    // Criar documento do usuário no Firestore
+    await setDoc(doc(db, 'users', userCredential.user.uid), {
+      uid: userCredential.user.uid,
+      email: userData.email,
+      displayName: userData.displayName,
+      photoURL: '',
+      isAdmin: userData.isAdmin || false,
+      isPaid: userData.isPaid || false,
+      isActive: userData.isActive || true,
+      studyTime: userData.studyTime || 0,
+      cardsStudied: userData.cardsStudied || 0,
+      cardsCorrect: userData.cardsCorrect || 0,
+      cardsWrong: userData.cardsWrong || 0,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     })
-    return userRef.id
+    
+    return userCredential.user.uid
   } catch (error) {
     console.error('Error creating user by admin:', error)
     throw error

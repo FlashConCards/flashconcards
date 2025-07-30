@@ -92,20 +92,15 @@ MERCADOPAGO_ACCESS_TOKEN=seu_access_token
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permitir acesso total para admins
-    match /users/{userId} {
-      allow read, write: if request.auth != null && 
-        (request.auth.token.email == 'claudioghabryel.cg@gmail.com' || 
-         request.auth.token.email == 'natalhia775@gmail.com');
-    }
-    
-    // Permitir acesso para usuários autenticados
+    // PERMITIR TUDO TEMPORARIAMENTE PARA DESENVOLVIMENTO
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if true;
     }
   }
 }
 ```
+
+**⚠️ IMPORTANTE:** Estas regras permitem acesso total. Use apenas para desenvolvimento/teste.
 
 ## 🚀 Deploy no Vercel
 

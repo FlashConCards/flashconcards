@@ -19,6 +19,7 @@ import {
   createCourse,
   deleteCourse,
   createSubject,
+  createTopic,
   onCoursesChange
 } from '@/lib/firebase'
 
@@ -46,6 +47,7 @@ export default function AdminCoursesPage() {
   const [showDeleteCourseModal, setShowDeleteCourseModal] = useState(false)
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null)
   const [showAddSubjectModal, setShowAddSubjectModal] = useState(false)
+  const [showAddTopicModal, setShowAddTopicModal] = useState(false)
   
   // Estados para novo curso
   const [newCourse, setNewCourse] = useState({
@@ -57,6 +59,13 @@ export default function AdminCoursesPage() {
 
   // Estados para nova matéria
   const [newSubject, setNewSubject] = useState({
+    name: '',
+    description: '',
+    order: 1
+  })
+
+  // Estados para novo tópico
+  const [newTopic, setNewTopic] = useState({
     name: '',
     description: '',
     order: 1
@@ -282,6 +291,31 @@ export default function AdminCoursesPage() {
     }
   }
 
+  const handleAddTopic = async () => {
+    try {
+      if (!selectedCourse || !selectedSubject || !newTopic.name || !newTopic.description) {
+        alert('Por favor, preencha todos os campos obrigatórios.')
+        return
+      }
+
+      const topicData = {
+        name: newTopic.name,
+        description: newTopic.description,
+        order: newTopic.order,
+        isActive: true
+      }
+
+      await createTopic(selectedCourse.id, selectedSubject.id, topicData)
+      setShowAddTopicModal(false)
+      setNewTopic({ name: '', description: '', order: 1 })
+      await getTopicsForSubject(selectedSubject.id) // Recarregar tópicos
+      alert('Tópico adicionado com sucesso!')
+    } catch (error) {
+      console.error('Erro ao adicionar tópico:', error)
+      alert('Erro ao adicionar tópico. Tente novamente.')
+    }
+  }
+
   const renderBreadcrumb = () => (
     <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-6">
       <button
@@ -475,7 +509,10 @@ export default function AdminCoursesPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Tópicos - {selectedSubject?.name}</h2>
-        <button className="btn-primary flex items-center gap-2">
+        <button 
+          onClick={() => setShowAddTopicModal(true)}
+          className="btn-primary flex items-center gap-2"
+        >
           <PlusIcon className="w-5 h-5" />
           Adicionar Tópico
         </button>
@@ -878,6 +915,79 @@ export default function AdminCoursesPage() {
                 className="btn-primary"
               >
                 Adicionar Matéria
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Adicionar Tópico */}
+      {showAddTopicModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-10 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Adicionar Novo Tópico</h3>
+              <button
+                onClick={() => setShowAddTopicModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nome do Tópico
+                </label>
+                <input
+                  type="text"
+                  value={newTopic.name}
+                  onChange={(e) => setNewTopic({...newTopic, name: e.target.value})}
+                  className="input-field"
+                  placeholder="Ex: Direito Constitucional"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Descrição
+                </label>
+                <textarea
+                  value={newTopic.description}
+                  onChange={(e) => setNewTopic({...newTopic, description: e.target.value})}
+                  className="input-field"
+                  rows={3}
+                  placeholder="Descreva o tópico..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ordem
+                </label>
+                <input
+                  type="number"
+                  value={newTopic.order}
+                  onChange={(e) => setNewTopic({...newTopic, order: parseInt(e.target.value)})}
+                  className="input-field"
+                  min="1"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setShowAddTopicModal(false)}
+                className="btn-outline"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleAddTopic}
+                className="btn-primary"
+              >
+                Adicionar Tópico
               </button>
             </div>
           </div>
