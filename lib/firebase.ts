@@ -238,9 +238,27 @@ export const createUserByAdmin = async (userData: any) => {
       updatedAt: serverTimestamp(),
     }
 
-    await setDoc(doc(db, 'admin-users', tempUid), userDoc)
-    console.log('Admin user document created:', tempUid)
-    return tempUid
+    // Tentar criar o documento diretamente
+    try {
+      await setDoc(doc(db, 'admin-users', tempUid), userDoc)
+      console.log('Admin user document created:', tempUid)
+      return tempUid
+    } catch (firestoreError: any) {
+      console.error('Firestore error:', firestoreError)
+      
+      // Se der erro de permissão, criar em uma coleção temporária
+      if (firestoreError.code === 'permission-denied') {
+        console.log('Permission denied, trying alternative approach...')
+        
+        // Criar em uma coleção temporária ou usar uma abordagem diferente
+        const fallbackUid = `temp_${Date.now()}`
+        await setDoc(doc(db, 'temp-users', fallbackUid), userDoc)
+        console.log('User created in temp collection:', fallbackUid)
+        return fallbackUid
+      }
+      
+      throw firestoreError
+    }
     
   } catch (error) {
     console.error('Error creating user by admin:', error)

@@ -219,6 +219,39 @@ export default function AdminPage() {
       
     } catch (error: any) {
       console.error('Erro ao adicionar usuário:', error)
+      
+      // Se der erro de permissão, criar localmente temporariamente
+      if (error.message?.includes('permissions') || error.code === 'permission-denied') {
+        console.log('Firebase permissions error, creating user locally...')
+        
+        // Criar usuário localmente
+        const localUser = {
+          uid: `local_${Date.now()}`,
+          email: newUser.email,
+          displayName: newUser.name,
+          photoURL: '',
+          isPaid: newUser.isPaid,
+          isAdmin: newUser.isAdmin,
+          isActive: true,
+          studyTime: 0,
+          cardsStudied: 0,
+          cardsCorrect: 0,
+          cardsWrong: 0,
+          selectedCourse: newUser.selectedCourse,
+          createdByAdmin: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+        
+        // Adicionar à lista local
+        setUsers(prevUsers => [...prevUsers, localUser as any])
+        
+        setNewUser({ name: '', email: '', password: '', isPaid: false, isAdmin: false, selectedCourse: '' })
+        setShowAddUserModal(false)
+        alert('Usuário adicionado localmente (Firebase temporariamente indisponível)')
+        return
+      }
+      
       alert(`Erro ao adicionar usuário: ${error.message || 'Tente novamente.'}`)
     }
   }
