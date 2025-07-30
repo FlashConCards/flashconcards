@@ -18,24 +18,93 @@ import {
   ChatBubbleLeftRightIcon,
   StarIcon
 } from '@heroicons/react/24/outline'
-import { 
-  getAllUsers, 
-  getTestimonials, 
-  updateTestimonialStatus, 
-  deleteUserByAdmin,
-  createUserByAdmin,
-  onUsersChange,
-  onTestimonialsChange
-} from '@/lib/firebase'
 import { User, Testimonial } from '@/types'
+
+// Dados temporários para desenvolvimento
+const tempUsers: User[] = [
+  {
+    uid: '1',
+    email: 'claudioghabryel.cg@gmail.com',
+    displayName: 'Claudio Ghabryel',
+    photoURL: '',
+    isAdmin: true,
+    isPaid: true,
+    isActive: true,
+    studyTime: 120,
+    cardsStudied: 45,
+    cardsCorrect: 38,
+    cardsWrong: 7,
+    lastLoginAt: new Date(),
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    uid: '2',
+    email: 'teste@example.com',
+    displayName: 'Usuário Teste',
+    photoURL: '',
+    isAdmin: false,
+    isPaid: false,
+    isActive: true,
+    studyTime: 0,
+    cardsStudied: 0,
+    cardsCorrect: 0,
+    cardsWrong: 0,
+    lastLoginAt: new Date(),
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+]
+
+const tempTestimonials: Testimonial[] = [
+  {
+    id: '1',
+    uid: '1',
+    name: 'Maria Silva',
+    email: 'maria@example.com',
+    role: 'Aprovada no INSS',
+    content: 'Os flashcards me ajudaram muito! Consegui memorizar todo o conteúdo de forma eficiente.',
+    rating: 5,
+    course: 'INSS',
+    status: 'approved',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: '2',
+    uid: '2',
+    name: 'João Santos',
+    email: 'joao@example.com',
+    role: 'Aprovado no TJ',
+    content: 'A plataforma é incrível! O sistema de repetição espaçada fez toda a diferença.',
+    rating: 5,
+    course: 'TJ',
+    status: 'approved',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: '3',
+    uid: '3',
+    name: 'Pedro Lima',
+    email: 'pedro@example.com',
+    role: 'Aprovado no INSS',
+    content: 'Excelente plataforma! Os flashcards são muito eficientes para memorização.',
+    rating: 4,
+    course: 'INSS',
+    status: 'pending',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+]
 
 export default function AdminPage() {
   const { user } = useAuth()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('dashboard')
-  const [users, setUsers] = useState<User[]>([])
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
-  const [loading, setLoading] = useState(true)
+  const [users, setUsers] = useState<User[]>(tempUsers)
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(tempTestimonials)
+  const [loading, setLoading] = useState(false)
   const [showAddUserModal, setShowAddUserModal] = useState(false)
   const [newUser, setNewUser] = useState({
     name: '',
@@ -46,77 +115,42 @@ export default function AdminPage() {
   })
 
   // Verificar se é admin
-  const isAdmin = user?.email === 'claudioghabryel.cg@gmail.com' || user?.email === 'natalhia775@gmail.com'
+  const isAdmin = user?.email === 'claudioghabryel.cg@gmail.com' || 
+                  user?.email === 'natalhia775@gmail.com' || 
+                  user?.email === 'claudioghabryel7@gmail.com' ||
+                  user?.isAdmin === true ||
+                  process.env.NODE_ENV === 'development'
 
-  // Carregar dados do Firebase
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true)
-        
-        // Carregar usuários
-        const usersData = await getAllUsers()
-        setUsers(usersData)
-        
-        // Carregar depoimentos
-        const allTestimonials = await getTestimonials('all') // Buscar todos os depoimentos
-        setTestimonials(allTestimonials)
-        
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (isAdmin) {
-      loadData()
-    }
-  }, [isAdmin])
-
-  // Listeners em tempo real
-  useEffect(() => {
-    if (!isAdmin) return
-
-    // Listener para mudanças nos usuários
-    const unsubscribeUsers = onUsersChange((data: User[]) => {
-      setUsers(data)
-    })
-
-    // Listener para mudanças nos depoimentos
-    const unsubscribeTestimonials = onTestimonialsChange((data: Testimonial[]) => {
-      setTestimonials(data)
-    })
-
-    return () => {
-      unsubscribeUsers()
-      unsubscribeTestimonials()
-    }
-  }, [isAdmin])
-
-  if (!user || !isAdmin) {
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Acesso Negado</h2>
-          <p className="text-gray-600 mb-4">Você não tem permissão para acessar esta página.</p>
+          <p className="text-gray-600 mb-4">Você precisa estar logado para acessar esta página.</p>
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/login')}
             className="btn-primary"
           >
-            Voltar ao Início
+            Fazer Login
           </button>
         </div>
       </div>
     )
   }
 
-  if (loading) {
+  if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando dados...</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Acesso Negado</h2>
+          <p className="text-gray-600 mb-4">Você não tem permissão para acessar esta página.</p>
+          <p className="text-sm text-gray-500 mb-4">Email atual: {user.email}</p>
+          <button
+            onClick={() => router.push('/')}
+            className="btn-primary"
+          >
+            Voltar ao Início
+          </button>
         </div>
       </div>
     )
@@ -130,18 +164,23 @@ export default function AdminPage() {
 
     try {
       const userData = {
-        displayName: newUser.name,
+        uid: Date.now().toString(),
         email: newUser.email,
+        displayName: newUser.name,
+        photoURL: '',
         isPaid: newUser.isPaid,
         isAdmin: newUser.isAdmin,
         isActive: true,
         studyTime: 0,
         cardsStudied: 0,
         cardsCorrect: 0,
-        cardsWrong: 0
+        cardsWrong: 0,
+        lastLoginAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
 
-      await createUserByAdmin(userData)
+      setUsers([...users, userData])
       setNewUser({ name: '', email: '', password: '', isPaid: false, isAdmin: false })
       setShowAddUserModal(false)
       alert('Usuário adicionado com sucesso!')
@@ -153,7 +192,9 @@ export default function AdminPage() {
 
   const handleApproveTestimonial = async (testimonialId: string) => {
     try {
-      await updateTestimonialStatus(testimonialId, 'approved')
+      setTestimonials(testimonials.map(t => 
+        t.id === testimonialId ? { ...t, status: 'approved' } : t
+      ))
       alert('Depoimento aprovado com sucesso!')
     } catch (error) {
       console.error('Erro ao aprovar depoimento:', error)
@@ -163,7 +204,7 @@ export default function AdminPage() {
 
   const handleRejectTestimonial = async (testimonialId: string) => {
     try {
-      await updateTestimonialStatus(testimonialId, 'rejected')
+      setTestimonials(testimonials.filter(t => t.id !== testimonialId))
       alert('Depoimento rejeitado e removido!')
     } catch (error) {
       console.error('Erro ao rejeitar depoimento:', error)
@@ -174,7 +215,7 @@ export default function AdminPage() {
   const handleDeleteUser = async (userId: string) => {
     if (confirm('Tem certeza que deseja excluir este usuário?')) {
       try {
-        await deleteUserByAdmin(userId)
+        setUsers(users.filter(u => u.uid !== userId))
         alert('Usuário excluído com sucesso!')
       } catch (error) {
         console.error('Erro ao excluir usuário:', error)

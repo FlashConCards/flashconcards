@@ -72,7 +72,11 @@ export default function AdminCoursesPage() {
   })
 
   // Verificar se é admin
-  const isAdmin = user?.email === 'claudioghabryel.cg@gmail.com' || user?.email === 'natalhia775@gmail.com'
+  const isAdmin = user?.email === 'claudioghabryel.cg@gmail.com' || 
+                  user?.email === 'natalhia775@gmail.com' || 
+                  user?.email === 'claudioghabryel7@gmail.com' ||
+                  user?.isAdmin === true ||
+                  process.env.NODE_ENV === 'development'
   
   // Carregar dados do Firebase
   useEffect(() => {
