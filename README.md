@@ -1,6 +1,6 @@
-# FlashConCards - Plataforma de Flashcards
+# FlashConCards
 
-Uma plataforma moderna para criação e estudo de flashcards, desenvolvida com Next.js, TypeScript, Tailwind CSS e Firebase.
+Uma plataforma de flashcards para estudo eficiente.
 
 ## 🚀 Tecnologias
 
@@ -8,26 +8,124 @@ Uma plataforma moderna para criação e estudo de flashcards, desenvolvida com N
 - **TypeScript** - Tipagem estática
 - **Tailwind CSS** - Estilização
 - **Firebase** - Backend e autenticação
-- **Mercado Pago** - Processamento de pagamentos
-- **Vercel** - Deploy
+- **Mercado Pago** - Pagamentos
 
-## 📋 Funcionalidades
+## 📁 Estrutura do Projeto
 
-- ✅ Autenticação de usuários
-- ✅ Criação e estudo de flashcards
-- ✅ Sistema de repetição espaçada
-- ✅ Pagamentos via Mercado Pago
-- ✅ Painel administrativo
-- ✅ Depoimentos de usuários
-- ✅ Progresso de estudo
-- ✅ Múltiplos cursos e matérias
+```
+FlashConCards/
+├── app/                    # Páginas Next.js
+├── components/            # Componentes React
+├── lib/                  # Utilitários (Firebase, etc.)
+├── types/                # Tipos TypeScript
+└── public/               # Arquivos estáticos
+```
 
-## 🛠️ Instalação
+## 🔥 Firebase Configuration
+
+### Firestore Security Rules
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Permitir acesso autenticado aos dados do usuário
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Permitir acesso autenticado aos cursos
+    match /courses/{courseId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        (request.auth.token.email == 'claudioghabryel.cg@gmail.com' || 
+         request.auth.token.email == 'natalhia775@gmail.com' ||
+         request.auth.token.email == 'claudioghabryel7@gmail.com');
+    }
+    
+    // Permitir acesso autenticado às matérias
+    match /subjects/{subjectId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        (request.auth.token.email == 'claudioghabryel.cg@gmail.com' || 
+         request.auth.token.email == 'natalhia775@gmail.com' ||
+         request.auth.token.email == 'claudioghabryel7@gmail.com');
+    }
+    
+    // Permitir acesso autenticado aos tópicos
+    match /topics/{topicId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        (request.auth.token.email == 'claudioghabryel.cg@gmail.com' || 
+         request.auth.token.email == 'natalhia775@gmail.com' ||
+         request.auth.token.email == 'claudioghabryel7@gmail.com');
+    }
+    
+    // Permitir acesso autenticado aos sub-tópicos
+    match /subtopics/{subtopicId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        (request.auth.token.email == 'claudioghabryel.cg@gmail.com' || 
+         request.auth.token.email == 'natalhia775@gmail.com' ||
+         request.auth.token.email == 'claudioghabryel7@gmail.com');
+    }
+    
+    // Permitir acesso autenticado aos flashcards
+    match /flashcards/{flashcardId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        (request.auth.token.email == 'claudioghabryel.cg@gmail.com' || 
+         request.auth.token.email == 'natalhia775@gmail.com' ||
+         request.auth.token.email == 'claudioghabryel7@gmail.com');
+    }
+    
+    // Permitir acesso autenticado aos aprofundamentos
+    match /deepenings/{deepeningId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        (request.auth.token.email == 'claudioghabryel.cg@gmail.com' || 
+         request.auth.token.email == 'natalhia775@gmail.com' ||
+         request.auth.token.email == 'claudioghabryel7@gmail.com');
+    }
+    
+    // Permitir acesso autenticado às sessões de estudo
+    match /study-sessions/{sessionId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Permitir acesso autenticado aos pagamentos
+    match /payments/{paymentId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Permitir acesso autenticado aos depoimentos
+    match /testimonials/{testimonialId} {
+      allow read: if true; // Qualquer one pode ler depoimentos aprovados
+      allow write: if request.auth != null; // Apenas usuários autenticados podem criar
+    }
+  }
+}
+```
+
+### Storage Rules
+
+```javascript
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+```
+
+## 🏃‍♂️ Como Executar
 
 1. **Clone o repositório**
 ```bash
-git clone https://github.com/FlashConCards/flashconcards.git
-cd flashconcards
+git clone https://github.com/seu-usuario/FlashConCards.git
+cd FlashConCards
 ```
 
 2. **Instale as dependências**
@@ -40,120 +138,22 @@ npm install
 cp env.example .env.local
 ```
 
-Edite o arquivo `.env.local` com suas configurações:
-```env
-# Firebase
-NEXT_PUBLIC_FIREBASE_API_KEY=sua_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=seu_projeto.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=seu_projeto_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=seu_projeto.appspot.com
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
-NEXT_PUBLIC_FIREBASE_APP_ID=seu_app_id
-
-# Mercado Pago
-NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY=sua_public_key
-MERCADOPAGO_ACCESS_TOKEN=seu_access_token
-MERCADOPAGO_WEBHOOK_SECRET=seu_webhook_secret
-```
-
 4. **Execute o projeto**
 ```bash
 npm run dev
 ```
 
-## 🔥 Configuração do Firebase
+## 📋 Scripts Disponíveis
 
-### 1. Configurar Autenticação
-- Vá para o console do Firebase
-- Acesse **Authentication** > **Settings** > **Authorized domains**
-- Adicione: `flashconcards.vercel.app`
+- `npm run dev` - Servidor de desenvolvimento
+- `npm run build` - Build para produção
+- `npm run start` - Servidor de produção
+- `npm run lint` - Verificar código
 
-### 2. Configurar Firestore Security Rules
-No console do Firebase, vá para **Firestore Database** > **Rules** e substitua por:
+## 🌐 Deploy
 
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // PERMITIR ACESSO TOTAL PARA DESENVOLVIMENTO
-    match /{document=**} {
-      allow read, write: if true;
-    }
-  }
-}
-```
+O projeto está configurado para deploy automático no Vercel.
 
-**IMPORTANTE:** Depois de colar as regras, clique em **PUBLISH** para salvar!
+## 📞 Suporte
 
-### 3. Configurar Storage Rules
-No console do Firebase, vá para **Storage** > **Rules** e substitua por:
-
-```javascript
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read, write: if true;
-    }
-  }
-}
-```
-
-## 📱 Deploy
-
-O projeto está configurado para deploy automático no Vercel:
-
-1. Conecte seu repositório GitHub ao Vercel
-2. Configure as variáveis de ambiente no Vercel
-3. O deploy será automático a cada push
-
-## 🎯 Estrutura do Projeto
-
-```
-FlashConCards/
-├── app/                    # Páginas Next.js 14
-│   ├── admin/             # Painel administrativo
-│   ├── api/               # API routes
-│   ├── courses/           # Página de cursos
-│   ├── dashboard/         # Dashboard do usuário
-│   └── ...
-├── components/            # Componentes React
-├── lib/                  # Utilitários e configurações
-├── types/                # Definições TypeScript
-└── public/               # Arquivos estáticos
-```
-
-## 🔐 Autenticação
-
-O sistema usa Firebase Authentication com os seguintes provedores:
-- Email/Senha
-- Google (configurável)
-
-## 💳 Pagamentos
-
-Integração com Mercado Pago para:
-- Pagamentos únicos
-- Assinaturas recorrentes
-- Webhooks para confirmação
-
-## 📊 Painel Administrativo
-
-Acessível em `/admin` para usuários com permissão de administrador.
-
-**Emails com acesso admin:**
-- `claudioghabryel.cg@gmail.com`
-- `natalhia775@gmail.com`
-- `claudioghabryel7@gmail.com`
-
-## 🚀 Scripts Disponíveis
-
-```bash
-npm run dev          # Desenvolvimento
-npm run build        # Build de produção
-npm run start        # Servidor de produção
-npm run lint         # Linting
-```
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT.
+Para dúvidas ou problemas, entre em contato através do email: claudioghabryel.cg@gmail.com

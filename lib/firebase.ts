@@ -43,18 +43,16 @@ export const db = getFirestore(app)
 export const storage = getStorage(app)
 
 // ===== ESTRUTURA ORGANIZADA DO FIREBASE =====
-// /users - Usuários registrados
-// /admin-users - Usuários criados pelo admin
-// /testimonials - Depoimentos
-// /courses - Cursos
-// /subjects - Matérias
-// /topics - Tópicos
+// /users - Todos os usuários (registrados + admin)
+// /courses - Cursos disponíveis
+// /subjects - Matérias dos cursos
+// /topics - Tópicos das matérias
 // /subtopics - Sub-tópicos
-// /flashcards - Flashcards
+// /flashcards - Flashcards de estudo
 // /deepenings - Aprofundamentos
+// /testimonials - Depoimentos
 // /study-sessions - Sessões de estudo
 // /payments - Pagamentos
-// /cards - Cards de estudo
 
 // Auth functions
 export const signIn = async (email: string, password: string) => {
@@ -66,9 +64,6 @@ export const signIn = async (email: string, password: string) => {
     throw error
   }
 }
-
-// Alias for backward compatibility
-export const signInUser = signIn
 
 export const signUp = async (email: string, password: string, displayName: string) => {
   try {
@@ -103,9 +98,6 @@ export const signUp = async (email: string, password: string, displayName: strin
   }
 }
 
-// Alias for backward compatibility
-export const createUser = signUp
-
 export const signOutUser = async () => {
   try {
     await signOut(auth)
@@ -124,10 +116,9 @@ export const onAuthStateChange = (callback: (user: FirebaseUser | null) => void)
   return onAuthStateChanged(auth, callback)
 }
 
-// Alias for backward compatibility
 export { onAuthStateChanged }
 
-// ===== USUÁRIOS REGISTRADOS (/users) =====
+// ===== USUÁRIOS (/users) =====
 export const getAllUsers = async () => {
   try {
     const querySnapshot = await getDocs(collection(db, 'users'))
@@ -139,11 +130,7 @@ export const getAllUsers = async () => {
     return users
   } catch (error: any) {
     console.error('Error getting all users:', error)
-    if (error.code === 'permission-denied') {
-      console.warn('Permission denied for users collection, returning empty array')
-      return []
-    }
-    throw error
+    return []
   }
 }
 
@@ -192,34 +179,28 @@ export const updateUser = async (uid: string, data: any) => {
   }
 }
 
-// Alias for backward compatibility
-export const updateUserData = updateUser
-
-// ===== USUÁRIOS CRIADOS PELO ADMIN (/admin-users) =====
+// ===== CRIAR USUÁRIO PELO ADMIN =====
 export const createUserByAdmin = async (userData: any) => {
   try {
     console.log('Creating user by admin:', userData.email)
     
-    // Verificar se o email já existe na coleção admin-users
-    const adminUsers = await getAllAdminUsers()
-    const existingAdminUser = adminUsers.find((u: any) => u.email === userData.email)
-    
-    if (existingAdminUser) {
-      throw new Error('Usuário já existe no sistema')
-    }
-    
-    // Verificar se o email já existe na coleção users
-    const regularUsers = await getAllUsers()
-    const existingRegularUser = regularUsers.find((u: any) => u.email === userData.email)
-    
-    if (existingRegularUser) {
-      throw new Error('Email já está sendo usado por um usuário registrado')
-    }
-    
-    // Criar apenas o documento na coleção admin-users sem criar no Auth
-    const tempUid = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    // Criar usuário no Firebase Auth
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      userData.email,
+      userData.password || '123456'
+    )
+
+    console.log('User created in Auth:', userCredential.user.uid)
+
+    // Update profile
+    await updateProfile(userCredential.user, {
+      displayName: userData.displayName
+    })
+
+    // Create user document in /users collection
     const userDoc = {
-      uid: tempUid,
+      uid: userCredential.user.uid,
       email: userData.email,
       displayName: userData.displayName,
       photoURL: '',
@@ -231,35 +212,16 @@ export const createUserByAdmin = async (userData: any) => {
       cardsCorrect: userData.cardsCorrect || 0,
       cardsWrong: userData.cardsWrong || 0,
       createdByAdmin: true,
-      password: userData.password || '123456', // Senha temporária
-      selectedCourse: userData.selectedCourse || '', // Curso selecionado pelo admin
+      selectedCourse: userData.selectedCourse || '',
       lastLoginAt: serverTimestamp(),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     }
 
-    // Tentar criar o documento diretamente
-    try {
-      await setDoc(doc(db, 'admin-users', tempUid), userDoc)
-      console.log('Admin user document created:', tempUid)
-      return tempUid
-    } catch (firestoreError: any) {
-      console.error('Firestore error:', firestoreError)
-      
-      // Se der erro de permissão, criar em uma coleção temporária
-      if (firestoreError.code === 'permission-denied') {
-        console.log('Permission denied, trying alternative approach...')
-        
-        // Criar em uma coleção temporária ou usar uma abordagem diferente
-        const fallbackUid = `temp_${Date.now()}`
-        await setDoc(doc(db, 'temp-users', fallbackUid), userDoc)
-        console.log('User created in temp collection:', fallbackUid)
-        return fallbackUid
-      }
-      
-      throw firestoreError
-    }
-    
+    await setDoc(doc(db, 'users', userCredential.user.uid), userDoc)
+    console.log('Admin user document created:', userCredential.user.uid)
+
+    return userCredential.user.uid
   } catch (error) {
     console.error('Error creating user by admin:', error)
     throw error
@@ -268,86 +230,10 @@ export const createUserByAdmin = async (userData: any) => {
 
 export const deleteUserByAdmin = async (uid: string) => {
   try {
-    // Delete from admin-users collection
-    await deleteDoc(doc(db, 'admin-users', uid))
-    console.log('Admin user deleted:', uid)
+    await deleteDoc(doc(db, 'users', uid))
+    console.log('User deleted:', uid)
   } catch (error) {
-    console.error('Error deleting admin user:', error)
-    throw error
-  }
-}
-
-export const getAllAdminUsers = async () => {
-  try {
-    const querySnapshot = await getDocs(collection(db, 'admin-users'))
-    const adminUsers = querySnapshot.docs.map(doc => ({
-      uid: doc.id,
-      ...doc.data()
-    })) as any[]
-    console.log('Admin users loaded:', adminUsers.length)
-    return adminUsers
-  } catch (error: any) {
-    console.error('Error getting admin users:', error)
-    if (error.code === 'permission-denied') {
-      console.warn('Permission denied for admin-users collection, returning empty array')
-      return []
-    }
-    throw error
-  }
-}
-
-// ===== DEPOIMENTOS (/testimonials) =====
-export const getTestimonials = async (status?: 'pending' | 'approved' | 'rejected' | 'all') => {
-  try {
-    let q: Query | CollectionReference = collection(db, 'testimonials')
-    
-    if (status && status !== 'all') {
-      q = query(q, where('status', '==', status))
-    }
-    
-    const querySnapshot = await getDocs(q)
-    const testimonials = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as any[]
-    console.log('Testimonials loaded:', testimonials.length)
-    return testimonials
-  } catch (error: any) {
-    console.error('Error getting testimonials:', error)
-    if (error.code === 'permission-denied') {
-      console.warn('Permission denied for testimonials collection, returning empty array')
-      return []
-    }
-    throw error
-  }
-}
-
-export const updateTestimonialStatus = async (testimonialId: string, status: 'pending' | 'approved' | 'rejected') => {
-  try {
-    console.log('Updating testimonial status:', testimonialId, status)
-    const testimonialRef = doc(db, 'testimonials', testimonialId)
-    await updateDoc(testimonialRef, {
-      status: status,
-      updatedAt: serverTimestamp()
-    })
-    console.log('Testimonial status updated successfully')
-  } catch (error) {
-    console.error('Error updating testimonial status:', error)
-    throw error
-  }
-}
-
-export const createTestimonial = async (testimonialData: any) => {
-  try {
-    const docRef = await addDoc(collection(db, 'testimonials'), {
-      ...testimonialData,
-      status: 'pending',
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    })
-    return docRef.id
-  } catch (error) {
-    console.error('Error creating testimonial:', error)
+    console.error('Error deleting user:', error)
     throw error
   }
 }
@@ -364,11 +250,7 @@ export const getCourses = async () => {
     return courses
   } catch (error: any) {
     console.error('Error getting courses:', error)
-    if (error.code === 'permission-denied') {
-      console.warn('Permission denied for courses collection, returning empty array')
-      return []
-    }
-    throw error
+    return []
   }
 }
 
@@ -416,11 +298,7 @@ export const getSubjects = async (courseId?: string) => {
     return subjects
   } catch (error: any) {
     console.error('Error getting subjects:', error)
-    if (error.code === 'permission-denied') {
-      console.warn('Permission denied for subjects collection, returning empty array')
-      return []
-    }
-    throw error
+    return []
   }
 }
 
@@ -436,28 +314,6 @@ export const createSubject = async (subjectData: any) => {
     return docRef.id
   } catch (error) {
     console.error('Error creating subject:', error)
-    throw error
-  }
-}
-
-export const updateSubject = async (subjectId: string, data: any) => {
-  try {
-    const subjectRef = doc(db, 'subjects', subjectId)
-    await updateDoc(subjectRef, {
-      ...data,
-      updatedAt: serverTimestamp()
-    })
-  } catch (error) {
-    console.error('Error updating subject:', error)
-    throw error
-  }
-}
-
-export const deleteSubject = async (subjectId: string) => {
-  try {
-    await deleteDoc(doc(db, 'subjects', subjectId))
-  } catch (error) {
-    console.error('Error deleting subject:', error)
     throw error
   }
 }
@@ -480,11 +336,7 @@ export const getTopics = async (subjectId?: string) => {
     return topics
   } catch (error: any) {
     console.error('Error getting topics:', error)
-    if (error.code === 'permission-denied') {
-      console.warn('Permission denied for topics collection, returning empty array')
-      return []
-    }
-    throw error
+    return []
   }
 }
 
@@ -500,28 +352,6 @@ export const createTopic = async (topicData: any) => {
     return docRef.id
   } catch (error) {
     console.error('Error creating topic:', error)
-    throw error
-  }
-}
-
-export const updateTopic = async (topicId: string, data: any) => {
-  try {
-    const topicRef = doc(db, 'topics', topicId)
-    await updateDoc(topicRef, {
-      ...data,
-      updatedAt: serverTimestamp()
-    })
-  } catch (error) {
-    console.error('Error updating topic:', error)
-    throw error
-  }
-}
-
-export const deleteTopic = async (topicId: string) => {
-  try {
-    await deleteDoc(doc(db, 'topics', topicId))
-  } catch (error) {
-    console.error('Error deleting topic:', error)
     throw error
   }
 }
@@ -544,11 +374,7 @@ export const getSubTopics = async (topicId?: string) => {
     return subTopics
   } catch (error: any) {
     console.error('Error getting subTopics:', error)
-    if (error.code === 'permission-denied') {
-      console.warn('Permission denied for subtopics collection, returning empty array')
-      return []
-    }
-    throw error
+    return []
   }
 }
 
@@ -564,28 +390,6 @@ export const createSubTopic = async (subTopicData: any) => {
     return docRef.id
   } catch (error) {
     console.error('Error creating subTopic:', error)
-    throw error
-  }
-}
-
-export const updateSubTopic = async (subTopicId: string, data: any) => {
-  try {
-    const subTopicRef = doc(db, 'subtopics', subTopicId)
-    await updateDoc(subTopicRef, {
-      ...data,
-      updatedAt: serverTimestamp()
-    })
-  } catch (error) {
-    console.error('Error updating subTopic:', error)
-    throw error
-  }
-}
-
-export const deleteSubTopic = async (subTopicId: string) => {
-  try {
-    await deleteDoc(doc(db, 'subtopics', subTopicId))
-  } catch (error) {
-    console.error('Error deleting subTopic:', error)
     throw error
   }
 }
@@ -608,11 +412,7 @@ export const getFlashcards = async (subTopicId?: string) => {
     return flashcards
   } catch (error: any) {
     console.error('Error getting flashcards:', error)
-    if (error.code === 'permission-denied') {
-      console.warn('Permission denied for flashcards collection, returning empty array')
-      return []
-    }
-    throw error
+    return []
   }
 }
 
@@ -634,10 +434,58 @@ export const getDeepenings = async (flashcardId?: string) => {
     return deepenings
   } catch (error: any) {
     console.error('Error getting deepenings:', error)
-    if (error.code === 'permission-denied') {
-      console.warn('Permission denied for deepenings collection, returning empty array')
-      return []
+    return []
+  }
+}
+
+// ===== DEPOIMENTOS (/testimonials) =====
+export const getTestimonials = async (status?: 'pending' | 'approved' | 'rejected' | 'all') => {
+  try {
+    let q: Query | CollectionReference = collection(db, 'testimonials')
+    
+    if (status && status !== 'all') {
+      q = query(q, where('status', '==', status))
     }
+    
+    const querySnapshot = await getDocs(q)
+    const testimonials = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as any[]
+    console.log('Testimonials loaded:', testimonials.length)
+    return testimonials
+  } catch (error: any) {
+    console.error('Error getting testimonials:', error)
+    return []
+  }
+}
+
+export const updateTestimonialStatus = async (testimonialId: string, status: 'pending' | 'approved' | 'rejected') => {
+  try {
+    console.log('Updating testimonial status:', testimonialId, status)
+    const testimonialRef = doc(db, 'testimonials', testimonialId)
+    await updateDoc(testimonialRef, {
+      status: status,
+      updatedAt: serverTimestamp()
+    })
+    console.log('Testimonial status updated successfully')
+  } catch (error) {
+    console.error('Error updating testimonial status:', error)
+    throw error
+  }
+}
+
+export const createTestimonial = async (testimonialData: any) => {
+  try {
+    const docRef = await addDoc(collection(db, 'testimonials'), {
+      ...testimonialData,
+      status: 'pending',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    })
+    return docRef.id
+  } catch (error) {
+    console.error('Error creating testimonial:', error)
     throw error
   }
 }
@@ -688,32 +536,6 @@ export const updatePaymentStatus = async (paymentId: string, status: string) => 
     console.log('Payment status updated successfully')
   } catch (error) {
     console.error('Error updating payment status:', error)
-    throw error
-  }
-}
-
-// ===== CARDS (/cards) =====
-export const getCards = async (category?: string) => {
-  try {
-    let q: Query | CollectionReference = collection(db, 'cards')
-    
-    if (category) {
-      q = query(q, where('category', '==', category))
-    }
-    
-    const querySnapshot = await getDocs(q)
-    const cards = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as any[]
-    console.log('Cards loaded:', cards.length)
-    return cards
-  } catch (error: any) {
-    console.error('Error getting cards:', error)
-    if (error.code === 'permission-denied') {
-      console.warn('Permission denied for cards collection, returning empty array')
-      return []
-    }
     throw error
   }
 }
@@ -776,25 +598,6 @@ export const onUsersChange = (callback: (data: any[]) => void) => {
   }
 }
 
-export const onAdminUsersChange = (callback: (data: any[]) => void) => {
-  try {
-    return onSnapshot(collection(db, 'admin-users'), (snapshot) => {
-      const adminUsers = snapshot.docs.map(doc => ({
-        uid: doc.id,
-        ...doc.data()
-      })) as any[]
-      console.log('Admin users real-time update:', adminUsers.length)
-      callback(adminUsers)
-    }, (error) => {
-      console.error('Error in admin users listener:', error)
-      callback([])
-    })
-  } catch (error) {
-    console.error('Error setting up admin users listener:', error)
-    return () => {}
-  }
-}
-
 export const onTestimonialsChange = (callback: (data: any[]) => void) => {
   try {
     return onSnapshot(collection(db, 'testimonials'), (snapshot) => {
@@ -844,4 +647,9 @@ export const uploadFile = async (file: File, path: string) => {
     console.error('Error uploading file:', error)
     throw error
   }
-} 
+}
+
+// Aliases for backward compatibility
+export const signInUser = signIn
+export const createUser = signUp
+export const updateUserData = updateUser 
