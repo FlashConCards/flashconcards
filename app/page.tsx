@@ -63,8 +63,8 @@ export default function HomePage() {
           getCourses(),
           getTestimonials('approved')
         ])
-        setCourses(coursesData)
-        setTestimonials(testimonialsData)
+        setCourses(coursesData || [])
+        setTestimonials(testimonialsData || [])
       } catch (error) {
         console.error('Error loading data:', error)
       } finally {
@@ -77,7 +77,7 @@ export default function HomePage() {
 
   useEffect(() => {
     setIsVisible(true)
-    if (testimonials.length > 0) {
+    if (testimonials && testimonials.length > 0) {
       const interval = setInterval(() => {
         setActiveTestimonial((prev) => (prev + 1) % testimonials.length)
       }, 5000)
@@ -273,7 +273,7 @@ export default function HomePage() {
                 <p className="text-gray-600">Nenhum curso disponível no momento.</p>
               </div>
             ) : (
-              courses.map((course: any, index: number) => (
+              (courses || []).map((course: any, index: number) => (
                 <motion.div
                   key={course.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -325,7 +325,7 @@ export default function HomePage() {
                     <div className="mb-4">
                       <h4 className="font-semibold text-gray-900 mb-2">Principais Matérias:</h4>
                       <div className="flex flex-wrap gap-1">
-                        {course.features.map((feature: any, idx: number) => (
+                        {(course.features || []).map((feature: any, idx: number) => (
                           <span
                             key={idx}
                             className="bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded-full"
@@ -371,7 +371,7 @@ export default function HomePage() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
+                                {(features || []).map((feature, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
@@ -446,7 +446,7 @@ export default function HomePage() {
 
             {testimonials.length > 1 && (
               <div className="flex justify-center mt-6 space-x-2">
-                {testimonials.map((_, index) => (
+                {(testimonials || []).map((_, index) => (
                   <button
                     key={index}
                     onClick={() => setActiveTestimonial(index)}
