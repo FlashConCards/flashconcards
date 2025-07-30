@@ -405,7 +405,7 @@ export default function AdminCoursesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {courses.map((course) => (
+          {(courses || []).map((course) => (
             <div key={course.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
               <div className="relative">
                 <img
@@ -476,7 +476,7 @@ export default function AdminCoursesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {subjects.map((subject) => (
+          {(subjects || []).map((subject) => (
             <div key={subject.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-semibold text-gray-900">{subject.name}</h3>
@@ -526,7 +526,7 @@ export default function AdminCoursesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {topics.map((topic) => (
+          {(topics || []).map((topic) => (
             <div key={topic.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-semibold text-gray-900">{topic.name}</h3>
@@ -573,7 +573,7 @@ export default function AdminCoursesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {subTopics.map((subTopic) => (
+          {(subTopics || []).map((subTopic) => (
             <div key={subTopic.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-semibold text-gray-900">{subTopic.name}</h3>
@@ -625,7 +625,7 @@ export default function AdminCoursesPage() {
           <p className="text-gray-600 text-center py-8">Nenhum flashcard encontrado.</p>
         ) : (
           <div className="space-y-4">
-            {flashcards.map((flashcard) => (
+            {(flashcards || []).map((flashcard) => (
               <div key={flashcard.id} className="border border-gray-200 rounded-lg p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex-1">
@@ -662,7 +662,7 @@ export default function AdminCoursesPage() {
           <p className="text-gray-600 text-center py-8">Nenhum aprofundamento encontrado.</p>
         ) : (
           <div className="space-y-4">
-            {deepenings.map((deepening) => (
+            {(deepenings || []).map((deepening) => (
               <div key={deepening.id} className="border border-gray-200 rounded-lg p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex-1">

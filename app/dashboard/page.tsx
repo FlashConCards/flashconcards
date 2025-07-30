@@ -62,12 +62,19 @@ export default function DashboardPage() {
 
   // Load courses in real-time
   useEffect(() => {
-    const unsubscribe = onCoursesChange((coursesData) => {
-      setCourses(coursesData);
-      setLoading(false);
-    });
+    const loadCourses = async () => {
+      try {
+        const coursesData = await getCourses();
+        setCourses(coursesData || []);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error loading courses:', error);
+        setCourses([]);
+        setLoading(false);
+      }
+    };
 
-    return () => unsubscribe();
+    loadCourses();
   }, []);
 
   // Load subjects when course is selected
@@ -428,7 +435,7 @@ export default function DashboardPage() {
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value="">Selecione um curso</option>
-                  {courses.map((course) => (
+                  {(courses || []).map((course) => (
                     <option key={course.id} value={course.id}>
                       {course.name}
                     </option>
@@ -451,7 +458,7 @@ export default function DashboardPage() {
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
                 >
                   <option value="">Selecione uma matéria</option>
-                  {subjects.map((subject) => (
+                  {(subjects || []).map((subject) => (
                     <option key={subject.id} value={subject.id}>
                       {subject.name}
                     </option>
@@ -473,7 +480,7 @@ export default function DashboardPage() {
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
                 >
                   <option value="">Selecione um tópico</option>
-                  {topics.map((topic) => (
+                  {(topics || []).map((topic) => (
                     <option key={topic.id} value={topic.id}>
                       {topic.name}
                     </option>
@@ -494,7 +501,7 @@ export default function DashboardPage() {
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
                 >
                   <option value="">Selecione um sub-tópico</option>
-                  {subTopics.map((subTopic) => (
+                  {(subTopics || []).map((subTopic) => (
                     <option key={subTopic.id} value={subTopic.id}>
                       {subTopic.name}
                     </option>

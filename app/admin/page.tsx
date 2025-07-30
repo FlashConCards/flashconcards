@@ -393,7 +393,7 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {users.map((user) => (
+                    {(users || []).map((user) => (
                       <tr key={user.uid}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
@@ -470,7 +470,7 @@ export default function AdminPage() {
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Aguardando Aprovação</h3>
                 <div className="space-y-4">
-                  {pendingTestimonials.map((testimonial) => (
+                  {(pendingTestimonials || []).map((testimonial) => (
                     <div key={testimonial.id} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -519,7 +519,7 @@ export default function AdminPage() {
                 <p className="text-gray-600 text-center py-8">Nenhum depoimento aprovado ainda.</p>
               ) : (
                 <div className="space-y-4">
-                  {approvedTestimonials.map((testimonial) => (
+                  {(approvedTestimonials || []).map((testimonial) => (
                     <div key={testimonial.id} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
