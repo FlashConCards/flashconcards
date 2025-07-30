@@ -232,6 +232,7 @@ export const createUserByAdmin = async (userData: any) => {
       cardsWrong: userData.cardsWrong || 0,
       createdByAdmin: true,
       password: userData.password || '123456', // Senha temporária
+      selectedCourse: userData.selectedCourse || '', // Curso selecionado pelo admin
       lastLoginAt: serverTimestamp(),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),

@@ -27,7 +27,8 @@ import {
   createUserByAdmin,
   onUsersChange,
   onAdminUsersChange,
-  onTestimonialsChange
+  onTestimonialsChange,
+  getCourses
 } from '@/lib/firebase'
 import { User, Testimonial } from '@/types'
 
@@ -44,8 +45,11 @@ export default function AdminPage() {
     email: '',
     password: '',
     isPaid: false,
-    isAdmin: false
+    isAdmin: false,
+    selectedCourse: '' // Novo campo para curso selecionado
   })
+  const [courses, setCourses] = useState<any[]>([])
+  const [loadingCourses, setLoadingCourses] = useState(false)
 
   // Verificar se é admin
   const isAdmin = user?.email === 'claudioghabryel.cg@gmail.com' || 
@@ -77,6 +81,13 @@ export default function AdminPage() {
         const allTestimonials = await getTestimonials('all')
         console.log('Testimonials loaded in admin:', allTestimonials?.length || 0)
         setTestimonials(allTestimonials || [])
+        
+        // Carregar cursos
+        setLoadingCourses(true)
+        const coursesData = await getCourses()
+        setCourses(coursesData || [])
+        setLoadingCourses(false)
+        console.log('Courses loaded in admin:', coursesData?.length || 0)
         
       } catch (error) {
         console.error('Erro ao carregar dados:', error)
@@ -176,8 +187,8 @@ export default function AdminPage() {
   }
 
   const handleAddUser = async () => {
-    if (!newUser.name || !newUser.email || !newUser.password) {
-      alert('Por favor, preencha todos os campos.')
+    if (!newUser.name || !newUser.email || !newUser.password || !newUser.selectedCourse) {
+      alert('Por favor, preencha todos os campos, incluindo a seleção do curso.')
       return
     }
 
@@ -189,13 +200,14 @@ export default function AdminPage() {
         email: newUser.email,
         password: newUser.password,
         isPaid: newUser.isPaid,
-        isAdmin: newUser.isAdmin
+        isAdmin: newUser.isAdmin,
+        selectedCourse: newUser.selectedCourse // Adicionar curso selecionado
       }
 
       const userId = await createUserByAdmin(userData)
       console.log('User created successfully:', userId)
       
-      setNewUser({ name: '', email: '', password: '', isPaid: false, isAdmin: false })
+      setNewUser({ name: '', email: '', password: '', isPaid: false, isAdmin: false, selectedCourse: '' })
       setShowAddUserModal(false)
       alert('Usuário adicionado com sucesso!')
       
@@ -746,6 +758,30 @@ export default function AdminPage() {
                     />
                     <span className="ml-2 text-sm text-gray-700">Administrador</span>
                   </label>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Curso de Acesso
+                  </label>
+                  {loadingCourses ? (
+                    <div className="text-sm text-gray-500">Carregando cursos...</div>
+                  ) : (
+                    <select
+                      value={newUser.selectedCourse}
+                      onChange={(e) => setNewUser({...newUser, selectedCourse: e.target.value})}
+                      className="input-field"
+                    >
+                      <option value="">Selecione um curso</option>
+                      {courses.map((course) => (
+                        <option key={course.id} value={course.id}>
+                          {course.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    O usuário terá acesso completo ao curso selecionado
+                  </p>
                 </div>
               </div>
               <div className="flex justify-end space-x-3 mt-6">
