@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@/types';
-import { auth, signInUser, createUser, signOutUser, updateUserData, getUserData, onAuthStateChanged } from '@/lib/firebase';
+import { auth, signInUser, createUser, signOutUser, updateUserData, getUserData, onAuthStateChanged, db } from '@/lib/firebase';
+import { setDoc, doc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
@@ -66,7 +67,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               createdAt: new Date(),
               updatedAt: new Date(),
             };
-            await updateUserData(firebaseUser.uid, newUserData);
+            // Use setDoc to create the document if it doesn't exist
+            await setDoc(doc(db, 'users', firebaseUser.uid), newUserData);
             setUser(newUserData);
           }
         } catch (error) {
