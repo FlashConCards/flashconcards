@@ -32,55 +32,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // Get user data from Firestore
-          const userData = await getUserData(firebaseUser.uid);
-          if (userData) {
-            setUser({
-              uid: firebaseUser.uid,
-              email: firebaseUser.email || '',
-              displayName: userData.displayName || firebaseUser.displayName || '',
-              photoURL: userData.photoURL || firebaseUser.photoURL || '',
-              isAdmin: userData.isAdmin || false,
-              isPaid: userData.isPaid || false,
-              isActive: userData.isActive || true,
-              studyTime: userData.studyTime || 0,
-              cardsStudied: userData.cardsStudied || 0,
-              cardsCorrect: userData.cardsCorrect || 0,
-              cardsWrong: userData.cardsWrong || 0,
-              createdAt: userData.createdAt,
-              updatedAt: userData.updatedAt,
-            });
-          } else {
-            // Create user data if it doesn't exist
-            const newUserData = {
-              uid: firebaseUser.uid,
-              email: firebaseUser.email || '',
-              displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || '',
-              photoURL: firebaseUser.photoURL || '',
-              isAdmin: firebaseUser.email === 'claudioghabryel.cg@gmail.com' || firebaseUser.email === 'natalhia775@gmail.com',
-              isPaid: false,
-              isActive: true,
-              studyTime: 0,
-              cardsStudied: 0,
-              cardsCorrect: 0,
-              cardsWrong: 0,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            };
-            // Use setDoc to create the document if it doesn't exist
-            await setDoc(doc(db, 'users', firebaseUser.uid), newUserData);
-            setUser(newUserData);
-            
-            // Debug: Log the admin status
-            console.log('User email:', firebaseUser.email);
-            console.log('Is admin:', newUserData.isAdmin);
-          }
+          const userData = await getUserData(firebaseUser.uid)
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email || '',
+            displayName: userData?.displayName || firebaseUser.displayName || '',
+            photoURL: userData?.photoURL || firebaseUser.photoURL || '',
+            isAdmin: userData?.isAdmin || false,
+            isPaid: userData?.isPaid || false,
+            isActive: userData?.isActive || true,
+            studyTime: userData?.studyTime || 0,
+            cardsStudied: userData?.cardsStudied || 0,
+            cardsCorrect: userData?.cardsCorrect || 0,
+            cardsWrong: userData?.cardsWrong || 0,
+            lastLoginAt: userData?.lastLoginAt || null,
+            createdAt: userData?.createdAt || null,
+            updatedAt: userData?.updatedAt || null
+          })
         } catch (error) {
-          console.error('Error getting user data:', error);
-          setUser(null);
+          console.error('Error getting user data:', error)
+          // Fallback to basic user data
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email || '',
+            displayName: firebaseUser.displayName || '',
+            photoURL: firebaseUser.photoURL || '',
+            isAdmin: false,
+            isPaid: false,
+            isActive: true,
+            studyTime: 0,
+            cardsStudied: 0,
+            cardsCorrect: 0,
+            cardsWrong: 0,
+            lastLoginAt: null,
+            createdAt: null,
+            updatedAt: null
+          })
         }
       } else {
-        setUser(null);
+        setUser(null)
       }
       setLoading(false);
     });

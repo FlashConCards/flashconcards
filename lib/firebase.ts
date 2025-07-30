@@ -148,7 +148,21 @@ export const getUserById = async (uid: string) => {
 }
 
 // Alias for backward compatibility
-export const getUserData = getUserById
+export const getUserData = async (uid: string) => {
+  try {
+    const docRef = doc(db, 'users', uid)
+    const docSnap = await getDoc(docRef)
+    
+    if (docSnap.exists()) {
+      return { uid: docSnap.id, ...docSnap.data() } as any
+    } else {
+      return null
+    }
+  } catch (error) {
+    console.error('Error getting user by ID:', error)
+    return null
+  }
+}
 
 export const updateUser = async (uid: string, data: any) => {
   try {
