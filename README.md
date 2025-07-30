@@ -31,7 +31,11 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Permitir acesso autenticado aos dados do usuário
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null && 
+        (request.auth.uid == userId || 
+         request.auth.token.email == 'claudioghabryel.cg@gmail.com' || 
+         request.auth.token.email == 'natalhia775@gmail.com' ||
+         request.auth.token.email == 'claudioghabryel7@gmail.com');
     }
     
     // Permitir acesso autenticado aos cursos

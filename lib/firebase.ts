@@ -184,15 +184,7 @@ export const createUserByAdmin = async (userData: any) => {
   try {
     console.log('Creating user by admin:', userData.email)
     
-    // Verificar se o email já existe
-    const existingUsers = await getAllUsers()
-    const existingUser = existingUsers.find((u: any) => u.email === userData.email)
-    
-    if (existingUser) {
-      throw new Error('Email já está sendo usado')
-    }
-    
-    // Criar usuário no Firebase Auth
+    // Criar usuário no Firebase Auth primeiro
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       userData.email,
@@ -234,8 +226,14 @@ export const createUserByAdmin = async (userData: any) => {
     console.log('Logged out from created user to prevent auto-login')
 
     return userCredential.user.uid
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating user by admin:', error)
+    
+    // Tratar erro específico de email já existente
+    if (error.code === 'auth/email-already-in-use') {
+      throw new Error('Este email já está sendo usado por outro usuário')
+    }
+    
     throw error
   }
 }
