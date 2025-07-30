@@ -1,277 +1,614 @@
-// Temporary Firebase configuration for deployment
-// This will be replaced with real Firebase implementation later
+import { initializeApp } from 'firebase/app'
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  updateProfile,
+  updatePassword,
+  onAuthStateChanged,
+  User
+} from 'firebase/auth'
+import { 
+  getFirestore, 
+  collection, 
+  doc, 
+  getDoc, 
+  setDoc, 
+  updateDoc, 
+  deleteDoc, 
+  addDoc, 
+  getDocs, 
+  query, 
+  where, 
+  onSnapshot,
+  serverTimestamp 
+} from 'firebase/firestore'
+import { 
+  getStorage, 
+  ref, 
+  uploadBytes, 
+  getDownloadURL, 
+  deleteObject 
+} from 'firebase/storage'
 
-// Mock Firebase objects for now
-export const auth = {
-  currentUser: null,
-  onAuthStateChanged: (callback: any) => {
-    // Mock auth state
-    callback(null);
-    return () => {};
-  }
-};
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+}
 
-export const db = {
-  collection: () => ({
-    doc: () => ({
-      get: () => Promise.resolve({ data: () => null }),
-      set: () => Promise.resolve(),
-      update: () => Promise.resolve(),
-      delete: () => Promise.resolve()
-    }),
-    add: () => Promise.resolve({ id: 'mock-id' }),
-    get: () => Promise.resolve({ docs: [] })
-  })
-};
+// Initialize Firebase
+const app = initializeApp(firebaseConfig)
 
-export const storage = {
-  ref: () => ({
-    put: () => Promise.resolve({ ref: { getDownloadURL: () => Promise.resolve('mock-url') } }),
-    delete: () => Promise.resolve()
-  })
-};
+// Initialize Firebase services
+export const auth = getAuth(app)
+export const db = getFirestore(app)
+export const storage = getStorage(app)
 
 // ===== AUTHENTICATION FUNCTIONS =====
 
 export const signInUser = async (email: string, password: string) => {
-  // Mock implementation for deployment
-  return { uid: 'mock-user-id', email };
-};
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password)
+    return userCredential.user
+  } catch (error) {
+    console.error('Error signing in:', error)
+    throw error
+  }
+}
 
 export const createUser = async (email: string, password: string, userData: any) => {
-  // Mock implementation for deployment
-  return { uid: 'mock-user-id', email };
-};
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+    const user = userCredential.user
+
+    // Update profile with display name
+    if (userData.displayName) {
+      await updateProfile(user, { displayName: userData.displayName })
+    }
+
+    // Create user document in Firestore
+    await setDoc(doc(db, 'users', user.uid), {
+      ...userData,
+      uid: user.uid,
+      email: user.email,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+
+    return user
+  } catch (error) {
+    console.error('Error creating user:', error)
+    throw error
+  }
+}
 
 export const signOutUser = async () => {
-  // Mock implementation for deployment
-  return Promise.resolve();
-};
+  try {
+    await signOut(auth)
+  } catch (error) {
+    console.error('Error signing out:', error)
+    throw error
+  }
+}
 
 export const updateUserProfile = async (displayName?: string, photoURL?: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve();
-};
+  try {
+    const user = auth.currentUser
+    if (!user) throw new Error('No user logged in')
+
+    await updateProfile(user, { displayName, photoURL })
+  } catch (error) {
+    console.error('Error updating profile:', error)
+    throw error
+  }
+}
 
 export const updateUserPassword = async (newPassword: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve(true);
-};
+  try {
+    const user = auth.currentUser
+    if (!user) throw new Error('No user logged in')
+
+    await updatePassword(user, newPassword)
+    return true
+  } catch (error) {
+    console.error('Error updating password:', error)
+    throw error
+  }
+}
 
 // ===== FIRESTORE FUNCTIONS =====
 
 export const getUserData = async (uid: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve(null);
-};
+  try {
+    const userDoc = await getDoc(doc(db, 'users', uid))
+    return userDoc.exists() ? userDoc.data() : null
+  } catch (error) {
+    console.error('Error getting user data:', error)
+    return null
+  }
+}
 
 export const updateUserData = async (uid: string, data: any) => {
-  // Mock implementation for deployment
-  return Promise.resolve(true);
-};
+  try {
+    await updateDoc(doc(db, 'users', uid), {
+      ...data,
+      updatedAt: serverTimestamp(),
+    })
+    return true
+  } catch (error) {
+    console.error('Error updating user data:', error)
+    throw error
+  }
+}
 
 // ===== COURSES FUNCTIONS =====
 
 export const createCourse = async (courseData: any) => {
-  // Mock implementation for deployment
-  return Promise.resolve('mock-course-id');
-};
+  try {
+    const courseRef = await addDoc(collection(db, 'courses'), {
+      ...courseData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    return courseRef.id
+  } catch (error) {
+    console.error('Error creating course:', error)
+    throw error
+  }
+}
 
 export const updateCourse = async (courseId: string, courseData: any) => {
-  // Mock implementation for deployment
-  return Promise.resolve();
-};
+  try {
+    await updateDoc(doc(db, 'courses', courseId), {
+      ...courseData,
+      updatedAt: serverTimestamp(),
+    })
+  } catch (error) {
+    console.error('Error updating course:', error)
+    throw error
+  }
+}
 
 export const deleteCourse = async (courseId: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve();
-};
+  try {
+    await deleteDoc(doc(db, 'courses', courseId))
+  } catch (error) {
+    console.error('Error deleting course:', error)
+    throw error
+  }
+}
 
 export const getCourses = async () => {
-  // Mock implementation for deployment
-  return Promise.resolve([]);
-};
+  try {
+    const coursesSnapshot = await getDocs(collection(db, 'courses'))
+    return coursesSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+  } catch (error) {
+    console.error('Error getting courses:', error)
+    return []
+  }
+}
 
 export const getCourseById = async (courseId: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve(null);
-};
+  try {
+    const courseDoc = await getDoc(doc(db, 'courses', courseId))
+    return courseDoc.exists() ? { id: courseDoc.id, ...courseDoc.data() } : null
+  } catch (error) {
+    console.error('Error getting course:', error)
+    return null
+  }
+}
 
 // ===== SUBJECTS FUNCTIONS =====
 
 export const createSubject = async (courseId: string, subjectData: any) => {
-  // Mock implementation for deployment
-  return Promise.resolve('mock-subject-id');
-};
+  try {
+    const subjectRef = await addDoc(collection(db, 'courses', courseId, 'subjects'), {
+      ...subjectData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    return subjectRef.id
+  } catch (error) {
+    console.error('Error creating subject:', error)
+    throw error
+  }
+}
 
 export const getSubjects = async (courseId: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve([]);
-};
+  try {
+    const subjectsSnapshot = await getDocs(collection(db, 'courses', courseId, 'subjects'))
+    return subjectsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+  } catch (error) {
+    console.error('Error getting subjects:', error)
+    return []
+  }
+}
 
 // ===== TOPICS FUNCTIONS =====
 
 export const createTopic = async (courseId: string, subjectId: string, topicData: any) => {
-  // Mock implementation for deployment
-  return Promise.resolve('mock-topic-id');
-};
+  try {
+    const topicRef = await addDoc(collection(db, 'courses', courseId, 'subjects', subjectId, 'topics'), {
+      ...topicData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    return topicRef.id
+  } catch (error) {
+    console.error('Error creating topic:', error)
+    throw error
+  }
+}
 
 export const getTopics = async (courseId: string, subjectId: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve([]);
-};
+  try {
+    const topicsSnapshot = await getDocs(collection(db, 'courses', courseId, 'subjects', subjectId, 'topics'))
+    return topicsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+  } catch (error) {
+    console.error('Error getting topics:', error)
+    return []
+  }
+}
 
-// ===== SUB-TOPICS FUNCTIONS =====
+// ===== SUBTOPICS FUNCTIONS =====
 
 export const createSubTopic = async (courseId: string, subjectId: string, topicId: string, subTopicData: any) => {
-  // Mock implementation for deployment
-  return Promise.resolve('mock-subtopic-id');
-};
+  try {
+    const subTopicRef = await addDoc(collection(db, 'courses', courseId, 'subjects', subjectId, 'topics', topicId, 'subtopics'), {
+      ...subTopicData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    return subTopicRef.id
+  } catch (error) {
+    console.error('Error creating subtopic:', error)
+    throw error
+  }
+}
 
 export const getSubTopics = async (courseId: string, subjectId: string, topicId: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve([]);
-};
+  try {
+    const subTopicsSnapshot = await getDocs(collection(db, 'courses', courseId, 'subjects', subjectId, 'topics', topicId, 'subtopics'))
+    return subTopicsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+  } catch (error) {
+    console.error('Error getting subtopics:', error)
+    return []
+  }
+}
 
 // ===== FLASHCARDS FUNCTIONS =====
 
 export const createFlashcard = async (courseId: string, subjectId: string, topicId: string, subTopicId: string, flashcardData: any) => {
-  // Mock implementation for deployment
-  return Promise.resolve('mock-flashcard-id');
-};
+  try {
+    const flashcardRef = await addDoc(collection(db, 'courses', courseId, 'subjects', subjectId, 'topics', topicId, 'subtopics', subTopicId, 'flashcards'), {
+      ...flashcardData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    return flashcardRef.id
+  } catch (error) {
+    console.error('Error creating flashcard:', error)
+    throw error
+  }
+}
 
 export const updateFlashcard = async (courseId: string, subjectId: string, topicId: string, subTopicId: string, flashcardId: string, flashcardData: any) => {
-  // Mock implementation for deployment
-  return Promise.resolve();
-};
+  try {
+    await updateDoc(doc(db, 'courses', courseId, 'subjects', subjectId, 'topics', topicId, 'subtopics', subTopicId, 'flashcards', flashcardId), {
+      ...flashcardData,
+      updatedAt: serverTimestamp(),
+    })
+  } catch (error) {
+    console.error('Error updating flashcard:', error)
+    throw error
+  }
+}
 
 export const deleteFlashcard = async (courseId: string, subjectId: string, topicId: string, subTopicId: string, flashcardId: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve();
-};
+  try {
+    await deleteDoc(doc(db, 'courses', courseId, 'subjects', subjectId, 'topics', topicId, 'subtopics', subTopicId, 'flashcards', flashcardId))
+  } catch (error) {
+    console.error('Error deleting flashcard:', error)
+    throw error
+  }
+}
 
 export const getFlashcards = async (courseId: string, subjectId: string, topicId: string, subTopicId: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve([]);
-};
+  try {
+    const flashcardsSnapshot = await getDocs(collection(db, 'courses', courseId, 'subjects', subjectId, 'topics', topicId, 'subtopics', subTopicId, 'flashcards'))
+    return flashcardsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+  } catch (error) {
+    console.error('Error getting flashcards:', error)
+    return []
+  }
+}
 
 // ===== DEEPENINGS FUNCTIONS =====
 
 export const createDeepening = async (courseId: string, subjectId: string, topicId: string, subTopicId: string, deepeningData: any) => {
-  // Mock implementation for deployment
-  return Promise.resolve('mock-deepening-id');
-};
+  try {
+    const deepeningRef = await addDoc(collection(db, 'courses', courseId, 'subjects', subjectId, 'topics', topicId, 'subtopics', subTopicId, 'deepenings'), {
+      ...deepeningData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    return deepeningRef.id
+  } catch (error) {
+    console.error('Error creating deepening:', error)
+    throw error
+  }
+}
 
 export const getDeepenings = async (courseId: string, subjectId: string, topicId: string, subTopicId: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve([]);
-};
+  try {
+    const deepeningsSnapshot = await getDocs(collection(db, 'courses', courseId, 'subjects', subjectId, 'topics', topicId, 'subtopics', subTopicId, 'deepenings'))
+    return deepeningsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+  } catch (error) {
+    console.error('Error getting deepenings:', error)
+    return []
+  }
+}
 
 // ===== USER PROGRESS FUNCTIONS =====
 
 export const createUserProgress = async (uid: string, courseId: string, progressData: any) => {
-  // Mock implementation for deployment
-  return Promise.resolve('mock-progress-id');
-};
+  try {
+    await setDoc(doc(db, 'users', uid, 'progress', courseId), {
+      ...progressData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+  } catch (error) {
+    console.error('Error creating user progress:', error)
+    throw error
+  }
+}
 
 export const updateUserProgress = async (uid: string, courseId: string, progressData: any) => {
-  // Mock implementation for deployment
-  return Promise.resolve();
-};
+  try {
+    await updateDoc(doc(db, 'users', uid, 'progress', courseId), {
+      ...progressData,
+      updatedAt: serverTimestamp(),
+    })
+  } catch (error) {
+    console.error('Error updating user progress:', error)
+    throw error
+  }
+}
 
 export const getUserProgress = async (uid: string, courseId: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve(null);
-};
+  try {
+    const progressDoc = await getDoc(doc(db, 'users', uid, 'progress', courseId))
+    return progressDoc.exists() ? progressDoc.data() : null
+  } catch (error) {
+    console.error('Error getting user progress:', error)
+    return null
+  }
+}
 
 // ===== STUDY SESSIONS FUNCTIONS =====
 
 export const createStudySession = async (uid: string, sessionData: any) => {
-  // Mock implementation for deployment
-  return Promise.resolve('mock-session-id');
-};
+  try {
+    const sessionRef = await addDoc(collection(db, 'users', uid, 'studySessions'), {
+      ...sessionData,
+      createdAt: serverTimestamp(),
+    })
+    return sessionRef.id
+  } catch (error) {
+    console.error('Error creating study session:', error)
+    throw error
+  }
+}
 
 export const getStudySessions = async (uid: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve([]);
-};
+  try {
+    const sessionsSnapshot = await getDocs(collection(db, 'users', uid, 'studySessions'))
+    return sessionsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+  } catch (error) {
+    console.error('Error getting study sessions:', error)
+    return []
+  }
+}
 
 // ===== PAYMENT FUNCTIONS =====
 
 export const createPayment = async (uid: string, paymentData: any) => {
-  // Mock implementation for deployment
-  return Promise.resolve('mock-payment-id');
-};
+  try {
+    const paymentRef = await addDoc(collection(db, 'payments'), {
+      uid,
+      ...paymentData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    return paymentRef.id
+  } catch (error) {
+    console.error('Error creating payment:', error)
+    throw error
+  }
+}
 
 export const updatePaymentStatus = async (paymentId: string, status: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve();
-};
+  try {
+    await updateDoc(doc(db, 'payments', paymentId), {
+      status,
+      updatedAt: serverTimestamp(),
+    })
+  } catch (error) {
+    console.error('Error updating payment status:', error)
+    throw error
+  }
+}
 
 // ===== TESTIMONIALS FUNCTIONS =====
 
 export const createTestimonial = async (uid: string, testimonialData: any) => {
-  // Mock implementation for deployment
-  return Promise.resolve('mock-testimonial-id');
-};
+  try {
+    const testimonialRef = await addDoc(collection(db, 'testimonials'), {
+      uid,
+      ...testimonialData,
+      status: 'pending',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    return testimonialRef.id
+  } catch (error) {
+    console.error('Error creating testimonial:', error)
+    throw error
+  }
+}
 
 export const updateTestimonialStatus = async (testimonialId: string, status: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve();
-};
+  try {
+    await updateDoc(doc(db, 'testimonials', testimonialId), {
+      status,
+      updatedAt: serverTimestamp(),
+    })
+  } catch (error) {
+    console.error('Error updating testimonial status:', error)
+    throw error
+  }
+}
 
 export const getTestimonials = async (status: string = 'approved') => {
-  // Mock implementation for deployment
-  return Promise.resolve([]);
-};
+  try {
+    const testimonialsQuery = query(collection(db, 'testimonials'), where('status', '==', status))
+    const testimonialsSnapshot = await getDocs(testimonialsQuery)
+    return testimonialsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+  } catch (error) {
+    console.error('Error getting testimonials:', error)
+    return []
+  }
+}
 
-// ===== ADMIN FUNCTIONS =====
+// ===== ADMIN USER MANAGEMENT FUNCTIONS =====
 
 export const getAllUsers = async () => {
-  // Mock implementation for deployment
-  return Promise.resolve([]);
-};
+  try {
+    const usersSnapshot = await getDocs(collection(db, 'users'))
+    return usersSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+  } catch (error) {
+    console.error('Error getting all users:', error)
+    return []
+  }
+}
 
 export const createUserByAdmin = async (userData: any) => {
-  // Mock implementation for deployment
-  return Promise.resolve('mock-admin-user-id');
-};
+  try {
+    const userRef = await addDoc(collection(db, 'users'), {
+      ...userData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    return userRef.id
+  } catch (error) {
+    console.error('Error creating user by admin:', error)
+    throw error
+  }
+}
 
 export const updateUserByAdmin = async (uid: string, userData: any) => {
-  // Mock implementation for deployment
-  return Promise.resolve();
-};
+  try {
+    await updateDoc(doc(db, 'users', uid), {
+      ...userData,
+      updatedAt: serverTimestamp(),
+    })
+  } catch (error) {
+    console.error('Error updating user by admin:', error)
+    throw error
+  }
+}
 
 export const deleteUserByAdmin = async (uid: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve();
-};
+  try {
+    await deleteDoc(doc(db, 'users', uid))
+  } catch (error) {
+    console.error('Error deleting user by admin:', error)
+    throw error
+  }
+}
 
 // ===== STORAGE FUNCTIONS =====
 
 export const uploadFile = async (file: File, path: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve('mock-file-url');
-};
+  try {
+    const storageRef = ref(storage, path)
+    const snapshot = await uploadBytes(storageRef, file)
+    const downloadURL = await getDownloadURL(snapshot.ref)
+    return downloadURL
+  } catch (error) {
+    console.error('Error uploading file:', error)
+    throw error
+  }
+}
 
 export const deleteFile = async (path: string) => {
-  // Mock implementation for deployment
-  return Promise.resolve();
-};
+  try {
+    const storageRef = ref(storage, path)
+    await deleteObject(storageRef)
+  } catch (error) {
+    console.error('Error deleting file:', error)
+    throw error
+  }
+}
 
 // ===== REAL-TIME LISTENERS =====
 
 export const onUserDataChange = (uid: string, callback: (data: any) => void) => {
-  // Mock implementation for deployment
-  return () => {};
-};
+  return onSnapshot(doc(db, 'users', uid), (doc) => {
+    callback(doc.exists() ? doc.data() : null)
+  })
+}
 
 export const onCoursesChange = (callback: (data: any[]) => void) => {
-  // Mock implementation for deployment
-  return () => {};
-};
+  return onSnapshot(collection(db, 'courses'), (snapshot) => {
+    const courses = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+    callback(courses)
+  })
+}
 
 export const onFlashcardsChange = (courseId: string, subjectId: string, topicId: string, subTopicId: string, callback: (data: any[]) => void) => {
-  // Mock implementation for deployment
-  return () => {};
-}; 
+  return onSnapshot(collection(db, 'courses', courseId, 'subjects', subjectId, 'topics', topicId, 'subtopics', subTopicId, 'flashcards'), (snapshot) => {
+    const flashcards = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+    callback(flashcards)
+  })
+} 
