@@ -296,6 +296,84 @@ export default function AdminPage() {
           </div>
         </div>
 
+        {/* Courses Management Section */}
+        <div className="bg-white rounded-lg shadow mb-8">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-800">Gerenciar Cursos</h2>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <button
+                onClick={() => router.push('/admin/courses')}
+                className="bg-blue-600 text-white p-4 rounded-lg hover:bg-blue-700 transition-colors text-center"
+              >
+                <div className="text-2xl font-bold mb-2">{courses.length}</div>
+                <div className="text-sm">Cursos</div>
+              </button>
+              
+              <button
+                onClick={() => router.push('/admin/subjects')}
+                className="bg-green-600 text-white p-4 rounded-lg hover:bg-green-700 transition-colors text-center"
+              >
+                <div className="text-2xl font-bold mb-2">+</div>
+                <div className="text-sm">Matérias</div>
+              </button>
+              
+              <button
+                onClick={() => router.push('/admin/topics')}
+                className="bg-purple-600 text-white p-4 rounded-lg hover:bg-purple-700 transition-colors text-center"
+              >
+                <div className="text-2xl font-bold mb-2">+</div>
+                <div className="text-sm">Tópicos</div>
+              </button>
+              
+              <button
+                onClick={() => router.push('/admin/flashcards')}
+                className="bg-orange-600 text-white p-4 rounded-lg hover:bg-orange-700 transition-colors text-center"
+              >
+                <div className="text-2xl font-bold mb-2">+</div>
+                <div className="text-sm">Flashcards</div>
+              </button>
+            </div>
+            
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Cursos Disponíveis</h3>
+              {courses.length === 0 ? (
+                <p className="text-gray-500">Nenhum curso cadastrado ainda.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {courses.map((course) => (
+                    <div key={course.id} className="border border-gray-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-800">{course.name}</h4>
+                      <p className="text-sm text-gray-600 mt-1">{course.description}</p>
+                      <div className="mt-3 flex space-x-2">
+                        <button
+                          onClick={() => router.push(`/admin/subjects?courseId=${course.id}`)}
+                          className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200"
+                        >
+                          Matérias
+                        </button>
+                        <button
+                          onClick={() => router.push(`/admin/topics?courseId=${course.id}`)}
+                          className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200"
+                        >
+                          Tópicos
+                        </button>
+                        <button
+                          onClick={() => router.push(`/admin/flashcards?courseId=${course.id}`)}
+                          className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded hover:bg-purple-200"
+                        >
+                          Flashcards
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Testimonials Section */}
         <div className="bg-white rounded-lg shadow">
           <div className="p-6 border-b border-gray-200">
