@@ -1,409 +1,369 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useAuth } from '@/components/auth/AuthProvider'
-import { useRouter } from 'next/navigation'
-import { 
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  DocumentTextIcon,
-  ChevronLeftIcon,
-  MagnifyingGlassIcon,
-  FunnelIcon
-} from '@heroicons/react/24/outline'
-import { Flashcard } from '@/types'
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { getCourses, getSubjects, getTopics, getSubTopics, getFlashcards, createFlashcard, deleteFlashcard } from '@/lib/firebase';
 
-export default function AdminFlashcardsPage() {
-  const { user } = useAuth()
-  const router = useRouter()
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([
-    {
-      id: '1',
-      subTopicId: '1',
-      front: 'Qual é o princípio fundamental da República Federativa do Brasil?',
-      back: 'A soberania popular, expressa pelo voto direto, secreto, universal e periódico.',
-      explanation: 'A soberania popular é o fundamento da democracia brasileira, garantindo que o poder emana do povo.',
-      isActive: true,
-      order: 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: '2',
-      subTopicId: '1',
-      front: 'Quais são os poderes da União?',
-      back: 'Legislativo, Executivo e Judiciário, independentes e harmônicos entre si.',
-      explanation: 'A separação dos poderes é um princípio fundamental da democracia, garantindo o controle mútuo entre os poderes.',
-      isActive: true,
-      order: 2,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: '3',
-      subTopicId: '1',
-      front: 'O que é o habeas corpus?',
-      back: 'Remédio constitucional que protege a liberdade de locomoção quando ameaçada ou restringida por ilegalidade ou abuso de poder.',
-      explanation: 'O habeas corpus é uma garantia fundamental que protege a liberdade individual contra abusos do poder público.',
-      isActive: false,
-      order: 3,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ])
+interface Course {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  createdAt: any;
+}
 
-  const [showModal, setShowModal] = useState(false)
-  const [editingFlashcard, setEditingFlashcard] = useState<Flashcard | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
+interface Subject {
+  id: string;
+  courseId: string;
+  name: string;
+  description: string;
+  order: number;
+  isActive: boolean;
+  createdAt: any;
+  updatedAt: any;
+}
 
-  const [filterStatus, setFilterStatus] = useState('all')
+interface Topic {
+  id: string;
+  subjectId: string;
+  name: string;
+  description: string;
+  order: number;
+  isActive: boolean;
+  createdAt: any;
+  updatedAt: any;
+}
 
-  const handleAddFlashcard = () => {
-    setEditingFlashcard(null)
-    setShowModal(true)
-  }
+interface SubTopic {
+  id: string;
+  topicId: string;
+  name: string;
+  description: string;
+  order: number;
+  isActive: boolean;
+  createdAt: any;
+  updatedAt: any;
+}
 
-  const handleEditFlashcard = (flashcard: Flashcard) => {
-    setEditingFlashcard(flashcard)
-    setShowModal(true)
-  }
+interface Flashcard {
+  id: string;
+  subTopicId: string;
+  question: string;
+  answer: string;
+  order: number;
+  isActive: boolean;
+  createdAt: any;
+  updatedAt: any;
+}
 
-  const handleToggleStatus = (flashcardId: string) => {
-    setFlashcards(prev => prev.map(flashcard => 
-      flashcard.id === flashcardId 
-        ? { ...flashcard, isActive: !flashcard.isActive }
-        : flashcard
-    ))
-  }
-
-  const handleDeleteFlashcard = (flashcardId: string) => {
-    if (confirm('Tem certeza que deseja excluir este flashcard?')) {
-      setFlashcards(prev => prev.filter(flashcard => flashcard.id !== flashcardId))
-    }
-  }
-
-  const filteredFlashcards = flashcards.filter(flashcard => {
-    const matchesSearch = flashcard.front.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         flashcard.back.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = filterStatus === 'all' || 
-                         (filterStatus === 'active' && flashcard.isActive) ||
-                         (filterStatus === 'inactive' && !flashcard.isActive)
-    
-    return matchesSearch && matchesStatus
-  })
-
-  const isAdmin = user?.isAdmin || user?.email === 'admin@flashconcards.com' || user?.email === 'demo@flashconcards.com'
+export default function FlashcardsPage() {
+  const { user } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const subTopicId = searchParams.get('subTopicId');
+  const topicId = searchParams.get('topicId');
+  const subjectId = searchParams.get('subjectId');
+  const courseId = searchParams.get('courseId');
   
-  if (!user || !isAdmin) {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [subTopics, setSubTopics] = useState<SubTopic[]>([]);
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
+  const [selectedSubTopic, setSelectedSubTopic] = useState<SubTopic | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newFlashcard, setNewFlashcard] = useState({
+    question: '',
+    answer: '',
+    order: 1
+  });
+
+  // Check if user is admin
+  useEffect(() => {
+    if (user && !user.isAdmin) {
+      router.push('/dashboard');
+    } else if (!user) {
+      router.push('/login');
+    }
+  }, [user, router]);
+
+  const loadData = async () => {
+    try {
+      const coursesData = await getCourses();
+      setCourses(coursesData || []);
+      
+      if (courseId) {
+        const course = coursesData?.find(c => c.id === courseId);
+        setSelectedCourse(course || null);
+        
+        if (course) {
+          const subjectsData = await getSubjects(courseId);
+          setSubjects(subjectsData || []);
+          
+          if (subjectId) {
+            const subject = subjectsData?.find(s => s.id === subjectId);
+            setSelectedSubject(subject || null);
+            
+            if (subject) {
+              const topicsData = await getTopics(subjectId);
+              setTopics(topicsData || []);
+              
+              if (topicId) {
+                const topic = topicsData?.find(t => t.id === topicId);
+                setSelectedTopic(topic || null);
+                
+                if (topic) {
+                  const subTopicsData = await getSubTopics(topicId);
+                  setSubTopics(subTopicsData || []);
+                  
+                  if (subTopicId) {
+                    const subTopic = subTopicsData?.find(st => st.id === subTopicId);
+                    setSelectedSubTopic(subTopic || null);
+                    
+                    if (subTopic) {
+                      const flashcardsData = await getFlashcards(subTopicId);
+                      setFlashcards(flashcardsData || []);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.isAdmin) {
+      loadData();
+    }
+  }, [user, courseId, subjectId, topicId, subTopicId]);
+
+  const handleAddFlashcard = async () => {
+    try {
+      if (!selectedSubTopic || !newFlashcard.question || !newFlashcard.answer) {
+        alert('Preencha todos os campos obrigatórios');
+        return;
+      }
+
+      const flashcardData = {
+        ...newFlashcard,
+        subTopicId: selectedSubTopic.id,
+        isActive: true
+      };
+
+      await createFlashcard(flashcardData);
+      await loadData();
+      
+      setNewFlashcard({ question: '', answer: '', order: 1 });
+      setShowAddModal(false);
+      alert('Flashcard criado com sucesso!');
+    } catch (error: any) {
+      console.error('Error creating flashcard:', error);
+      alert(`Erro ao criar flashcard: ${error.message}`);
+    }
+  };
+
+  const handleDeleteFlashcard = async (flashcardId: string) => {
+    if (confirm('Tem certeza que deseja excluir este flashcard?')) {
+      try {
+        await deleteFlashcard(flashcardId);
+        await loadData();
+        alert('Flashcard excluído com sucesso!');
+      } catch (error: any) {
+        console.error('Error deleting flashcard:', error);
+        alert(`Erro ao excluir flashcard: ${error.message}`);
+      }
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Acesso Negado</h2>
-          <p className="text-gray-600 mb-4">Você não tem permissão para acessar esta página.</p>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="btn-primary"
-          >
-            Voltar ao Dashboard
-          </button>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando flashcards...</p>
         </div>
       </div>
-    )
+    );
+  }
+
+  if (!user?.isAdmin) {
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/admin')}
-                className="p-2 rounded-lg hover:bg-gray-100"
-              >
-                <ChevronLeftIcon className="w-6 h-6" />
-              </button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Gerenciar Flashcards</h1>
-                <p className="text-gray-600">Adicione, edite ou remova flashcards da plataforma</p>
-              </div>
-            </div>
+    <div className="min-h-screen bg-gray-100">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Gerenciar Flashcards</h1>
+            {selectedCourse && selectedSubject && selectedTopic && selectedSubTopic && (
+              <p className="text-gray-600 mt-2">
+                Curso: {selectedCourse.name} → Matéria: {selectedSubject.name} → Tópico: {selectedTopic.name} → Sub-tópico: {selectedSubTopic.name}
+              </p>
+            )}
+          </div>
+          <div className="flex space-x-4">
             <button
-              onClick={handleAddFlashcard}
-              className="btn-primary flex items-center gap-2"
+              onClick={() => router.push('/admin')}
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
             >
-              <PlusIcon className="w-5 h-5" />
-              Adicionar Flashcard
+              Voltar ao Admin
             </button>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <DocumentTextIcon className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total de Flashcards</p>
-                <p className="text-2xl font-bold text-gray-900">{flashcards.length}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <EyeIcon className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Ativos</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {flashcards.filter(f => f.isActive).length}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <EyeSlashIcon className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Inativos</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {flashcards.filter(f => !f.isActive).length}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <DocumentTextIcon className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Matérias</p>
-                <p className="text-2xl font-bold text-gray-900">3</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Buscar
-              </label>
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Buscar flashcards..."
-                  className="input-field pl-10"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Status
-              </label>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="input-field"
+            {selectedSubTopic && (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
-                <option value="all">Todos</option>
-                <option value="active">Ativos</option>
-                <option value="inactive">Inativos</option>
-              </select>
-            </div>
+                Adicionar Flashcard
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Course/Subject/Topic/SubTopic Selection */}
+        {(!selectedCourse || !selectedSubject || !selectedTopic || !selectedSubTopic) && (
+          <div className="bg-white rounded-lg shadow mb-8">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-800">Selecionar Curso, Matéria, Tópico e Sub-tópico</h2>
+            </div>
+            <div className="p-6">
+              {courses.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">Nenhum curso disponível.</p>
+              ) : (
+                <div className="space-y-4">
+                  {courses.map((course) => (
+                    <div key={course.id} className="border border-gray-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-800 mb-2">{course.name}</h3>
+                      <p className="text-sm text-gray-600 mb-3">{course.description}</p>
+                      <button
+                        onClick={() => router.push(`/admin/subjects?courseId=${course.id}`)}
+                        className="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded hover:bg-blue-200"
+                      >
+                        Ver Matérias
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Flashcards List */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Flashcards ({filteredFlashcards.length})
-            </h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Pergunta
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Resposta
-                  </th>
-
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredFlashcards.map((flashcard) => (
-                  <tr key={flashcard.id}>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900 max-w-xs truncate">
-                        {flashcard.front}
+        {selectedCourse && selectedSubject && selectedTopic && selectedSubTopic && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-800">Flashcards ({flashcards.length})</h2>
+            </div>
+            <div className="p-6">
+              {flashcards.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">Nenhum flashcard cadastrado ainda.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {flashcards.map((flashcard) => (
+                    <div key={flashcard.id} className="border border-gray-200 rounded-lg p-6">
+                      <div className="mb-4">
+                        <h3 className="text-sm font-medium text-gray-500 mb-1">Pergunta:</h3>
+                        <p className="text-gray-800 font-medium">{flashcard.question}</p>
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900 max-w-xs truncate">
-                        {flashcard.back}
+                      <div className="mb-4">
+                        <h3 className="text-sm font-medium text-gray-500 mb-1">Resposta:</h3>
+                        <p className="text-gray-800">{flashcard.answer}</p>
                       </div>
-                    </td>
-
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        flashcard.isActive
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {flashcard.isActive ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleEditFlashcard(flashcard)}
-                          className="text-primary-600 hover:text-primary-900 p-1 rounded"
-                        >
-                          <PencilIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleToggleStatus(flashcard.id)}
-                          className={`p-1 rounded ${
-                            flashcard.isActive
-                              ? 'text-yellow-600 hover:text-yellow-900'
-                              : 'text-green-600 hover:text-green-900'
-                          }`}
-                        >
-                          {flashcard.isActive ? (
-                            <EyeSlashIcon className="w-4 h-4" />
-                          ) : (
-                            <EyeIcon className="w-4 h-4" />
-                          )}
-                        </button>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-500">Ordem: {flashcard.order}</span>
                         <button
                           onClick={() => handleDeleteFlashcard(flashcard.id)}
-                          className="text-red-600 hover:text-red-900 p-1 rounded"
+                          className="text-xs bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200"
                         >
-                          <TrashIcon className="w-4 h-4" />
+                          Excluir
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {editingFlashcard ? 'Editar Flashcard' : 'Adicionar Flashcard'}
-              </h3>
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Pergunta/Frente
-                  </label>
-                  <textarea
-                    defaultValue={editingFlashcard?.front || ''}
-                    className="input-field"
-                    rows={3}
-                    placeholder="Digite a pergunta ou conteúdo da frente do card..."
-                  />
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Resposta/Verso
-                  </label>
-                  <textarea
-                    defaultValue={editingFlashcard?.back || ''}
-                    className="input-field"
-                    rows={3}
-                    placeholder="Digite a resposta ou conteúdo do verso do card..."
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Explicação (Opcional)
-                  </label>
-                  <textarea
-                    defaultValue={editingFlashcard?.explanation || ''}
-                    className="input-field"
-                    rows={3}
-                    placeholder="Explicação detalhada do conteúdo..."
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Sub-tópico
-                  </label>
-                  <select
-                    defaultValue={editingFlashcard?.subTopicId || '1'}
-                    className="input-field"
-                  >
-                    <option value="1">Soberania Popular</option>
-                    <option value="2">Separação de Poderes</option>
-                    <option value="3">Habeas Corpus</option>
-                  </select>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    defaultChecked={editingFlashcard?.isActive ?? true}
-                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                  />
-                  <label className="ml-2 block text-sm text-gray-900">
-                    Flashcard Ativo
-                  </label>
-                </div>
-                <div className="flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="btn-outline"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                  >
-                    {editingFlashcard ? 'Salvar' : 'Adicionar'}
-                  </button>
-                </div>
-              </form>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Add Flashcard Modal */}
+        {showAddModal && selectedSubTopic && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">Adicionar Flashcard</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Pergunta *
+                  </label>
+                  <textarea
+                    value={newFlashcard.question}
+                    onChange={(e) => setNewFlashcard({...newFlashcard, question: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={3}
+                    placeholder="Digite a pergunta do flashcard"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Resposta *
+                  </label>
+                  <textarea
+                    value={newFlashcard.answer}
+                    onChange={(e) => setNewFlashcard({...newFlashcard, answer: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={3}
+                    placeholder="Digite a resposta do flashcard"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ordem
+                  </label>
+                  <input
+                    type="number"
+                    value={newFlashcard.order}
+                    onChange={(e) => setNewFlashcard({...newFlashcard, order: parseInt(e.target.value) || 1})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="1"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleAddFlashcard}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Adicionar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
-  )
+  );
 } 

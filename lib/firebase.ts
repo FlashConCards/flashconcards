@@ -458,6 +458,32 @@ export const getFlashcards = async (subTopicId?: string) => {
   }
 }
 
+export const createFlashcard = async (flashcardData: any) => {
+  try {
+    console.log('Creating flashcard:', flashcardData)
+    const docRef = await addDoc(collection(db, 'flashcards'), {
+      ...flashcardData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    })
+    console.log('Flashcard created successfully:', docRef.id)
+    return docRef.id
+  } catch (error) {
+    console.error('Error creating flashcard:', error)
+    throw error
+  }
+}
+
+export const deleteFlashcard = async (flashcardId: string) => {
+  try {
+    await deleteDoc(doc(db, 'flashcards', flashcardId))
+    console.log('Flashcard deleted successfully:', flashcardId)
+  } catch (error) {
+    console.error('Error deleting flashcard:', error)
+    throw error
+  }
+}
+
 // ===== APROFUNDAMENTOS (/deepenings) =====
 export const getDeepenings = async (flashcardId?: string) => {
   try {
