@@ -426,6 +426,16 @@ export const createSubTopic = async (subTopicData: any) => {
   }
 }
 
+export const deleteSubTopic = async (subTopicId: string) => {
+  try {
+    await deleteDoc(doc(db, 'subtopics', subTopicId))
+    console.log('SubTopic deleted successfully:', subTopicId)
+  } catch (error) {
+    console.error('Error deleting subTopic:', error)
+    throw error
+  }
+}
+
 // ===== FLASHCARDS (/flashcards) =====
 export const getFlashcards = async (subTopicId?: string) => {
   try {
