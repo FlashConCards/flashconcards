@@ -18,93 +18,24 @@ import {
   ChatBubbleLeftRightIcon,
   StarIcon
 } from '@heroicons/react/24/outline'
+import { 
+  getAllUsers, 
+  getTestimonials, 
+  updateTestimonialStatus, 
+  deleteUserByAdmin,
+  createUserByAdmin,
+  onUsersChange,
+  onTestimonialsChange
+} from '@/lib/firebase'
 import { User, Testimonial } from '@/types'
-
-// Dados temporários para desenvolvimento
-const tempUsers: User[] = [
-  {
-    uid: '1',
-    email: 'claudioghabryel.cg@gmail.com',
-    displayName: 'Claudio Ghabryel',
-    photoURL: '',
-    isAdmin: true,
-    isPaid: true,
-    isActive: true,
-    studyTime: 120,
-    cardsStudied: 45,
-    cardsCorrect: 38,
-    cardsWrong: 7,
-    lastLoginAt: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    uid: '2',
-    email: 'teste@example.com',
-    displayName: 'Usuário Teste',
-    photoURL: '',
-    isAdmin: false,
-    isPaid: false,
-    isActive: true,
-    studyTime: 0,
-    cardsStudied: 0,
-    cardsCorrect: 0,
-    cardsWrong: 0,
-    lastLoginAt: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-]
-
-const tempTestimonials: Testimonial[] = [
-  {
-    id: '1',
-    uid: '1',
-    name: 'Maria Silva',
-    email: 'maria@example.com',
-    role: 'Aprovada no INSS',
-    content: 'Os flashcards me ajudaram muito! Consegui memorizar todo o conteúdo de forma eficiente.',
-    rating: 5,
-    course: 'INSS',
-    status: 'approved',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: '2',
-    uid: '2',
-    name: 'João Santos',
-    email: 'joao@example.com',
-    role: 'Aprovado no TJ',
-    content: 'A plataforma é incrível! O sistema de repetição espaçada fez toda a diferença.',
-    rating: 5,
-    course: 'TJ',
-    status: 'approved',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: '3',
-    uid: '3',
-    name: 'Pedro Lima',
-    email: 'pedro@example.com',
-    role: 'Aprovado no INSS',
-    content: 'Excelente plataforma! Os flashcards são muito eficientes para memorização.',
-    rating: 4,
-    course: 'INSS',
-    status: 'pending',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-]
 
 export default function AdminPage() {
   const { user } = useAuth()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('dashboard')
-  const [users, setUsers] = useState<User[]>(tempUsers)
-  const [testimonials, setTestimonials] = useState<Testimonial[]>(tempTestimonials)
-  const [loading, setLoading] = useState(false)
+  const [users, setUsers] = useState<User[]>([])
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
+  const [loading, setLoading] = useState(true)
   const [showAddUserModal, setShowAddUserModal] = useState(false)
   const [newUser, setNewUser] = useState({
     name: '',
@@ -118,8 +49,56 @@ export default function AdminPage() {
   const isAdmin = user?.email === 'claudioghabryel.cg@gmail.com' || 
                   user?.email === 'natalhia775@gmail.com' || 
                   user?.email === 'claudioghabryel7@gmail.com' ||
-                  user?.isAdmin === true ||
-                  process.env.NODE_ENV === 'development'
+                  user?.isAdmin === true
+
+  // Carregar dados do Firebase
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true)
+        
+        // Carregar usuários
+        const usersData = await getAllUsers()
+        setUsers(usersData || [])
+        
+        // Carregar depoimentos
+        const allTestimonials = await getTestimonials('all') // Buscar todos os depoimentos
+        setTestimonials(allTestimonials || [])
+        
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error)
+        // Em caso de erro, inicializar com arrays vazios
+        setUsers([])
+        setTestimonials([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (isAdmin) {
+      loadData()
+    }
+  }, [isAdmin])
+
+  // Listeners em tempo real
+  useEffect(() => {
+    if (!isAdmin) return
+
+    // Listener para mudanças nos usuários
+    const unsubscribeUsers = onUsersChange((data: any[]) => {
+      setUsers(data || [])
+    })
+
+    // Listener para mudanças nos depoimentos
+    const unsubscribeTestimonials = onTestimonialsChange((data: any[]) => {
+      setTestimonials(data || [])
+    })
+
+    return () => {
+      unsubscribeUsers()
+      unsubscribeTestimonials()
+    }
+  }, [isAdmin])
 
   if (!user) {
     return (
@@ -156,6 +135,17 @@ export default function AdminPage() {
     )
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando dados...</p>
+        </div>
+      </div>
+    )
+  }
+
   const handleAddUser = async () => {
     if (!newUser.name || !newUser.email || !newUser.password) {
       alert('Por favor, preencha todos os campos.')
@@ -164,23 +154,14 @@ export default function AdminPage() {
 
     try {
       const userData = {
-        uid: Date.now().toString(),
-        email: newUser.email,
         displayName: newUser.name,
-        photoURL: '',
+        email: newUser.email,
+        password: newUser.password,
         isPaid: newUser.isPaid,
-        isAdmin: newUser.isAdmin,
-        isActive: true,
-        studyTime: 0,
-        cardsStudied: 0,
-        cardsCorrect: 0,
-        cardsWrong: 0,
-        lastLoginAt: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date()
+        isAdmin: newUser.isAdmin
       }
 
-      setUsers([...users, userData])
+      await createUserByAdmin(userData)
       setNewUser({ name: '', email: '', password: '', isPaid: false, isAdmin: false })
       setShowAddUserModal(false)
       alert('Usuário adicionado com sucesso!')
@@ -192,9 +173,7 @@ export default function AdminPage() {
 
   const handleApproveTestimonial = async (testimonialId: string) => {
     try {
-      setTestimonials(testimonials.map(t => 
-        t.id === testimonialId ? { ...t, status: 'approved' } : t
-      ))
+      await updateTestimonialStatus(testimonialId, 'approved')
       alert('Depoimento aprovado com sucesso!')
     } catch (error) {
       console.error('Erro ao aprovar depoimento:', error)
@@ -204,8 +183,8 @@ export default function AdminPage() {
 
   const handleRejectTestimonial = async (testimonialId: string) => {
     try {
-      setTestimonials(testimonials.filter(t => t.id !== testimonialId))
-      alert('Depoimento rejeitado e removido!')
+      await updateTestimonialStatus(testimonialId, 'rejected')
+      alert('Depoimento rejeitado com sucesso!')
     } catch (error) {
       console.error('Erro ao rejeitar depoimento:', error)
       alert('Erro ao rejeitar depoimento!')
@@ -215,7 +194,7 @@ export default function AdminPage() {
   const handleDeleteUser = async (userId: string) => {
     if (confirm('Tem certeza que deseja excluir este usuário?')) {
       try {
-        setUsers(users.filter(u => u.uid !== userId))
+        await deleteUserByAdmin(userId)
         alert('Usuário excluído com sucesso!')
       } catch (error) {
         console.error('Erro ao excluir usuário:', error)
@@ -233,9 +212,9 @@ export default function AdminPage() {
     ))
   }
 
-  const pendingTestimonials = testimonials.filter(t => t.status === 'pending')
-  const approvedTestimonials = testimonials.filter(t => t.status === 'approved')
-  const payingUsers = users.filter(u => u.isPaid)
+  const pendingTestimonials = (testimonials || []).filter(t => t.status === 'pending')
+  const approvedTestimonials = (testimonials || []).filter(t => t.status === 'approved')
+  const payingUsers = (users || []).filter(u => u.isPaid)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -328,7 +307,7 @@ export default function AdminPage() {
                   <UserGroupIcon className="w-8 h-8 text-primary-600" />
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Total de Usuários</p>
-                    <p className="text-2xl font-bold text-gray-900">{users.length}</p>
+                    <p className="text-2xl font-bold text-gray-900">{(users || []).length}</p>
                   </div>
                 </div>
               </div>
@@ -346,7 +325,7 @@ export default function AdminPage() {
                   <ChatBubbleLeftRightIcon className="w-8 h-8 text-blue-600" />
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Depoimentos</p>
-                    <p className="text-2xl font-bold text-gray-900">{testimonials.length}</p>
+                    <p className="text-2xl font-bold text-gray-900">{(testimonials || []).length}</p>
                   </div>
                 </div>
               </div>
@@ -378,7 +357,7 @@ export default function AdminPage() {
                     </button>
                   </div>
                 )}
-                {users.length === 0 && (
+                {(users || []).length === 0 && (
                   <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
                     <div>
                       <p className="font-medium text-gray-900">Nenhum usuário registrado</p>
@@ -405,7 +384,7 @@ export default function AdminPage() {
               </button>
             </div>
 
-            {users.length === 0 ? (
+            {(users || []).length === 0 ? (
               <div className="bg-white rounded-lg shadow-sm p-8 text-center">
                 <UserGroupIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum usuário encontrado</h3>
@@ -556,7 +535,7 @@ export default function AdminPage() {
             {/* Approved Testimonials */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Depoimentos Aprovados</h3>
-              {approvedTestimonials.length === 0 ? (
+              {(approvedTestimonials || []).length === 0 ? (
                 <p className="text-gray-600 text-center py-8">Nenhum depoimento aprovado ainda.</p>
               ) : (
                 <div className="space-y-4">
