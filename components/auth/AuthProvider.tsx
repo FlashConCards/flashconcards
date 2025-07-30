@@ -160,6 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             updatedAt: new Date()
           };
           
+          console.log('Created temp user with createdByAdmin:', tempUser.createdByAdmin);
           setUser(tempUser);
           return;
         }
