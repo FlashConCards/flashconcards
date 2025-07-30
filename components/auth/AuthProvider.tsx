@@ -63,6 +63,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               cardsStudied: 0,
               cardsCorrect: 0,
               cardsWrong: 0,
+              createdAt: new Date(),
+              updatedAt: new Date(),
             };
             await updateUserData(firebaseUser.uid, newUserData);
             setUser(newUserData);
