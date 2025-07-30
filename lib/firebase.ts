@@ -77,6 +77,7 @@ export const signUp = async (email: string, password: string, displayName: strin
       cardsStudied: 0,
       cardsCorrect: 0,
       cardsWrong: 0,
+      lastLoginAt: serverTimestamp(),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     })
@@ -119,6 +120,7 @@ export const getAllUsers = async () => {
       uid: doc.id,
       ...doc.data()
     })) as any[]
+    console.log('Users loaded:', users.length)
     return users
   } catch (error: any) {
     console.error('Error getting all users:', error)
@@ -184,10 +186,7 @@ export const deleteUserByAdmin = async (uid: string) => {
   try {
     // Delete from Firestore
     await deleteDoc(doc(db, 'users', uid))
-    
-    // Note: Deleting from Firebase Auth requires admin SDK
-    // For now, we'll just delete from Firestore
-    console.log('User document deleted from Firestore')
+    console.log('User document deleted from Firestore:', uid)
   } catch (error) {
     console.error('Error deleting user:', error)
     throw error
@@ -196,6 +195,8 @@ export const deleteUserByAdmin = async (uid: string) => {
 
 export const createUserByAdmin = async (userData: any) => {
   try {
+    console.log('Creating user by admin:', userData.email)
+    
     // Create user in Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(
       auth,
@@ -203,13 +204,15 @@ export const createUserByAdmin = async (userData: any) => {
       userData.password || '123456' // Default password if not provided
     )
 
+    console.log('User created in Auth:', userCredential.user.uid)
+
     // Update profile
     await updateProfile(userCredential.user, {
       displayName: userData.displayName
     })
 
     // Create user document in Firestore
-    await setDoc(doc(db, 'users', userCredential.user.uid), {
+    const userDoc = {
       uid: userCredential.user.uid,
       email: userData.email,
       displayName: userData.displayName,
@@ -221,9 +224,13 @@ export const createUserByAdmin = async (userData: any) => {
       cardsStudied: userData.cardsStudied || 0,
       cardsCorrect: userData.cardsCorrect || 0,
       cardsWrong: userData.cardsWrong || 0,
+      lastLoginAt: serverTimestamp(),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-    })
+    }
+
+    await setDoc(doc(db, 'users', userCredential.user.uid), userDoc)
+    console.log('User document created in Firestore:', userCredential.user.uid)
 
     return userCredential.user.uid
   } catch (error) {
@@ -246,6 +253,7 @@ export const getTestimonials = async (status?: 'pending' | 'approved' | 'rejecte
       id: doc.id,
       ...doc.data()
     })) as any[]
+    console.log('Testimonials loaded:', testimonials.length)
     return testimonials
   } catch (error: any) {
     console.error('Error getting testimonials:', error)
@@ -260,11 +268,13 @@ export const getTestimonials = async (status?: 'pending' | 'approved' | 'rejecte
 
 export const updateTestimonialStatus = async (testimonialId: string, status: 'pending' | 'approved' | 'rejected') => {
   try {
+    console.log('Updating testimonial status:', testimonialId, status)
     const testimonialRef = doc(db, 'testimonials', testimonialId)
     await updateDoc(testimonialRef, {
       status: status,
       updatedAt: serverTimestamp()
     })
+    console.log('Testimonial status updated successfully')
   } catch (error) {
     console.error('Error updating testimonial status:', error)
     throw error
@@ -294,6 +304,7 @@ export const getCourses = async () => {
       id: doc.id,
       ...doc.data()
     })) as any[]
+    console.log('Courses loaded:', courses.length)
     return courses
   } catch (error: any) {
     console.error('Error getting courses:', error)
@@ -308,11 +319,13 @@ export const getCourses = async () => {
 
 export const createCourse = async (courseData: any) => {
   try {
+    console.log('Creating course:', courseData.name)
     const docRef = await addDoc(collection(db, 'courses'), {
       ...courseData,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     })
+    console.log('Course created successfully:', docRef.id)
     return docRef.id
   } catch (error) {
     console.error('Error creating course:', error)
@@ -323,6 +336,7 @@ export const createCourse = async (courseData: any) => {
 export const deleteCourse = async (courseId: string) => {
   try {
     await deleteDoc(doc(db, 'courses', courseId))
+    console.log('Course deleted successfully:', courseId)
   } catch (error) {
     console.error('Error deleting course:', error)
     throw error
@@ -343,6 +357,7 @@ export const getSubjects = async (courseId?: string) => {
       id: doc.id,
       ...doc.data()
     })) as any[]
+    console.log('Subjects loaded:', subjects.length)
     return subjects
   } catch (error: any) {
     console.error('Error getting subjects:', error)
@@ -357,11 +372,13 @@ export const getSubjects = async (courseId?: string) => {
 
 export const createSubject = async (subjectData: any) => {
   try {
+    console.log('Creating subject:', subjectData.name)
     const docRef = await addDoc(collection(db, 'subjects'), {
       ...subjectData,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     })
+    console.log('Subject created successfully:', docRef.id)
     return docRef.id
   } catch (error) {
     console.error('Error creating subject:', error)
@@ -405,6 +422,7 @@ export const getTopics = async (subjectId?: string) => {
       id: doc.id,
       ...doc.data()
     })) as any[]
+    console.log('Topics loaded:', topics.length)
     return topics
   } catch (error: any) {
     console.error('Error getting topics:', error)
@@ -419,11 +437,13 @@ export const getTopics = async (subjectId?: string) => {
 
 export const createTopic = async (topicData: any) => {
   try {
+    console.log('Creating topic:', topicData.name)
     const docRef = await addDoc(collection(db, 'topics'), {
       ...topicData,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     })
+    console.log('Topic created successfully:', docRef.id)
     return docRef.id
   } catch (error) {
     console.error('Error creating topic:', error)
@@ -467,6 +487,7 @@ export const getSubTopics = async (topicId?: string) => {
       id: doc.id,
       ...doc.data()
     })) as any[]
+    console.log('SubTopics loaded:', subTopics.length)
     return subTopics
   } catch (error: any) {
     console.error('Error getting subTopics:', error)
@@ -481,11 +502,13 @@ export const getSubTopics = async (topicId?: string) => {
 
 export const createSubTopic = async (subTopicData: any) => {
   try {
+    console.log('Creating subTopic:', subTopicData.name)
     const docRef = await addDoc(collection(db, 'subTopics'), {
       ...subTopicData,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     })
+    console.log('SubTopic created successfully:', docRef.id)
     return docRef.id
   } catch (error) {
     console.error('Error creating subTopic:', error)
@@ -529,6 +552,7 @@ export const getFlashcards = async (subTopicId?: string) => {
       id: doc.id,
       ...doc.data()
     })) as any[]
+    console.log('Flashcards loaded:', flashcards.length)
     return flashcards
   } catch (error: any) {
     console.error('Error getting flashcards:', error)
@@ -555,6 +579,7 @@ export const getDeepenings = async (flashcardId?: string) => {
       id: doc.id,
       ...doc.data()
     })) as any[]
+    console.log('Deepenings loaded:', deepenings.length)
     return deepenings
   } catch (error: any) {
     console.error('Error getting deepenings:', error)
@@ -570,11 +595,13 @@ export const getDeepenings = async (flashcardId?: string) => {
 // Study session functions
 export const createStudySession = async (sessionData: any) => {
   try {
+    console.log('Creating study session:', sessionData)
     const docRef = await addDoc(collection(db, 'studySessions'), {
       ...sessionData,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     })
+    console.log('Study session created successfully:', docRef.id)
     return docRef.id
   } catch (error) {
     console.error('Error creating study session:', error)
@@ -628,6 +655,7 @@ export const onUsersChange = (callback: (data: any[]) => void) => {
         uid: doc.id,
         ...doc.data()
       })) as any[]
+      console.log('Users real-time update:', users.length)
       callback(users)
     }, (error) => {
       console.error('Error in users listener:', error)
@@ -648,6 +676,7 @@ export const onTestimonialsChange = (callback: (data: any[]) => void) => {
         id: doc.id,
         ...doc.data()
       })) as any[]
+      console.log('Testimonials real-time update:', testimonials.length)
       callback(testimonials)
     }, (error) => {
       console.error('Error in testimonials listener:', error)
@@ -668,6 +697,7 @@ export const onCoursesChange = (callback: (data: any[]) => void) => {
         id: doc.id,
         ...doc.data()
       })) as any[]
+      console.log('Courses real-time update:', courses.length)
       callback(courses)
     }, (error) => {
       console.error('Error in courses listener:', error)

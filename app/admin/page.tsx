@@ -56,13 +56,16 @@ export default function AdminPage() {
     const loadData = async () => {
       try {
         setLoading(true)
+        console.log('Loading admin data...')
         
         // Carregar usuários
         const usersData = await getAllUsers()
+        console.log('Users loaded in admin:', usersData?.length || 0)
         setUsers(usersData || [])
         
         // Carregar depoimentos
         const allTestimonials = await getTestimonials('all') // Buscar todos os depoimentos
+        console.log('Testimonials loaded in admin:', allTestimonials?.length || 0)
         setTestimonials(allTestimonials || [])
         
       } catch (error) {
@@ -153,6 +156,8 @@ export default function AdminPage() {
     }
 
     try {
+      console.log('Adding new user:', newUser.email)
+      
       const userData = {
         displayName: newUser.name,
         email: newUser.email,
@@ -161,44 +166,69 @@ export default function AdminPage() {
         isAdmin: newUser.isAdmin
       }
 
-      await createUserByAdmin(userData)
+      const userId = await createUserByAdmin(userData)
+      console.log('User created successfully:', userId)
+      
       setNewUser({ name: '', email: '', password: '', isPaid: false, isAdmin: false })
       setShowAddUserModal(false)
       alert('Usuário adicionado com sucesso!')
-    } catch (error) {
+      
+      // Recarregar dados após adicionar usuário
+      const updatedUsers = await getAllUsers()
+      setUsers(updatedUsers || [])
+      
+    } catch (error: any) {
       console.error('Erro ao adicionar usuário:', error)
-      alert('Erro ao adicionar usuário. Tente novamente.')
+      alert(`Erro ao adicionar usuário: ${error.message || 'Tente novamente.'}`)
     }
   }
 
   const handleApproveTestimonial = async (testimonialId: string) => {
     try {
+      console.log('Approving testimonial:', testimonialId)
       await updateTestimonialStatus(testimonialId, 'approved')
       alert('Depoimento aprovado com sucesso!')
-    } catch (error) {
+      
+      // Recarregar depoimentos após aprovar
+      const updatedTestimonials = await getTestimonials('all')
+      setTestimonials(updatedTestimonials || [])
+      
+    } catch (error: any) {
       console.error('Erro ao aprovar depoimento:', error)
-      alert('Erro ao aprovar depoimento!')
+      alert(`Erro ao aprovar depoimento: ${error.message || 'Tente novamente!'}`)
     }
   }
 
   const handleRejectTestimonial = async (testimonialId: string) => {
     try {
+      console.log('Rejecting testimonial:', testimonialId)
       await updateTestimonialStatus(testimonialId, 'rejected')
       alert('Depoimento rejeitado com sucesso!')
-    } catch (error) {
+      
+      // Recarregar depoimentos após rejeitar
+      const updatedTestimonials = await getTestimonials('all')
+      setTestimonials(updatedTestimonials || [])
+      
+    } catch (error: any) {
       console.error('Erro ao rejeitar depoimento:', error)
-      alert('Erro ao rejeitar depoimento!')
+      alert(`Erro ao rejeitar depoimento: ${error.message || 'Tente novamente!'}`)
     }
   }
 
   const handleDeleteUser = async (userId: string) => {
     if (confirm('Tem certeza que deseja excluir este usuário?')) {
       try {
+        console.log('Deleting user:', userId)
         await deleteUserByAdmin(userId)
         alert('Usuário excluído com sucesso!')
-      } catch (error) {
+        
+        // Recarregar usuários após excluir
+        const updatedUsers = await getAllUsers()
+        setUsers(updatedUsers || [])
+        
+      } catch (error: any) {
         console.error('Erro ao excluir usuário:', error)
-        alert('Erro ao excluir usuário!')
+        alert(`Erro ao excluir usuário: ${error.message || 'Tente novamente!'}`)
       }
     }
   }
