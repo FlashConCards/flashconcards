@@ -150,6 +150,19 @@ export default function AdminPage() {
         return;
       }
 
+      // Validar formato do email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(newUser.email)) {
+        alert('Por favor, insira um email válido (exemplo: usuario@exemplo.com)');
+        return;
+      }
+
+      // Validar se o nome não está vazio
+      if (newUser.displayName.trim().length < 2) {
+        alert('O nome deve ter pelo menos 2 caracteres');
+        return;
+      }
+
       console.log('Adding user:', newUser);
       await createUserByAdmin(newUser);
       
@@ -437,21 +450,29 @@ export default function AdminPage() {
                   value={newUser.email}
                   onChange={(e) => setNewUser({...newUser, email: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="usuario@exemplo.com"
+                  placeholder="exemplo@gmail.com"
+                  required
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Digite um email válido (exemplo: usuario@gmail.com)
+                </p>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome *
+                  Nome Completo *
                 </label>
                 <input
                   type="text"
                   value={newUser.displayName}
                   onChange={(e) => setNewUser({...newUser, displayName: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Nome do usuário"
+                  placeholder="Nome completo do usuário"
+                  required
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Digite o nome completo (mínimo 2 caracteres)
+                </p>
               </div>
 
               <div>
