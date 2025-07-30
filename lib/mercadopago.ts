@@ -1,8 +1,8 @@
-import mercadopago from 'mercadopago'
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago'
 
 // Configure Mercado Pago
-mercadopago.configure({
-  access_token: process.env.MERCADOPAGO_ACCESS_TOKEN!,
+const client = new MercadoPagoConfig({
+  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN!,
 })
 
 // Payment functions
@@ -11,6 +11,7 @@ export const createPaymentPreference = async (paymentData: any) => {
     const preference = {
       items: [
         {
+          id: '1',
           title: paymentData.title || 'Curso FlashConCards',
           unit_price: paymentData.amount,
           quantity: 1,
@@ -29,8 +30,9 @@ export const createPaymentPreference = async (paymentData: any) => {
       external_reference: paymentData.externalReference,
     }
 
-    const response = await mercadopago.preferences.create(preference)
-    return response.body
+    const preferenceClient = new Preference(client)
+    const response = await preferenceClient.create({ body: preference })
+    return response
   } catch (error) {
     throw error
   }
@@ -38,17 +40,20 @@ export const createPaymentPreference = async (paymentData: any) => {
 
 export const createPixPayment = async (paymentData: any) => {
   try {
-    const pixResponse = await mercadopago.payment.create({
-      transaction_amount: paymentData.amount,
-      description: paymentData.description || 'Curso FlashConCards',
-      payment_method_id: 'pix',
-      payer: {
-        email: paymentData.email,
-      },
-      external_reference: paymentData.externalReference,
+    const paymentClient = new Payment(client)
+    const pixResponse = await paymentClient.create({
+      body: {
+        transaction_amount: paymentData.amount,
+        description: paymentData.description || 'Curso FlashConCards',
+        payment_method_id: 'pix',
+        payer: {
+          email: paymentData.email,
+        },
+        external_reference: paymentData.externalReference,
+      }
     })
 
-    return pixResponse.body
+    return pixResponse
   } catch (error) {
     throw error
   }
@@ -56,11 +61,12 @@ export const createPixPayment = async (paymentData: any) => {
 
 export const getPaymentStatus = async (paymentId: string) => {
   try {
-    const payment = await mercadopago.payment.findById(paymentId)
-    return payment.body
+    const paymentClient = new Payment(client)
+    const payment = await paymentClient.get({ id: paymentId })
+    return payment
   } catch (error) {
     throw error
   }
 }
 
-export default mercadopago 
+export default client 
