@@ -18,49 +18,7 @@ import {
   RocketLaunchIcon
 } from '@heroicons/react/24/outline'
 import { motion } from 'framer-motion'
-
-// Mock data para cursos
-const mockCourses = [
-  {
-    id: 'inss',
-    name: 'INSS - Instituto Nacional do Seguro Social',
-    description: 'Preparação completa para o concurso do INSS com foco em Direito Previdenciário, Administrativo e Constitucional.',
-    image: '/api/placeholder/400/200',
-    price: 99.90,
-    isActive: true,
-    subjects: 4,
-    flashcards: 250,
-    students: 1250,
-    rating: 4.8,
-    features: ['Direito Previdenciário', 'Direito Administrativo', 'Direito Constitucional', 'Matemática Financeira']
-  },
-  {
-    id: 'tj',
-    name: 'TJ - Tribunal de Justiça',
-    description: 'Concurso para cargos de técnico e analista judiciário com matérias específicas do Direito.',
-    image: '/api/placeholder/400/200',
-    price: 99.90,
-    isActive: true,
-    subjects: 5,
-    flashcards: 300,
-    students: 890,
-    rating: 4.7,
-    features: ['Direito Civil', 'Direito Penal', 'Direito Processual', 'Direito Constitucional']
-  },
-  {
-    id: 'pm',
-    name: 'PM - Polícia Militar',
-    description: 'Preparação para concursos de soldado e oficial da Polícia Militar com foco em Direito Penal e Constitucional.',
-    image: '/api/placeholder/400/200',
-    price: 99.90,
-    isActive: true,
-    subjects: 3,
-    flashcards: 180,
-    students: 2100,
-    rating: 4.9,
-    features: ['Direito Penal', 'Direito Constitucional', 'Legislação Específica']
-  }
-]
+import { getCourses, getTestimonials } from '@/lib/firebase'
 
 const features = [
   {
@@ -85,26 +43,10 @@ const features = [
   }
 ]
 
-const testimonials = [
-  {
-    name: 'Maria Silva',
-    role: 'Aprovada no INSS',
-    content: 'Os flashcards me ajudaram muito! Consegui memorizar todo o conteúdo de forma eficiente.',
-    rating: 5
-  },
-  {
-    name: 'João Santos',
-    role: 'Aprovado no TJ',
-    content: 'A plataforma é incrível! O sistema de repetição espaçada fez toda a diferença.',
-    rating: 5
-  },
-  {
-    name: 'Ana Costa',
-    role: 'Aprovada na PM',
-    content: 'Conteúdo de qualidade e interface intuitiva. Recomendo para todos!',
-    rating: 5
-  }
-]
+// Estados para dados reais
+const [courses, setCourses] = useState<any[]>([])
+const [testimonials, setTestimonials] = useState<any[]>([])
+const [loading, setLoading] = useState(true)
 
 export default function HomePage() {
   const { user } = useAuth()
@@ -112,13 +54,36 @@ export default function HomePage() {
   const [activeTestimonial, setActiveTestimonial] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
 
+  // Carregar dados reais do Firebase
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true)
+        const [coursesData, testimonialsData] = await Promise.all([
+          getCourses(),
+          getTestimonials('approved')
+        ])
+        setCourses(coursesData)
+        setTestimonials(testimonialsData)
+      } catch (error) {
+        console.error('Error loading data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
+  }, [])
+
   useEffect(() => {
     setIsVisible(true)
-    const interval = setInterval(() => {
-      setActiveTestimonial((prev) => (prev + 1) % testimonials.length)
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [])
+    if (testimonials.length > 0) {
+      const interval = setInterval(() => {
+        setActiveTestimonial((prev) => (prev + 1) % testimonials.length)
+      }, 5000)
+      return () => clearInterval(interval)
+    }
+  }, [testimonials])
 
   const handleCourseClick = (courseId: string) => {
     // Se o usuário não está logado, vai para login
@@ -302,8 +267,18 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {mockCourses.map((course, index) => (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {loading ? (
+                          <div className="col-span-full text-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+                            <p className="mt-2 text-gray-600">Carregando cursos...</p>
+                          </div>
+                        ) : courses.length === 0 ? (
+                          <div className="col-span-full text-center py-8">
+                            <p className="text-gray-600">Nenhum curso disponível no momento.</p>
+                          </div>
+                        ) : (
+                          courses.map((course: any, index: number) => (
               <motion.div
                 key={course.id}
                 initial={{ opacity: 0, y: 20 }}
