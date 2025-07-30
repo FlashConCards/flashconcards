@@ -582,6 +582,30 @@ export const updateUserProgress = async (uid: string, progressData: any) => {
   }
 }
 
+export const getUserProgress = async (uid: string) => {
+  try {
+    const userRef = doc(db, 'users', uid)
+    const userSnap = await getDoc(userRef)
+    
+    if (userSnap.exists()) {
+      const userData = userSnap.data()
+      return {
+        studyTime: userData.studyTime || 0,
+        cardsStudied: userData.cardsStudied || 0,
+        cardsCorrect: userData.cardsCorrect || 0,
+        cardsWrong: userData.cardsWrong || 0,
+        isPaid: userData.isPaid || false,
+        isActive: userData.isActive || true
+      }
+    } else {
+      return null
+    }
+  } catch (error) {
+    console.error('Error getting user progress:', error)
+    return null
+  }
+}
+
 // Real-time listeners
 export const onUsersChange = (callback: (data: any[]) => void) => {
   try {
