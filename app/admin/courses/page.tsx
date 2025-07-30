@@ -147,47 +147,47 @@ export default function AdminCoursesPage() {
   const getTopicsForSubject = async (subjectId: string) => {
     if (!selectedCourse) return []
     try {
-      const topicsData = await getTopics(selectedCourse.id, subjectId)
+      const topicsData = await getTopics(subjectId)
       setTopics(topicsData)
       return topicsData
     } catch (error) {
-      console.error('Erro ao carregar tópicos:', error)
+      console.error('Error getting topics:', error)
       return []
     }
   }
 
   const getSubTopicsForTopic = async (topicId: string) => {
-    if (!selectedCourse || !selectedSubject) return []
+    if (!selectedCourse) return []
     try {
-      const subTopicsData = await getSubTopics(selectedCourse.id, selectedSubject.id, topicId)
+      const subTopicsData = await getSubTopics(topicId)
       setSubTopics(subTopicsData)
       return subTopicsData
     } catch (error) {
-      console.error('Erro ao carregar sub-tópicos:', error)
+      console.error('Error getting subTopics:', error)
       return []
     }
   }
 
   const getFlashcardsForSubTopic = async (subTopicId: string) => {
-    if (!selectedCourse || !selectedSubject || !selectedTopic) return []
+    if (!selectedCourse) return []
     try {
-      const flashcardsData = await getFlashcards(selectedCourse.id, selectedSubject.id, selectedTopic.id, subTopicId)
+      const flashcardsData = await getFlashcards(subTopicId)
       setFlashcards(flashcardsData)
       return flashcardsData
     } catch (error) {
-      console.error('Erro ao carregar flashcards:', error)
+      console.error('Error getting flashcards:', error)
       return []
     }
   }
 
   const getDeepeningsForFlashcard = async (flashcardId: string) => {
-    if (!selectedCourse || !selectedSubject || !selectedTopic || !selectedSubTopic) return []
+    if (!selectedCourse) return []
     try {
-      const deepeningsData = await getDeepenings(selectedCourse.id, selectedSubject.id, selectedTopic.id, selectedSubTopic.id)
+      const deepeningsData = await getDeepenings(flashcardId)
       setDeepenings(deepeningsData)
       return deepeningsData
     } catch (error) {
-      console.error('Erro ao carregar aprofundamentos:', error)
+      console.error('Error getting deepenings:', error)
       return []
     }
   }
@@ -284,7 +284,7 @@ export default function AdminCoursesPage() {
         isActive: true
       }
 
-      await createSubject(selectedCourse.id, subjectData)
+      await createSubject(subjectData)
       setShowAddSubjectModal(false)
       setNewSubject({ name: '', description: '', order: 1 })
       await getSubjectsForCourse(selectedCourse.id) // Recarregar matérias
@@ -309,7 +309,7 @@ export default function AdminCoursesPage() {
         isActive: true
       }
 
-      await createTopic(selectedCourse.id, selectedSubject.id, topicData)
+      await createTopic(topicData)
       setShowAddTopicModal(false)
       setNewTopic({ name: '', description: '', order: 1 })
       await getTopicsForSubject(selectedSubject.id) // Recarregar tópicos

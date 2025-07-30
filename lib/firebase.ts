@@ -53,6 +53,9 @@ export const signIn = async (email: string, password: string) => {
   }
 }
 
+// Alias for backward compatibility
+export const signInUser = signIn
+
 export const signUp = async (email: string, password: string, displayName: string) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password)
@@ -85,6 +88,9 @@ export const signUp = async (email: string, password: string, displayName: strin
   }
 }
 
+// Alias for backward compatibility
+export const createUser = signUp
+
 export const signOutUser = async () => {
   try {
     await signOut(auth)
@@ -102,6 +108,9 @@ export const getCurrentUser = () => {
 export const onAuthStateChange = (callback: (user: FirebaseUser | null) => void) => {
   return onAuthStateChanged(auth, callback)
 }
+
+// Alias for backward compatibility
+export { onAuthStateChanged }
 
 export const getAllUsers = async () => {
   try {
@@ -138,6 +147,9 @@ export const getUserById = async (uid: string) => {
   }
 }
 
+// Alias for backward compatibility
+export const getUserData = getUserById
+
 export const updateUser = async (uid: string, data: any) => {
   try {
     const userRef = doc(db, 'users', uid)
@@ -150,6 +162,9 @@ export const updateUser = async (uid: string, data: any) => {
     throw error
   }
 }
+
+// Alias for backward compatibility
+export const updateUserData = updateUser
 
 export const deleteUserByAdmin = async (uid: string) => {
   try {
@@ -534,6 +549,35 @@ export const getDeepenings = async (flashcardId?: string) => {
       console.warn('Permission denied for deepenings collection, returning empty array')
       return []
     }
+    throw error
+  }
+}
+
+// Study session functions
+export const createStudySession = async (sessionData: any) => {
+  try {
+    const docRef = await addDoc(collection(db, 'studySessions'), {
+      ...sessionData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    })
+    return docRef.id
+  } catch (error) {
+    console.error('Error creating study session:', error)
+    throw error
+  }
+}
+
+// User progress functions
+export const updateUserProgress = async (uid: string, progressData: any) => {
+  try {
+    const userRef = doc(db, 'users', uid)
+    await updateDoc(userRef, {
+      ...progressData,
+      updatedAt: serverTimestamp()
+    })
+  } catch (error) {
+    console.error('Error updating user progress:', error)
     throw error
   }
 }
