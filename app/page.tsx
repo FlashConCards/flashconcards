@@ -108,31 +108,52 @@ const testimonials = [
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            FlashConCards
-          </h1>
-          <p className="text-xl text-gray-600 mb-8">
-            Plataforma de estudos para concursos com flashcards inteligentes
+    <div style={{ 
+      minHeight: '100vh', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      backgroundColor: '#f0f9ff',
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      <div style={{ 
+        textAlign: 'center', 
+        padding: '2rem',
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        maxWidth: '500px'
+      }}>
+        <h1 style={{ 
+          fontSize: '2.5rem', 
+          fontWeight: 'bold', 
+          color: '#1f2937',
+          marginBottom: '1rem'
+        }}>
+          FlashConCards
+        </h1>
+        <p style={{ 
+          fontSize: '1.25rem', 
+          color: '#6b7280',
+          marginBottom: '2rem'
+        }}>
+          Teste de Deploy - Se você está vendo esta página, está funcionando!
+        </p>
+        <div style={{ 
+          backgroundColor: '#f3f4f6',
+          padding: '1rem',
+          borderRadius: '4px',
+          marginTop: '1rem'
+        }}>
+          <p style={{ margin: '0.5rem 0', fontSize: '0.9rem' }}>
+            <strong>Status:</strong> <span style={{ color: '#059669' }}>✅ Online</span>
           </p>
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto">
-            <h2 className="text-2xl font-semibold mb-4">Teste de Deploy</h2>
-            <p className="text-gray-600 mb-4">
-              Se você está vendo esta página, o deploy está funcionando!
-            </p>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Status:</span>
-                <span className="text-green-600 font-semibold">✅ Funcionando</span>
-              </div>
-              <div className="flex justify-between">
-                <span>URL:</span>
-                <span className="text-blue-600">flashconcards.vercel.app</span>
-              </div>
-            </div>
-          </div>
+          <p style={{ margin: '0.5rem 0', fontSize: '0.9rem' }}>
+            <strong>URL:</strong> flashconcards.vercel.app
+          </p>
+          <p style={{ margin: '0.5rem 0', fontSize: '0.9rem' }}>
+            <strong>Deploy:</strong> <span style={{ color: '#059669' }}>✅ Sucesso</span>
+          </p>
         </div>
       </div>
     </div>
