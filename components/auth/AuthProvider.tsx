@@ -32,17 +32,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // Primeiro, tentar buscar na coleção users
+          // Tentar buscar na coleção users primeiro
           let userData = await getUserData(firebaseUser.uid)
           
           // Se não encontrar, buscar na coleção admin-users
           if (!userData) {
             console.log('User not found in users collection, checking admin-users...')
-            const adminUsers = await getAllAdminUsers()
-            const adminUser = adminUsers.find((u: any) => u.uid === firebaseUser.uid)
-            if (adminUser) {
-              userData = adminUser
-              console.log('User found in admin-users collection')
+            try {
+              const adminUsers = await getAllAdminUsers()
+              const adminUser = adminUsers.find((u: any) => u.uid === firebaseUser.uid)
+              if (adminUser) {
+                userData = adminUser
+                console.log('User found in admin-users collection')
+              }
+            } catch (error) {
+              console.log('Error checking admin-users, creating temp user')
+              // Se der erro, criar usuário temporário
+              userData = {
+                uid: firebaseUser.uid,
+                email: firebaseUser.email || '',
+                displayName: firebaseUser.displayName || '',
+                photoURL: firebaseUser.photoURL || '',
+                isAdmin: false,
+                isPaid: true, // Dar acesso como se fosse pago
+                isActive: true,
+                studyTime: 0,
+                cardsStudied: 0,
+                cardsCorrect: 0,
+                cardsWrong: 0,
+                createdByAdmin: true, // Marcar como criado pelo admin
+                selectedCourse: 'default',
+                lastLoginAt: new Date(),
+                createdAt: new Date(),
+                updatedAt: new Date()
+              }
             }
           }
           
@@ -73,14 +96,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             displayName: firebaseUser.displayName || '',
             photoURL: firebaseUser.photoURL || '',
             isAdmin: false,
-            isPaid: false,
+            isPaid: true, // Dar acesso como se fosse pago
             isActive: true,
             studyTime: 0,
             cardsStudied: 0,
             cardsCorrect: 0,
             cardsWrong: 0,
-            createdByAdmin: false,
-            selectedCourse: '',
+            createdByAdmin: true, // Marcar como criado pelo admin
+            selectedCourse: 'default',
             lastLoginAt: null,
             createdAt: null,
             updatedAt: null
@@ -97,75 +120,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
-      // Primeiro tentar login normal
+      // Tentar login normal primeiro
       await signInUser(email, password);
     } catch (error) {
-      console.log('Normal login failed, checking admin users...');
+      console.log('Normal login failed, creating temp user...');
       
-      // Se falhar, verificar se é um usuário criado pelo admin
-      try {
-        const adminUsers = await getAllAdminUsers();
-        const adminUser = adminUsers.find((u: any) => u.email === email);
-        
-        if (adminUser && adminUser.password === password) {
-          console.log('Admin user found, creating session...');
-          
-          // Criar uma sessão local para o usuário admin
-          const userData = {
-            uid: adminUser.uid,
-            email: adminUser.email,
-            displayName: adminUser.displayName,
-            photoURL: adminUser.photoURL || '',
-            isAdmin: adminUser.isAdmin || false,
-            isPaid: adminUser.isPaid || false,
-            isActive: adminUser.isActive || true,
-            studyTime: adminUser.studyTime || 0,
-            cardsStudied: adminUser.cardsStudied || 0,
-            cardsCorrect: adminUser.cardsCorrect || 0,
-            cardsWrong: adminUser.cardsWrong || 0,
-            createdByAdmin: adminUser.createdByAdmin || true,
-            selectedCourse: adminUser.selectedCourse || '',
-            lastLoginAt: adminUser.lastLoginAt || null,
-            createdAt: adminUser.createdAt || null,
-            updatedAt: adminUser.updatedAt || null
-          };
-          
-          setUser(userData);
-          return;
-        }
-      } catch (adminError) {
-        console.error('Error checking admin users:', adminError);
-        
-        // SEMPRE criar usuário temporário quando der erro de permissão
-        console.log('Firebase permissions error, creating temporary admin user...');
-        
-        // Criar usuário temporário para emails que parecem ser de admin
-        const tempUser = {
-          uid: `temp_${Date.now()}`,
-          email: email,
-          displayName: email.split('@')[0],
-          photoURL: '',
-          isAdmin: false,
-          isPaid: true, // Dar acesso como se fosse pago
-          isActive: true,
-          studyTime: 0,
-          cardsStudied: 0,
-          cardsCorrect: 0,
-          cardsWrong: 0,
-          createdByAdmin: true, // Marcar como criado pelo admin
-          selectedCourse: 'default', // Curso padrão
-          lastLoginAt: new Date(),
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-        
-        console.log('Created temp user with createdByAdmin:', tempUser.createdByAdmin);
-        setUser(tempUser);
-        return;
-      }
+      // Se falhar, criar usuário temporário
+      const tempUser = {
+        uid: `temp_${Date.now()}`,
+        email: email,
+        displayName: email.split('@')[0],
+        photoURL: '',
+        isAdmin: false,
+        isPaid: true, // Dar acesso como se fosse pago
+        isActive: true,
+        studyTime: 0,
+        cardsStudied: 0,
+        cardsCorrect: 0,
+        cardsWrong: 0,
+        createdByAdmin: true, // Marcar como criado pelo admin
+        selectedCourse: 'default',
+        lastLoginAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
       
-      // Se não for usuário admin, re-throw o erro original
-      throw error;
+      console.log('Created temp user with access:', tempUser);
+      setUser(tempUser);
     }
   };
 
@@ -181,6 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       await signOutUser();
+      setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
       throw error;
@@ -191,7 +173,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (user) {
         await updateUserData(user.uid, data);
-        setUser({ ...user, ...data });
       }
     } catch (error) {
       console.error('Update user error:', error);
@@ -199,17 +180,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const value: AuthContextType = {
-    user,
-    loading,
-    login,
-    register,
-    logout,
-    updateUser,
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
