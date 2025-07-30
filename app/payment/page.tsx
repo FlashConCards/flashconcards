@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { getCourses } from '@/lib/firebase'
 import {
   CreditCardIcon,
   QrCodeIcon,
@@ -13,42 +14,19 @@ import {
   BookOpenIcon
 } from '@heroicons/react/24/outline'
 
-// Mock data para cursos
-const mockCourses = {
-  inss: {
-    id: 'inss',
-    name: 'INSS - Instituto Nacional do Seguro Social',
-    description: 'Preparação completa para o concurso do INSS',
-    price: 99.90,
-    image: '/api/placeholder/400/200'
-  },
-  tj: {
-    id: 'tj',
-    name: 'TJ - Tribunal de Justiça',
-    description: 'Concurso para cargos de técnico e analista judiciário',
-    price: 99.90,
-    image: '/api/placeholder/400/200'
-  },
-  pm: {
-    id: 'pm',
-    name: 'PM - Polícia Militar',
-    description: 'Preparação para concursos de soldado e oficial da PM',
-    price: 99.90,
-    image: '/api/placeholder/400/200'
-  }
-}
-
 export default function PaymentPage() {
   const { user } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const courseId = searchParams.get('course')
   
-  const [selectedCourse, setSelectedCourse] = useState(courseId ? mockCourses[courseId as keyof typeof mockCourses] : null)
+  const [courses, setCourses] = useState<any[]>([])
+  const [selectedCourse, setSelectedCourse] = useState<any>(null)
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'success' | 'failed'>('pending')
   const [pixQrCode, setPixQrCode] = useState('')
   const [pixCode, setPixCode] = useState('')
   const [copySuccess, setCopySuccess] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!user) {
@@ -61,11 +39,36 @@ export default function PaymentPage() {
       return
     }
 
-    // Simular geração do PIX
+    // Carregar cursos do Firebase
+    const loadCourses = async () => {
+      try {
+        setLoading(true)
+        const coursesData = await getCourses()
+        setCourses(coursesData || [])
+        
+        // Se há um courseId na URL, selecionar o curso correspondente
+        if (courseId) {
+          const course = coursesData?.find((c: any) => c.id === courseId)
+          if (course) {
+            setSelectedCourse(course)
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao carregar cursos:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadCourses()
+  }, [user, courseId])
+
+  useEffect(() => {
+    // Simular geração do PIX quando um curso é selecionado
     if (selectedCourse) {
       generatePixPayment()
     }
-  }, [user, selectedCourse])
+  }, [selectedCourse])
 
   const generatePixPayment = async () => {
     // Simular chamada para Mercado Pago
@@ -140,37 +143,54 @@ export default function PaymentPage() {
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Escolha seu Curso</h2>
               <div className="space-y-4">
-                {Object.values(mockCourses).map((course) => (
-                  <div
-                    key={course.id}
-                    onClick={() => handleCourseSelect(course)}
-                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                      selectedCourse?.id === course.id
-                        ? 'border-primary-500 bg-primary-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-4">
-                      <img
-                        src={course.image}
-                        alt={course.name}
-                        className="w-16 h-16 object-cover rounded-lg"
-                      />
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">{course.name}</h3>
-                        <p className="text-sm text-gray-600">{course.description}</p>
-                        <div className="flex items-center justify-between mt-2">
-                          <span className="text-lg font-bold text-primary-600">
-                            R$ {course.price.toFixed(2).replace('.', ',')}
-                          </span>
-                          {selectedCourse?.id === course.id && (
-                            <CheckCircleIcon className="w-5 h-5 text-primary-600" />
-                          )}
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Carregando cursos...</p>
+                  </div>
+                ) : courses.length === 0 ? (
+                  <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+                    <BookOpenIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Nenhum curso disponível
+                    </h3>
+                    <p className="text-gray-600">
+                      Desculpe, não há cursos disponíveis no momento.
+                    </p>
+                  </div>
+                ) : (
+                  courses.map((course) => (
+                    <div
+                      key={course.id}
+                      onClick={() => handleCourseSelect(course)}
+                      className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                        selectedCourse?.id === course.id
+                          ? 'border-primary-500 bg-primary-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-4">
+                        <img
+                          src={course.image}
+                          alt={course.name}
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900">{course.name}</h3>
+                          <p className="text-sm text-gray-600">{course.description}</p>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-lg font-bold text-primary-600">
+                              R$ {course.price.toFixed(2).replace('.', ',')}
+                            </span>
+                            {selectedCourse?.id === course.id && (
+                              <CheckCircleIcon className="w-5 h-5 text-primary-600" />
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 
