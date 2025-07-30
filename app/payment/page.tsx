@@ -30,15 +30,27 @@ export default function PaymentPage() {
 
   useEffect(() => {
     if (!user) {
+      console.log('No user, redirecting to login')
       router.push('/login')
       return
     }
 
+    console.log('User data:', {
+      uid: user.uid,
+      email: user.email,
+      isPaid: user.isPaid,
+      createdByAdmin: (user as any).createdByAdmin,
+      isAdmin: user.isAdmin
+    })
+
     // Verificar se o usuário tem acesso (pago OU criado pelo admin)
     if (user.isPaid || (user as any).createdByAdmin) {
+      console.log('User has access, redirecting to dashboard')
       router.push('/dashboard')
       return
     }
+
+    console.log('User needs payment, staying on payment page')
 
     // Carregar cursos do Firebase
     const loadCourses = async () => {
