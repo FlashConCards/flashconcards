@@ -84,16 +84,7 @@ export default function Flashcard({
                       </p>
                     </div>
                   )}
-                  <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-                    <span className="px-2 py-1 bg-gray-100 rounded-full">
-                      {flashcard.difficulty}
-                    </span>
-                    {flashcard.tags.map((tag) => (
-                      <span key={tag} className="px-2 py-1 bg-primary-100 text-primary-700 rounded-full">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+                  {/* Removed difficulty and tags as they don't exist in Flashcard type */}
                 </div>
               )}
             </motion.div>
