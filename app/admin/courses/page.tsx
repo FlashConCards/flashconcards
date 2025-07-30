@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import {
   PlusIcon, PencilIcon, TrashIcon,
@@ -9,68 +9,15 @@ import {
   FolderIcon, DocumentTextIcon, PhotoIcon, CurrencyDollarIcon
 } from '@heroicons/react/24/outline'
 import { Course, Subject, Topic, SubTopic, Flashcard, Deepening } from '@/types'
-
-// Mock data
-const mockCourses: Course[] = [
-  {
-    id: 'inss',
-    name: 'INSS - Instituto Nacional do Seguro Social',
-    description: 'Preparação completa para o concurso do INSS',
-    image: '/api/placeholder/400/200',
-    price: 99.90,
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 'tj',
-    name: 'TJ - Tribunal de Justiça',
-    description: 'Concurso para cargos de técnico e analista judiciário',
-    image: '/api/placeholder/400/200',
-    price: 99.90,
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 'pm',
-    name: 'PM - Polícia Militar',
-    description: 'Preparação para concursos de soldado e oficial da PM',
-    image: '/api/placeholder/400/200',
-    price: 99.90,
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-]
-
-const mockSubjects: Subject[] = [
-  { id: 'sub1', courseId: 'inss', name: 'Direito Previdenciário', description: 'Matéria sobre direito previdenciário', order: 1, isActive: true },
-  { id: 'sub2', courseId: 'inss', name: 'Direito Administrativo', description: 'Matéria sobre direito administrativo', order: 2, isActive: true },
-  { id: 'sub3', courseId: 'tj', name: 'Direito Civil', description: 'Matéria sobre direito civil', order: 1, isActive: true },
-  { id: 'sub4', courseId: 'pm', name: 'Direito Penal', description: 'Matéria sobre direito penal', order: 1, isActive: true }
-]
-
-const mockTopics: Topic[] = [
-  { id: 'top1', subjectId: 'sub1', name: 'Benefícios Previdenciários', description: 'Tópico sobre benefícios', order: 1, isActive: true },
-  { id: 'top2', subjectId: 'sub1', name: 'Contribuições', description: 'Tópico sobre contribuições', order: 2, isActive: true },
-  { id: 'top3', subjectId: 'sub3', name: 'Contratos', description: 'Tópico sobre contratos', order: 1, isActive: true }
-]
-
-const mockSubTopics: SubTopic[] = [
-  { id: 'st1', topicId: 'top1', name: 'Aposentadoria por Idade', description: 'Sub-tópico sobre aposentadoria', order: 1, isActive: true },
-  { id: 'st2', topicId: 'top1', name: 'Aposentadoria por Tempo de Contribuição', description: 'Sub-tópico sobre aposentadoria', order: 2, isActive: true },
-  { id: 'st3', topicId: 'top3', name: 'Contrato de Compra e Venda', description: 'Sub-tópico sobre contratos', order: 1, isActive: true }
-]
-
-const mockFlashcards: Flashcard[] = [
-  { id: 'fc1', subTopicId: 'st1', front: 'O que é aposentadoria por idade?', back: 'Benefício concedido ao segurado que completar 65 anos (homem) ou 60 anos (mulher)', explanation: 'Aposentadoria por idade é um benefício previdenciário', isActive: true, order: 1, createdAt: new Date(), updatedAt: new Date() },
-  { id: 'fc2', subTopicId: 'st1', front: 'Qual a idade mínima para aposentadoria por idade?', back: '65 anos para homens e 60 anos para mulheres', explanation: 'Idade mínima estabelecida pela legislação', isActive: true, order: 2, createdAt: new Date(), updatedAt: new Date() }
-]
-
-const mockDeepenings: Deepening[] = [
-  { id: 'dep1', flashcardId: 'fc1', title: 'Aposentadoria por Idade - Detalhes', content: '<p><strong>Aposentadoria por Idade</strong> é um benefício previdenciário...</p>', images: [], videos: [], pdfs: [], externalLinks: [], isActive: true }
-]
+import { 
+  getCourses, 
+  getSubjects, 
+  getTopics, 
+  getSubTopics, 
+  getFlashcards, 
+  getDeepenings,
+  onCoursesChange
+} from '@/lib/firebase'
 
 export default function AdminCoursesPage() {
   const { user } = useAuth()
@@ -81,6 +28,15 @@ export default function AdminCoursesPage() {
   const [selectedSubTopic, setSelectedSubTopic] = useState<SubTopic | null>(null)
   const [activeView, setActiveView] = useState<'courses' | 'subjects' | 'topics' | 'subtopics' | 'content'>('courses')
   const [searchTerm, setSearchTerm] = useState('')
+  const [loading, setLoading] = useState(true)
+  
+  // Estados para dados do Firebase
+  const [courses, setCourses] = useState<Course[]>([])
+  const [subjects, setSubjects] = useState<Subject[]>([])
+  const [topics, setTopics] = useState<Topic[]>([])
+  const [subTopics, setSubTopics] = useState<SubTopic[]>([])
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([])
+  const [deepenings, setDeepenings] = useState<Deepening[]>([])
   
   // Estados para modais
   const [showAddCourseModal, setShowAddCourseModal] = useState(false)
@@ -98,6 +54,39 @@ export default function AdminCoursesPage() {
   // Verificar se é admin
   const isAdmin = user?.email === 'claudioghabryel.cg@gmail.com' || user?.email === 'natalhia775@gmail.com'
   
+  // Carregar dados do Firebase
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true)
+        
+        // Carregar cursos
+        const coursesData = await getCourses()
+        setCourses(coursesData)
+        
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (isAdmin) {
+      loadData()
+    }
+  }, [isAdmin])
+
+  // Listener em tempo real para cursos
+  useEffect(() => {
+    if (!isAdmin) return
+
+    const unsubscribe = onCoursesChange((data) => {
+      setCourses(data)
+    })
+
+    return () => unsubscribe()
+  }, [isAdmin])
+
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -109,50 +98,104 @@ export default function AdminCoursesPage() {
     )
   }
 
-  const getSubjectsForCourse = (courseId: string) => {
-    return mockSubjects.filter(subject => subject.courseId === courseId)
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando dados...</p>
+        </div>
+      </div>
+    )
   }
 
-  const getTopicsForSubject = (subjectId: string) => {
-    return mockTopics.filter(topic => topic.subjectId === subjectId)
+  const getSubjectsForCourse = async (courseId: string) => {
+    try {
+      const subjectsData = await getSubjects(courseId)
+      setSubjects(subjectsData)
+      return subjectsData
+    } catch (error) {
+      console.error('Erro ao carregar matérias:', error)
+      return []
+    }
   }
 
-  const getSubTopicsForTopic = (topicId: string) => {
-    return mockSubTopics.filter(subTopic => subTopic.topicId === topicId)
+  const getTopicsForSubject = async (subjectId: string) => {
+    if (!selectedCourse) return []
+    try {
+      const topicsData = await getTopics(selectedCourse.id, subjectId)
+      setTopics(topicsData)
+      return topicsData
+    } catch (error) {
+      console.error('Erro ao carregar tópicos:', error)
+      return []
+    }
   }
 
-  const getFlashcardsForSubTopic = (subTopicId: string) => {
-    return mockFlashcards.filter(flashcard => flashcard.subTopicId === subTopicId)
+  const getSubTopicsForTopic = async (topicId: string) => {
+    if (!selectedCourse || !selectedSubject) return []
+    try {
+      const subTopicsData = await getSubTopics(selectedCourse.id, selectedSubject.id, topicId)
+      setSubTopics(subTopicsData)
+      return subTopicsData
+    } catch (error) {
+      console.error('Erro ao carregar sub-tópicos:', error)
+      return []
+    }
   }
 
-  const getDeepeningsForFlashcard = (flashcardId: string) => {
-    return mockDeepenings.filter(deepening => deepening.flashcardId === flashcardId)
+  const getFlashcardsForSubTopic = async (subTopicId: string) => {
+    if (!selectedCourse || !selectedSubject || !selectedTopic) return []
+    try {
+      const flashcardsData = await getFlashcards(selectedCourse.id, selectedSubject.id, selectedTopic.id, subTopicId)
+      setFlashcards(flashcardsData)
+      return flashcardsData
+    } catch (error) {
+      console.error('Erro ao carregar flashcards:', error)
+      return []
+    }
   }
 
-  const handleCourseSelect = (course: Course) => {
+  const getDeepeningsForFlashcard = async (flashcardId: string) => {
+    if (!selectedCourse || !selectedSubject || !selectedTopic || !selectedSubTopic) return []
+    try {
+      const deepeningsData = await getDeepenings(selectedCourse.id, selectedSubject.id, selectedTopic.id, selectedSubTopic.id)
+      setDeepenings(deepeningsData)
+      return deepeningsData
+    } catch (error) {
+      console.error('Erro ao carregar aprofundamentos:', error)
+      return []
+    }
+  }
+
+  const handleCourseSelect = async (course: Course) => {
     setSelectedCourse(course)
     setSelectedSubject(null)
     setSelectedTopic(null)
     setSelectedSubTopic(null)
     setActiveView('subjects')
+    await getSubjectsForCourse(course.id)
   }
 
-  const handleSubjectSelect = (subject: Subject) => {
+  const handleSubjectSelect = async (subject: Subject) => {
     setSelectedSubject(subject)
     setSelectedTopic(null)
     setSelectedSubTopic(null)
     setActiveView('topics')
+    await getTopicsForSubject(subject.id)
   }
 
-  const handleTopicSelect = (topic: Topic) => {
+  const handleTopicSelect = async (topic: Topic) => {
     setSelectedTopic(topic)
     setSelectedSubTopic(null)
     setActiveView('subtopics')
+    await getSubTopicsForTopic(topic.id)
   }
 
-  const handleSubTopicSelect = (subTopic: SubTopic) => {
+  const handleSubTopicSelect = async (subTopic: SubTopic) => {
     setSelectedSubTopic(subTopic)
     setActiveView('content')
+    await getFlashcardsForSubTopic(subTopic.id)
   }
 
   const handleAddCourse = () => {
@@ -259,53 +302,61 @@ export default function AdminCoursesPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {mockCourses.map((course) => (
-          <div key={course.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="relative">
-              <img
-                src={course.image}
-                alt={course.name}
-                className="w-full h-48 object-cover"
-              />
-              <div className="absolute top-2 right-2">
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  course.isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-                }`}>
-                  {course.isActive ? 'Ativo' : 'Inativo'}
-                </span>
+      {courses.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+          <BookOpenIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum curso encontrado</h3>
+          <p className="text-gray-600">Adicione seu primeiro curso para começar.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {courses.map((course) => (
+            <div key={course.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="relative">
+                <img
+                  src={course.image}
+                  alt={course.name}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="absolute top-2 right-2">
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                    course.isActive ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                  }`}>
+                    {course.isActive ? 'Ativo' : 'Inativo'}
+                  </span>
+                </div>
+              </div>
+              <div className="p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{course.name}</h3>
+                <p className="text-gray-600 text-sm mb-3">{course.description}</p>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-lg font-bold text-primary-600">
+                    R$ {course.price.toFixed(2).replace('.', ',')}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {subjects.filter(s => s.courseId === course.id).length} matérias
+                  </span>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleCourseSelect(course)}
+                    className="btn-primary flex-1 flex items-center justify-center gap-2"
+                  >
+                    <BookOpenIcon className="w-4 h-4" />
+                    Gerenciar
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCourse(course)}
+                    className="btn-outline text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
-            <div className="p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{course.name}</h3>
-              <p className="text-gray-600 text-sm mb-3">{course.description}</p>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-lg font-bold text-primary-600">
-                  R$ {course.price.toFixed(2).replace('.', ',')}
-                </span>
-                <span className="text-sm text-gray-500">
-                  {getSubjectsForCourse(course.id).length} matérias
-                </span>
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handleCourseSelect(course)}
-                  className="btn-primary flex-1 flex items-center justify-center gap-2"
-                >
-                  <BookOpenIcon className="w-4 h-4" />
-                  Gerenciar
-                </button>
-                <button
-                  onClick={() => handleDeleteCourse(course)}
-                  className="btn-outline text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
-                >
-                  <TrashIcon className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 
@@ -319,32 +370,40 @@ export default function AdminCoursesPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {getSubjectsForCourse(selectedCourse!.id).map((subject) => (
-          <div key={subject.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold text-gray-900">{subject.name}</h3>
-              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                subject.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
-                {subject.isActive ? 'Ativo' : 'Inativo'}
-              </span>
+      {subjects.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+          <AcademicCapIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma matéria encontrada</h3>
+          <p className="text-gray-600">Adicione matérias ao curso para organizar o conteúdo.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {subjects.map((subject) => (
+            <div key={subject.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold text-gray-900">{subject.name}</h3>
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                  subject.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }`}>
+                  {subject.isActive ? 'Ativo' : 'Inativo'}
+                </span>
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleSubjectSelect(subject)}
+                  className="btn-primary flex-1 flex items-center justify-center gap-2"
+                >
+                  <AcademicCapIcon className="w-4 h-4" />
+                  Ver Tópicos
+                </button>
+                <button className="btn-outline text-red-600 hover:text-red-700 border-red-200 hover:border-red-300">
+                  <TrashIcon className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => handleSubjectSelect(subject)}
-                className="btn-primary flex-1 flex items-center justify-center gap-2"
-              >
-                <AcademicCapIcon className="w-4 h-4" />
-                Ver Tópicos
-              </button>
-              <button className="btn-outline text-red-600 hover:text-red-700 border-red-200 hover:border-red-300">
-                <TrashIcon className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 
@@ -358,32 +417,40 @@ export default function AdminCoursesPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {getTopicsForSubject(selectedSubject!.id).map((topic) => (
-          <div key={topic.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold text-gray-900">{topic.name}</h3>
-              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                topic.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
-                {topic.isActive ? 'Ativo' : 'Inativo'}
-              </span>
+      {topics.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+          <FolderIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum tópico encontrado</h3>
+          <p className="text-gray-600">Adicione tópicos à matéria para organizar o conteúdo.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {topics.map((topic) => (
+            <div key={topic.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold text-gray-900">{topic.name}</h3>
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                  topic.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }`}>
+                  {topic.isActive ? 'Ativo' : 'Inativo'}
+                </span>
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleTopicSelect(topic)}
+                  className="btn-primary flex-1 flex items-center justify-center gap-2"
+                >
+                  <FolderIcon className="w-4 h-4" />
+                  Ver Sub-tópicos
+                </button>
+                <button className="btn-outline text-red-600 hover:text-red-700 border-red-200 hover:border-red-300">
+                  <TrashIcon className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => handleTopicSelect(topic)}
-                className="btn-primary flex-1 flex items-center justify-center gap-2"
-              >
-                <FolderIcon className="w-4 h-4" />
-                Ver Sub-tópicos
-              </button>
-              <button className="btn-outline text-red-600 hover:text-red-700 border-red-200 hover:border-red-300">
-                <TrashIcon className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 
@@ -397,32 +464,40 @@ export default function AdminCoursesPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {getSubTopicsForTopic(selectedTopic!.id).map((subTopic) => (
-          <div key={subTopic.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold text-gray-900">{subTopic.name}</h3>
-              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                subTopic.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
-                {subTopic.isActive ? 'Ativo' : 'Inativo'}
-              </span>
+      {subTopics.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+          <DocumentTextIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum sub-tópico encontrado</h3>
+          <p className="text-gray-600">Adicione sub-tópicos para organizar o conteúdo.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {subTopics.map((subTopic) => (
+            <div key={subTopic.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold text-gray-900">{subTopic.name}</h3>
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                  subTopic.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }`}>
+                  {subTopic.isActive ? 'Ativo' : 'Inativo'}
+                </span>
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleSubTopicSelect(subTopic)}
+                  className="btn-primary flex-1 flex items-center justify-center gap-2"
+                >
+                  <DocumentTextIcon className="w-4 h-4" />
+                  Ver Conteúdo
+                </button>
+                <button className="btn-outline text-red-600 hover:text-red-700 border-red-200 hover:border-red-300">
+                  <TrashIcon className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => handleSubTopicSelect(subTopic)}
-                className="btn-primary flex-1 flex items-center justify-center gap-2"
-              >
-                <DocumentTextIcon className="w-4 h-4" />
-                Ver Conteúdo
-              </button>
-              <button className="btn-outline text-red-600 hover:text-red-700 border-red-200 hover:border-red-300">
-                <TrashIcon className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 
@@ -445,47 +520,53 @@ export default function AdminCoursesPage() {
       {/* Flashcards */}
       <div className="bg-white rounded-lg shadow-sm p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Flashcards</h3>
-        <div className="space-y-4">
-          {getFlashcardsForSubTopic(selectedSubTopic!.id).map((flashcard) => (
-            <div key={flashcard.id} className="border border-gray-200 rounded-lg p-4">
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 mb-1">Frente: {flashcard.front}</h4>
-                  <p className="text-sm text-gray-600">Verso: {flashcard.back}</p>
+        {flashcards.length === 0 ? (
+          <p className="text-gray-600 text-center py-8">Nenhum flashcard encontrado.</p>
+        ) : (
+          <div className="space-y-4">
+            {flashcards.map((flashcard) => (
+              <div key={flashcard.id} className="border border-gray-200 rounded-lg p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900 mb-1">Frente: {flashcard.front}</h4>
+                    <p className="text-sm text-gray-600">Verso: {flashcard.back}</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button className="text-blue-600 hover:text-blue-900">
+                      <PencilIcon className="w-4 h-4" />
+                    </button>
+                    <button className="text-red-600 hover:text-red-900">
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex space-x-2">
-                  <button className="text-blue-600 hover:text-blue-900">
-                    <PencilIcon className="w-4 h-4" />
-                  </button>
-                  <button className="text-red-600 hover:text-red-900">
-                    <TrashIcon className="w-4 h-4" />
-                  </button>
+                <div className="flex justify-between items-center text-sm text-gray-500">
+                  <span>Ordem: {flashcard.order}</span>
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                    flashcard.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {flashcard.isActive ? 'Ativo' : 'Inativo'}
+                  </span>
                 </div>
               </div>
-              <div className="flex justify-between items-center text-sm text-gray-500">
-                <span>Ordem: {flashcard.order}</span>
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  flashcard.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}>
-                  {flashcard.isActive ? 'Ativo' : 'Inativo'}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Aprofundamentos */}
       <div className="bg-white rounded-lg shadow-sm p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Aprofundamentos</h3>
-        <div className="space-y-4">
-          {getFlashcardsForSubTopic(selectedSubTopic!.id).map((flashcard) =>
-            getDeepeningsForFlashcard(flashcard.id).map((deepening) => (
+        {deepenings.length === 0 ? (
+          <p className="text-gray-600 text-center py-8">Nenhum aprofundamento encontrado.</p>
+        ) : (
+          <div className="space-y-4">
+            {deepenings.map((deepening) => (
               <div key={deepening.id} className="border border-gray-200 rounded-lg p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900 mb-1">{deepening.title}</h4>
-                    <p className="text-sm text-gray-600">Flashcard: {flashcard.front}</p>
+                    <p className="text-sm text-gray-600">Flashcard relacionado</p>
                   </div>
                   <div className="flex space-x-2">
                     <button className="text-blue-600 hover:text-blue-900">
@@ -505,9 +586,9 @@ export default function AdminCoursesPage() {
                   </span>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

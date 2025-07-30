@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { useRouter } from 'next/navigation'
 import {
@@ -18,101 +18,23 @@ import {
   ChatBubbleLeftRightIcon,
   StarIcon
 } from '@heroicons/react/24/outline'
-
-// Mock data
-const mockUsers = [
-  {
-    id: '1',
-    name: 'João Silva',
-    email: 'joao@example.com',
-    isPaid: true,
-    isAdmin: false,
-    isActive: true,
-    lastLoginAt: new Date('2024-01-15'),
-    studyTime: 120,
-    cardsStudied: 45,
-    cardsCorrect: 38,
-    cardsWrong: 7
-  },
-  {
-    id: '2',
-    name: 'Maria Santos',
-    email: 'maria@example.com',
-    isPaid: false,
-    isAdmin: false,
-    isActive: true,
-    lastLoginAt: new Date('2024-01-14'),
-    studyTime: 0,
-    cardsStudied: 0,
-    cardsCorrect: 0,
-    cardsWrong: 0
-  }
-]
-
-const mockTestimonials = [
-  {
-    id: '1',
-    name: 'Maria Silva',
-    email: 'maria@example.com',
-    role: 'Aprovada no INSS',
-    content: 'Os flashcards me ajudaram muito! Consegui memorizar todo o conteúdo de forma eficiente.',
-    rating: 5,
-    course: 'INSS',
-    createdAt: new Date('2024-01-15'),
-    isApproved: true
-  },
-  {
-    id: '2',
-    name: 'João Santos',
-    email: 'joao@example.com',
-    role: 'Aprovado no TJ',
-    content: 'A plataforma é incrível! O sistema de repetição espaçada fez toda a diferença.',
-    rating: 5,
-    course: 'TJ',
-    createdAt: new Date('2024-01-14'),
-    isApproved: true
-  },
-  {
-    id: '3',
-    name: 'Ana Costa',
-    email: 'ana@example.com',
-    role: 'Aprovada na PM',
-    content: 'Conteúdo de qualidade e interface intuitiva. Recomendo para todos!',
-    rating: 5,
-    course: 'PM',
-    createdAt: new Date('2024-01-13'),
-    isApproved: true
-  },
-  {
-    id: '4',
-    name: 'Pedro Lima',
-    email: 'pedro@example.com',
-    role: 'Aprovado no INSS',
-    content: 'Excelente plataforma! Os flashcards são muito eficientes para memorização.',
-    rating: 4,
-    course: 'INSS',
-    createdAt: new Date('2024-01-12'),
-    isApproved: false // Aguardando aprovação
-  },
-  {
-    id: '5',
-    name: 'Carla Souza',
-    email: 'carla@example.com',
-    role: 'Aprovada no TJ',
-    content: 'Muito bom o conteúdo! Recomendo fortemente para quem está estudando.',
-    rating: 5,
-    course: 'TJ',
-    createdAt: new Date('2024-01-11'),
-    isApproved: false // Aguardando aprovação
-  }
-]
+import { 
+  getAllUsers, 
+  getTestimonials, 
+  updateTestimonialStatus, 
+  deleteUserByAdmin,
+  onUsersChange,
+  onTestimonialsChange
+} from '@/lib/firebase'
+import { User, Testimonial } from '@/types'
 
 export default function AdminPage() {
   const { user } = useAuth()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('dashboard')
-  const [users, setUsers] = useState(mockUsers)
-  const [testimonials, setTestimonials] = useState(mockTestimonials)
+  const [users, setUsers] = useState<User[]>([])
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
+  const [loading, setLoading] = useState(true)
   const [showAddUserModal, setShowAddUserModal] = useState(false)
   const [newUser, setNewUser] = useState({
     name: '',
@@ -122,7 +44,56 @@ export default function AdminPage() {
     isAdmin: false
   })
 
-  if (!user || !user.isAdmin) {
+  // Verificar se é admin
+  const isAdmin = user?.email === 'claudioghabryel.cg@gmail.com' || user?.email === 'natalhia775@gmail.com'
+
+  // Carregar dados do Firebase
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true)
+        
+        // Carregar usuários
+        const usersData = await getAllUsers()
+        setUsers(usersData)
+        
+        // Carregar depoimentos
+        const allTestimonials = await getTestimonials('all') // Buscar todos os depoimentos
+        setTestimonials(allTestimonials)
+        
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (isAdmin) {
+      loadData()
+    }
+  }, [isAdmin])
+
+  // Listeners em tempo real
+  useEffect(() => {
+    if (!isAdmin) return
+
+    // Listener para mudanças nos usuários
+    const unsubscribeUsers = onUsersChange((data: User[]) => {
+      setUsers(data)
+    })
+
+    // Listener para mudanças nos depoimentos
+    const unsubscribeTestimonials = onTestimonialsChange((data: Testimonial[]) => {
+      setTestimonials(data)
+    })
+
+    return () => {
+      unsubscribeUsers()
+      unsubscribeTestimonials()
+    }
+  }, [isAdmin])
+
+  if (!user || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -139,42 +110,60 @@ export default function AdminPage() {
     )
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando dados...</p>
+        </div>
+      </div>
+    )
+  }
+
   const handleAddUser = () => {
     if (!newUser.name || !newUser.email || !newUser.password) {
       alert('Por favor, preencha todos os campos.')
       return
     }
 
-    const user = {
-      id: Date.now().toString(),
-      name: newUser.name,
-      email: newUser.email,
-      isPaid: newUser.isPaid,
-      isAdmin: newUser.isAdmin,
-      isActive: true,
-      lastLoginAt: new Date(),
-      studyTime: 0,
-      cardsStudied: 0,
-      cardsCorrect: 0,
-      cardsWrong: 0
-    }
-
-    setUsers([...users, user])
+    // Implementar criação de usuário via Firebase
+    console.log('Adicionando usuário:', newUser)
     setNewUser({ name: '', email: '', password: '', isPaid: false, isAdmin: false })
     setShowAddUserModal(false)
-    alert('Usuário adicionado com sucesso!')
+    alert('Funcionalidade em desenvolvimento!')
   }
 
-  const handleApproveTestimonial = (testimonialId: string) => {
-    setTestimonials(testimonials.map(t => 
-      t.id === testimonialId ? { ...t, isApproved: true } : t
-    ))
-    alert('Depoimento aprovado com sucesso!')
+  const handleApproveTestimonial = async (testimonialId: string) => {
+    try {
+      await updateTestimonialStatus(testimonialId, 'approved')
+      alert('Depoimento aprovado com sucesso!')
+    } catch (error) {
+      console.error('Erro ao aprovar depoimento:', error)
+      alert('Erro ao aprovar depoimento!')
+    }
   }
 
-  const handleRejectTestimonial = (testimonialId: string) => {
-    setTestimonials(testimonials.filter(t => t.id !== testimonialId))
-    alert('Depoimento rejeitado e removido!')
+  const handleRejectTestimonial = async (testimonialId: string) => {
+    try {
+      await updateTestimonialStatus(testimonialId, 'rejected')
+      alert('Depoimento rejeitado e removido!')
+    } catch (error) {
+      console.error('Erro ao rejeitar depoimento:', error)
+      alert('Erro ao rejeitar depoimento!')
+    }
+  }
+
+  const handleDeleteUser = async (userId: string) => {
+    if (confirm('Tem certeza que deseja excluir este usuário?')) {
+      try {
+        await deleteUserByAdmin(userId)
+        alert('Usuário excluído com sucesso!')
+      } catch (error) {
+        console.error('Erro ao excluir usuário:', error)
+        alert('Erro ao excluir usuário!')
+      }
+    }
   }
 
   const renderStars = (rating: number) => {
@@ -186,8 +175,9 @@ export default function AdminPage() {
     ))
   }
 
-  const pendingTestimonials = testimonials.filter(t => !t.isApproved)
-  const approvedTestimonials = testimonials.filter(t => t.isApproved)
+  const pendingTestimonials = testimonials.filter(t => t.status === 'pending')
+  const approvedTestimonials = testimonials.filter(t => t.status === 'approved')
+  const payingUsers = users.filter(u => u.isPaid)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -289,7 +279,7 @@ export default function AdminPage() {
                   <CheckIcon className="w-8 h-8 text-green-600" />
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Usuários Pagantes</p>
-                    <p className="text-2xl font-bold text-gray-900">{users.filter(u => u.isPaid).length}</p>
+                    <p className="text-2xl font-bold text-gray-900">{payingUsers.length}</p>
                   </div>
                 </div>
               </div>
@@ -316,18 +306,28 @@ export default function AdminPage() {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Atividade Recente</h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-gray-900">Novos depoimentos aguardando aprovação</p>
-                    <p className="text-sm text-gray-600">{pendingTestimonials.length} depoimentos</p>
+                {pendingTestimonials.length > 0 && (
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-900">Novos depoimentos aguardando aprovação</p>
+                      <p className="text-sm text-gray-600">{pendingTestimonials.length} depoimentos</p>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab('testimonials')}
+                      className="btn-primary"
+                    >
+                      Ver Depoimentos
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setActiveTab('testimonials')}
-                    className="btn-primary"
-                  >
-                    Ver Depoimentos
-                  </button>
-                </div>
+                )}
+                {users.length === 0 && (
+                  <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-900">Nenhum usuário registrado</p>
+                      <p className="text-sm text-gray-600">Aguarde novos registros</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -347,78 +347,89 @@ export default function AdminPage() {
               </button>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Usuário
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Último Login
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Progresso
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ações
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {users.map((user) => (
-                    <tr key={user.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
-                          {user.isPaid ? (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              Pagante
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                              Não Pagante
-                            </span>
-                          )}
-                          {user.isAdmin && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              Admin
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.lastLoginAt.toLocaleDateString('pt-BR')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {user.cardsStudied} flashcards estudados
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {user.studyTime} min de estudo
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button className="text-primary-600 hover:text-primary-900 mr-3">
-                          Editar
-                        </button>
-                        <button className="text-red-600 hover:text-red-900">
-                          Remover
-                        </button>
-                      </td>
+            {users.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+                <UserGroupIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum usuário encontrado</h3>
+                <p className="text-gray-600">Aguarde novos registros de usuários.</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Usuário
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Último Login
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Progresso
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Ações
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {users.map((user) => (
+                      <tr key={user.uid}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{user.displayName || 'Usuário'}</div>
+                            <div className="text-sm text-gray-500">{user.email}</div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center space-x-2">
+                            {user.isPaid ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Pagante
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                Não Pagante
+                              </span>
+                            )}
+                            {user.isAdmin && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                Admin
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString('pt-BR') : 'Nunca'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {user.cardsStudied || 0} flashcards estudados
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {user.studyTime || 0} min de estudo
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button className="text-primary-600 hover:text-primary-900 mr-3">
+                            Editar
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteUser(user.uid)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Remover
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
@@ -458,7 +469,7 @@ export default function AdminPage() {
                           <p className="text-gray-700 italic mb-2">"{testimonial.content}"</p>
                           <div className="flex items-center justify-between text-sm text-gray-500">
                             <span>Curso: {testimonial.course}</span>
-                            <span>{testimonial.createdAt.toLocaleDateString('pt-BR')}</span>
+                            <span>{testimonial.createdAt ? new Date(testimonial.createdAt).toLocaleDateString('pt-BR') : 'Data não disponível'}</span>
                           </div>
                         </div>
                         <div className="flex space-x-2 ml-4">
@@ -487,42 +498,46 @@ export default function AdminPage() {
             {/* Approved Testimonials */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Depoimentos Aprovados</h3>
-              <div className="space-y-4">
-                {approvedTestimonials.map((testimonial) => (
-                  <div key={testimonial.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <h4 className="font-semibold text-gray-900">{testimonial.name}</h4>
-                          <span className="text-sm text-gray-500">({testimonial.email})</span>
-                          <span className="text-sm text-primary-600">{testimonial.role}</span>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Aprovado
-                          </span>
+              {approvedTestimonials.length === 0 ? (
+                <p className="text-gray-600 text-center py-8">Nenhum depoimento aprovado ainda.</p>
+              ) : (
+                <div className="space-y-4">
+                  {approvedTestimonials.map((testimonial) => (
+                    <div key={testimonial.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h4 className="font-semibold text-gray-900">{testimonial.name}</h4>
+                            <span className="text-sm text-gray-500">({testimonial.email})</span>
+                            <span className="text-sm text-primary-600">{testimonial.role}</span>
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Aprovado
+                            </span>
+                          </div>
+                          <div className="flex items-center mb-2">
+                            {renderStars(testimonial.rating)}
+                            <span className="ml-2 text-sm text-gray-600">({testimonial.rating}/5)</span>
+                          </div>
+                          <p className="text-gray-700 italic mb-2">"{testimonial.content}"</p>
+                          <div className="flex items-center justify-between text-sm text-gray-500">
+                            <span>Curso: {testimonial.course}</span>
+                            <span>{testimonial.createdAt ? new Date(testimonial.createdAt).toLocaleDateString('pt-BR') : 'Data não disponível'}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center mb-2">
-                          {renderStars(testimonial.rating)}
-                          <span className="ml-2 text-sm text-gray-600">({testimonial.rating}/5)</span>
+                        <div className="flex space-x-2 ml-4">
+                          <button
+                            onClick={() => handleRejectTestimonial(testimonial.id)}
+                            className="btn-outline text-red-600 border-red-300 hover:bg-red-50 flex items-center gap-1"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                            Remover
+                          </button>
                         </div>
-                        <p className="text-gray-700 italic mb-2">"{testimonial.content}"</p>
-                        <div className="flex items-center justify-between text-sm text-gray-500">
-                          <span>Curso: {testimonial.course}</span>
-                          <span>{testimonial.createdAt.toLocaleDateString('pt-BR')}</span>
-                        </div>
-                      </div>
-                      <div className="flex space-x-2 ml-4">
-                        <button
-                          onClick={() => handleRejectTestimonial(testimonial.id)}
-                          className="btn-outline text-red-600 border-red-300 hover:bg-red-50 flex items-center gap-1"
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                          Remover
-                        </button>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

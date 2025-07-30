@@ -10,6 +10,7 @@ export interface User {
   cardsStudied: number;
   cardsCorrect: number;
   cardsWrong: number;
+  lastLoginAt?: any;
   createdAt: any;
   updatedAt: any;
 }
@@ -128,4 +129,18 @@ export interface AdminStats {
   totalFlashcards: number
   totalStudySessions: number
   revenue: number
+}
+
+export interface Testimonial {
+  id: string
+  uid: string
+  name: string
+  email: string
+  role: string
+  content: string
+  rating: number
+  course: string
+  status: 'pending' | 'approved' | 'rejected'
+  createdAt: any
+  updatedAt: any
 } 

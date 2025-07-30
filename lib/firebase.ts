@@ -193,7 +193,7 @@ export const getCourses = async () => {
     return coursesSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }))
+    })) as any[]
   } catch (error) {
     console.error('Error getting courses:', error)
     return []
@@ -232,7 +232,7 @@ export const getSubjects = async (courseId: string) => {
     return subjectsSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }))
+    })) as any[]
   } catch (error) {
     console.error('Error getting subjects:', error)
     return []
@@ -261,7 +261,7 @@ export const getTopics = async (courseId: string, subjectId: string) => {
     return topicsSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }))
+    })) as any[]
   } catch (error) {
     console.error('Error getting topics:', error)
     return []
@@ -290,7 +290,7 @@ export const getSubTopics = async (courseId: string, subjectId: string, topicId:
     return subTopicsSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }))
+    })) as any[]
   } catch (error) {
     console.error('Error getting subtopics:', error)
     return []
@@ -340,7 +340,7 @@ export const getFlashcards = async (courseId: string, subjectId: string, topicId
     return flashcardsSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }))
+    })) as any[]
   } catch (error) {
     console.error('Error getting flashcards:', error)
     return []
@@ -369,7 +369,7 @@ export const getDeepenings = async (courseId: string, subjectId: string, topicId
     return deepeningsSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }))
+    })) as any[]
   } catch (error) {
     console.error('Error getting deepenings:', error)
     return []
@@ -502,7 +502,12 @@ export const updateTestimonialStatus = async (testimonialId: string, status: str
 
 export const getTestimonials = async (status: string = 'approved') => {
   try {
-    const testimonialsQuery = query(collection(db, 'testimonials'), where('status', '==', status))
+    let testimonialsQuery
+    if (status === 'all') {
+      testimonialsQuery = collection(db, 'testimonials')
+    } else {
+      testimonialsQuery = query(collection(db, 'testimonials'), where('status', '==', status))
+    }
     const testimonialsSnapshot = await getDocs(testimonialsQuery)
     return testimonialsSnapshot.docs.map(doc => ({
       id: doc.id,
@@ -593,6 +598,26 @@ export const deleteFile = async (path: string) => {
 export const onUserDataChange = (uid: string, callback: (data: any) => void) => {
   return onSnapshot(doc(db, 'users', uid), (doc) => {
     callback(doc.exists() ? doc.data() : null)
+  })
+}
+
+export const onUsersChange = (callback: (data: any[]) => void) => {
+  return onSnapshot(collection(db, 'users'), (snapshot) => {
+    const users = snapshot.docs.map(doc => ({
+      uid: doc.id,
+      ...doc.data()
+    }))
+    callback(users)
+  })
+}
+
+export const onTestimonialsChange = (callback: (data: any[]) => void) => {
+  return onSnapshot(collection(db, 'testimonials'), (snapshot) => {
+    const testimonials = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+    callback(testimonials)
   })
 }
 
