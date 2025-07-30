@@ -18,6 +18,7 @@ import {
   getDeepenings,
   createCourse,
   deleteCourse,
+  createSubject,
   onCoursesChange
 } from '@/lib/firebase'
 
@@ -44,13 +45,21 @@ export default function AdminCoursesPage() {
   const [showAddCourseModal, setShowAddCourseModal] = useState(false)
   const [showDeleteCourseModal, setShowDeleteCourseModal] = useState(false)
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null)
+  const [showAddSubjectModal, setShowAddSubjectModal] = useState(false)
   
   // Estados para novo curso
   const [newCourse, setNewCourse] = useState({
     name: '',
     description: '',
     price: 99.90,
-    image: '/api/placeholder/400/200'
+    image: 'https://via.placeholder.com/400x200/3B82F6/FFFFFF?text=Curso'
+  })
+
+  // Estados para nova matéria
+  const [newSubject, setNewSubject] = useState({
+    name: '',
+    description: '',
+    order: 1
   })
 
   // Verificar se é admin
@@ -221,7 +230,7 @@ export default function AdminCoursesPage() {
 
       await createCourse(courseData)
       setShowAddCourseModal(false)
-      setNewCourse({ name: '', description: '', price: 99.90, image: '/api/placeholder/400/200' })
+      setNewCourse({ name: '', description: '', price: 99.90, image: 'https://via.placeholder.com/400x200/3B82F6/FFFFFF?text=Curso' })
       alert('Curso adicionado com sucesso!')
     } catch (error) {
       console.error('Erro ao adicionar curso:', error)
@@ -245,6 +254,31 @@ export default function AdminCoursesPage() {
     } catch (error) {
       console.error('Erro ao excluir curso:', error)
       alert('Erro ao excluir curso. Tente novamente.')
+    }
+  }
+
+  const handleAddSubject = async () => {
+    try {
+      if (!selectedCourse || !newSubject.name || !newSubject.description) {
+        alert('Por favor, preencha todos os campos obrigatórios.')
+        return
+      }
+
+      const subjectData = {
+        name: newSubject.name,
+        description: newSubject.description,
+        order: newSubject.order,
+        isActive: true
+      }
+
+      await createSubject(selectedCourse.id, subjectData)
+      setShowAddSubjectModal(false)
+      setNewSubject({ name: '', description: '', order: 1 })
+      await getSubjectsForCourse(selectedCourse.id) // Recarregar matérias
+      alert('Matéria adicionada com sucesso!')
+    } catch (error) {
+      console.error('Erro ao adicionar matéria:', error)
+      alert('Erro ao adicionar matéria. Tente novamente.')
     }
   }
 
@@ -391,7 +425,10 @@ export default function AdminCoursesPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Matérias - {selectedCourse?.name}</h2>
-        <button className="btn-primary flex items-center gap-2">
+        <button 
+          onClick={() => setShowAddSubjectModal(true)}
+          className="btn-primary flex items-center gap-2"
+        >
           <PlusIcon className="w-5 h-5" />
           Adicionar Matéria
         </button>
@@ -769,6 +806,79 @@ export default function AdminCoursesPage() {
                   Excluir Curso
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Adicionar Matéria */}
+      {showAddSubjectModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-10 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Adicionar Nova Matéria</h3>
+              <button
+                onClick={() => setShowAddSubjectModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nome da Matéria
+                </label>
+                <input
+                  type="text"
+                  value={newSubject.name}
+                  onChange={(e) => setNewSubject({...newSubject, name: e.target.value})}
+                  className="input-field"
+                  placeholder="Ex: Direito Constitucional"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Descrição
+                </label>
+                <textarea
+                  value={newSubject.description}
+                  onChange={(e) => setNewSubject({...newSubject, description: e.target.value})}
+                  className="input-field"
+                  rows={3}
+                  placeholder="Descreva a matéria..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ordem
+                </label>
+                <input
+                  type="number"
+                  value={newSubject.order}
+                  onChange={(e) => setNewSubject({...newSubject, order: parseInt(e.target.value)})}
+                  className="input-field"
+                  min="1"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setShowAddSubjectModal(false)}
+                className="btn-outline"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleAddSubject}
+                className="btn-primary"
+              >
+                Adicionar Matéria
+              </button>
             </div>
           </div>
         </div>

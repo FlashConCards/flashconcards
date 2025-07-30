@@ -76,6 +76,37 @@ NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abcdef123456
 MERCADOPAGO_ACCESS_TOKEN=seu_access_token
 ```
 
+## 🔐 Configuração do Firebase
+
+### 1. Autorizar Domínio
+1. Acesse o [Firebase Console](https://console.firebase.google.com)
+2. Selecione seu projeto
+3. Vá para **Authentication** → **Settings** → **Authorized domains**
+4. Adicione: `flashconcards.vercel.app`
+
+### 2. Configurar Regras do Firestore
+1. Vá para **Firestore Database** → **Rules**
+2. Substitua as regras por:
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Permitir acesso total para admins
+    match /users/{userId} {
+      allow read, write: if request.auth != null && 
+        (request.auth.token.email == 'claudioghabryel.cg@gmail.com' || 
+         request.auth.token.email == 'natalhia775@gmail.com');
+    }
+    
+    // Permitir acesso para usuários autenticados
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+```
+
 ## 🚀 Deploy no Vercel
 
 1. **Conecte seu repositório GitHub ao Vercel**
