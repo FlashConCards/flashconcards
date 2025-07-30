@@ -10,9 +10,11 @@ export interface User {
   cardsStudied: number;
   cardsCorrect: number;
   cardsWrong: number;
+  createdByAdmin?: boolean;
+  selectedCourse?: string;
   lastLoginAt?: any;
-  createdAt: any;
-  updatedAt: any;
+  createdAt?: any;
+  updatedAt?: any;
 }
 
 export interface Course {

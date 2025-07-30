@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@/types';
-import { auth, signInUser, createUser, signOutUser, updateUserData, getUserData, onAuthStateChanged, db } from '@/lib/firebase';
+import { auth, signInUser, createUser, signOutUser, updateUserData, getUserData, getAllAdminUsers, onAuthStateChanged, db } from '@/lib/firebase';
 import { setDoc, doc } from 'firebase/firestore';
 
 interface AuthContextType {
@@ -32,10 +32,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          const userData = await getUserData(firebaseUser.uid)
+          // Primeiro, tentar buscar na coleção users
+          let userData = await getUserData(firebaseUser.uid)
+          
+          // Se não encontrar, buscar na coleção admin-users
+          if (!userData) {
+            console.log('User not found in users collection, checking admin-users...')
+            const adminUsers = await getAllAdminUsers()
+            const adminUser = adminUsers.find((u: any) => u.uid === firebaseUser.uid)
+            if (adminUser) {
+              userData = adminUser
+              console.log('User found in admin-users collection')
+            }
+          }
+          
           setUser({
             uid: firebaseUser.uid,
-            email: firebaseUser.email || '',
+            email: userData?.email || firebaseUser.email || '',
             displayName: userData?.displayName || firebaseUser.displayName || '',
             photoURL: userData?.photoURL || firebaseUser.photoURL || '',
             isAdmin: userData?.isAdmin || false,
@@ -45,6 +58,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             cardsStudied: userData?.cardsStudied || 0,
             cardsCorrect: userData?.cardsCorrect || 0,
             cardsWrong: userData?.cardsWrong || 0,
+            createdByAdmin: userData?.createdByAdmin || false,
+            selectedCourse: userData?.selectedCourse || '',
             lastLoginAt: userData?.lastLoginAt || null,
             createdAt: userData?.createdAt || null,
             updatedAt: userData?.updatedAt || null
@@ -64,6 +79,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             cardsStudied: 0,
             cardsCorrect: 0,
             cardsWrong: 0,
+            createdByAdmin: false,
+            selectedCourse: '',
             lastLoginAt: null,
             createdAt: null,
             updatedAt: null
