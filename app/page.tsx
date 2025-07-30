@@ -90,19 +90,15 @@ export default function HomePage() {
       router.push('/login')
       return
     }
-    if (!user.isPaid && !(user as any).createdByAdmin) {
-      router.push('/payment')
-      return
-    }
+    // Remover verificação de pagamento - ir direto para dashboard
     router.push('/dashboard')
   }
 
   const handleViewAllCourses = () => {
     if (!user) {
       router.push('/login')
-    } else if (!user.isPaid && !(user as any).createdByAdmin) {
-      router.push('/payment')
     } else {
+      // Remover verificação de pagamento - ir direto para dashboard
       router.push('/dashboard')
     }
   }
@@ -181,9 +177,8 @@ export default function HomePage() {
                 onClick={() => {
                   if (!user) {
                     router.push('/register')
-                  } else if (!user.isPaid && !(user as any).createdByAdmin) {
-                    router.push('/payment')
                   } else {
+                    // Remover verificação de pagamento - ir direto para dashboard
                     router.push('/dashboard')
                   }
                 }}
@@ -490,9 +485,8 @@ export default function HomePage() {
                 onClick={() => {
                   if (!user) {
                     router.push('/register')
-                  } else if (!user.isPaid && !(user as any).createdByAdmin) {
-                    router.push('/payment')
                   } else {
+                    // Remover verificação de pagamento - ir direto para dashboard
                     router.push('/dashboard')
                   }
                 }}

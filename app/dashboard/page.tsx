@@ -54,10 +54,8 @@ export default function DashboardPage() {
 
   // Check if user has access
   useEffect(() => {
-    if (user && !user.isPaid && !user.isAdmin && !(user as any).createdByAdmin) {
-      router.push('/payment')
-      return
-    }
+    // Remover verificação de pagamento para evitar loop
+    console.log('Dashboard loaded for user:', user?.email)
   }, [user, router]);
 
   // Load courses in real-time
