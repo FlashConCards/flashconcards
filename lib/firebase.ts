@@ -121,67 +121,42 @@ export { onAuthStateChanged }
 // ===== USUÁRIOS (/users) =====
 export const getAllUsers = async () => {
   try {
-    console.log('Fetching users from Firestore...')
-    const querySnapshot = await getDocs(collection(db, 'users'))
-    const users = querySnapshot.docs.map(doc => ({
-      uid: doc.id,
-      ...doc.data()
-    })) as any[]
-    console.log('Users loaded from Firestore:', users.length)
-    console.log('Users data:', users)
+    console.log('getAllUsers: Starting to fetch users...')
+    const usersCollection = collection(db, 'users')
+    console.log('getAllUsers: Collection reference created')
+    
+    const querySnapshot = await getDocs(usersCollection)
+    console.log('getAllUsers: Query snapshot received, docs count:', querySnapshot.docs.length)
+    
+    const users = querySnapshot.docs.map(doc => {
+      const userData = {
+        uid: doc.id,
+        ...doc.data()
+      } as any
+      console.log('getAllUsers: Processing user:', userData.uid, userData.email)
+      return userData
+    }) as any[]
+    
+    console.log('getAllUsers: Final users array length:', users.length)
+    console.log('getAllUsers: Users data:', users)
+    
+    // Se não há usuários no Firestore, vamos verificar se há usuários no Auth
+    if (users.length === 0) {
+      console.log('getAllUsers: No users found in Firestore, checking if this is a permissions issue...')
+    }
+    
     return users
   } catch (error: any) {
-    console.error('Error getting all users from Firestore:', error)
+    console.error('getAllUsers: Error getting all users:', error)
+    console.error('getAllUsers: Error code:', error.code)
+    console.error('getAllUsers: Error message:', error.message)
+    
+    // Se é erro de permissão, vamos tentar uma abordagem diferente
+    if (error.code === 'permission-denied') {
+      console.log('getAllUsers: Permission denied, this might be a Firebase rules issue')
+    }
+    
     return []
-  }
-}
-
-// Função para buscar usuários do Firebase Auth (todos os usuários registrados)
-export const getAllAuthUsers = async () => {
-  try {
-    console.log('Fetching users from Firebase Auth...')
-    // Nota: Firebase Admin SDK seria necessário para listar todos os usuários
-    // Por enquanto, vamos apenas retornar os usuários do Firestore
-    return await getAllUsers()
-  } catch (error: any) {
-    console.error('Error getting auth users:', error)
-    return []
-  }
-}
-
-// Função para verificar se há usuários em diferentes coleções
-export const checkAllUserCollections = async () => {
-  try {
-    console.log('Checking all user collections...')
-    
-    // Verificar coleção /users
-    const usersSnapshot = await getDocs(collection(db, 'users'))
-    console.log('Users in /users collection:', usersSnapshot.docs.length)
-    
-    // Verificar se há usuários em outras coleções antigas
-    try {
-      const adminUsersSnapshot = await getDocs(collection(db, 'admin-users'))
-      console.log('Users in /admin-users collection:', adminUsersSnapshot.docs.length)
-    } catch (error) {
-      console.log('No /admin-users collection found')
-    }
-    
-    // Verificar se há usuários em outras coleções
-    try {
-      const allUsersSnapshot = await getDocs(collection(db, 'all-users'))
-      console.log('Users in /all-users collection:', allUsersSnapshot.docs.length)
-    } catch (error) {
-      console.log('No /all-users collection found')
-    }
-    
-    return {
-      users: usersSnapshot.docs.length,
-      adminUsers: 0, // Será calculado se existir
-      allUsers: 0 // Será calculado se existir
-    }
-  } catch (error) {
-    console.error('Error checking user collections:', error)
-    return { users: 0, adminUsers: 0, allUsers: 0 }
   }
 }
 

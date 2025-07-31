@@ -206,14 +206,14 @@ export default function FlashcardsPage() {
     <div className="min-h-screen bg-gray-100">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
-          <div>
+              <div>
             <h1 className="text-3xl font-bold text-gray-800">Gerenciar Flashcards</h1>
             {selectedCourse && selectedSubject && selectedTopic && selectedSubTopic && (
               <p className="text-gray-600 mt-2">
                 Curso: {selectedCourse.name} → Matéria: {selectedSubject.name} → Tópico: {selectedTopic.name} → Sub-tópico: {selectedSubTopic.name}
               </p>
             )}
-          </div>
+              </div>
           <div className="flex space-x-4">
             <button
               onClick={() => router.push('/admin')}
@@ -266,7 +266,7 @@ export default function FlashcardsPage() {
           <div className="bg-white rounded-lg shadow">
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-800">Flashcards ({flashcards.length})</h2>
-            </div>
+          </div>
             <div className="p-6">
               {flashcards.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">Nenhum flashcard cadastrado ainda.</p>
@@ -292,11 +292,11 @@ export default function FlashcardsPage() {
                         </button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                ))}
           </div>
+              )}
+        </div>
+      </div>
         )}
 
         {/* Add Flashcard Modal */}
@@ -347,23 +347,23 @@ export default function FlashcardsPage() {
               </div>
 
               <div className="flex justify-end space-x-3 mt-6">
-                <button
+                  <button
                   onClick={() => setShowAddModal(false)}
                   className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  Cancelar
-                </button>
-                <button
+                  >
+                    Cancelar
+                  </button>
+                  <button
                   onClick={handleAddFlashcard}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
+                  >
                   Adicionar
-                </button>
-              </div>
+                  </button>
+                </div>
             </div>
           </div>
         )}
-      </div>
+        </div>
     </div>
   );
 } 

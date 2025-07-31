@@ -104,25 +104,25 @@ export default function CoursesPage() {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Gerenciar Cursos</h1>
           <div className="flex space-x-4">
-            <button
+      <button
               onClick={() => router.push('/admin')}
               className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
             >
               Voltar ao Admin
-            </button>
-            <button
+      </button>
+          <button
               onClick={() => setShowAddModal(true)}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Adicionar Curso
-            </button>
-          </div>
-        </div>
+          Adicionar Curso
+        </button>
+      </div>
+              </div>
 
         <div className="bg-white rounded-lg shadow">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-800">Cursos ({courses.length})</h2>
-          </div>
+            </div>
           <div className="p-6">
             {courses.length === 0 ? (
               <p className="text-gray-500 text-center py-8">Nenhum curso cadastrado ainda.</p>
@@ -135,25 +135,25 @@ export default function CoursesPage() {
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-bold text-green-600">
                         R$ {course.price.toFixed(2)}
-                      </span>
-                      <div className="flex space-x-2">
-                        <button
+                </span>
+              <div className="flex space-x-2">
+                <button
                           onClick={() => router.push(`/admin/subjects?courseId=${course.id}`)}
                           className="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded hover:bg-blue-200"
-                        >
+                >
                           Matérias
-                        </button>
-                        <button
+                </button>
+                <button
                           onClick={() => handleDeleteCourse(course.id)}
                           className="text-xs bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200"
-                        >
+                >
                           Excluir
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                </button>
               </div>
+            </div>
+          </div>
+        ))}
+      </div>
             )}
           </div>
         </div>
@@ -163,50 +163,50 @@ export default function CoursesPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <h3 className="text-lg font-semibold mb-4">Adicionar Curso</h3>
-              
-              <div className="space-y-4">
-                <div>
+
+            <div className="space-y-4">
+              <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Nome do Curso *
-                  </label>
-                  <input
-                    type="text"
-                    value={newCourse.name}
-                    onChange={(e) => setNewCourse({...newCourse, name: e.target.value})}
+                </label>
+                <input
+                  type="text"
+                  value={newCourse.name}
+                  onChange={(e) => setNewCourse({...newCourse, name: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Nome do curso"
-                  />
-                </div>
-                
-                <div>
+                />
+              </div>
+
+              <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Descrição *
-                  </label>
-                  <textarea
-                    value={newCourse.description}
-                    onChange={(e) => setNewCourse({...newCourse, description: e.target.value})}
+                </label>
+                <textarea
+                  value={newCourse.description}
+                  onChange={(e) => setNewCourse({...newCourse, description: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={3}
+                  rows={3}
                     placeholder="Descrição do curso"
-                  />
-                </div>
-                
+                />
+              </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Preço (R$)
                   </label>
-                  <input
-                    type="number"
+                    <input
+                      type="number"
                     step="0.01"
-                    value={newCourse.price}
+                      value={newCourse.price}
                     onChange={(e) => setNewCourse({...newCourse, price: parseFloat(e.target.value) || 0})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="0.00"
                   />
-                </div>
               </div>
+            </div>
 
-              <div className="flex justify-end space-x-3 mt-6">
+            <div className="flex justify-end space-x-3 mt-6">
                 <button
                   onClick={() => setShowAddModal(false)}
                   className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
@@ -223,7 +223,7 @@ export default function CoursesPage() {
             </div>
           </div>
         )}
-      </div>
+        </div>
     </div>
   );
 } 

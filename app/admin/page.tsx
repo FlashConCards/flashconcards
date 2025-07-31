@@ -12,8 +12,7 @@ import {
   getCourses,
   onUsersChange,
   onTestimonialsChange,
-  onCoursesChange,
-  checkAllUserCollections
+  onCoursesChange
 } from '@/lib/firebase';
 
 interface User {
@@ -211,18 +210,6 @@ export default function AdminPage() {
     }
   };
 
-  const handleCheckAllCollections = async () => {
-    try {
-      console.log('Checking all user collections...')
-      const collections = await checkAllUserCollections()
-      console.log('Collections found:', collections)
-      alert(`Verificação completa!\n\nUsuários encontrados:\n- /users: ${collections.users}\n- /admin-users: ${collections.adminUsers}\n- /all-users: ${collections.allUsers}\n\nVerifique o console (F12) para mais detalhes.`)
-    } catch (error: any) {
-      console.error('Error checking collections:', error)
-      alert(`Erro ao verificar coleções: ${error.message}`)
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -259,7 +246,7 @@ export default function AdminPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-700">Total de Depoimentos</h3>
             <p className="text-3xl font-bold text-purple-600">{testimonials.length}</p>
-          </div>
+            </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-700">Aguardando Aprovação</h3>
             <p className="text-3xl font-bold text-orange-600">{pendingTestimonials}</p>
@@ -271,42 +258,25 @@ export default function AdminPage() {
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold text-gray-800">Usuários ({users.length})</h2>
-                             <div className="flex space-x-2">
-                 <button
-                   onClick={loadData}
-                   className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-                 >
-                   Atualizar
-                 </button>
-                 <button
-                   onClick={handleCheckAllCollections}
-                   className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
-                 >
-                   Verificar Coleções
-                 </button>
-                 <button
-                   onClick={() => setShowAddUserModal(true)}
-                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                 >
-                   Adicionar Usuário
-                 </button>
-               </div>
-            </div>
-            
-            {/* Debug Info */}
-            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-              <h4 className="text-sm font-medium text-yellow-800 mb-2">🔍 Informações de Debug:</h4>
-              <div className="text-xs text-yellow-700 space-y-1">
-                <p>• Usuários carregados: {users.length}</p>
-                <p>• Última atualização: {new Date().toLocaleTimeString()}</p>
-                <p>• Verifique o console do navegador (F12) para mais detalhes</p>
-                <p>• Coleção no Firebase: /users</p>
+              <div className="flex space-x-2">
+            <button
+                  onClick={loadData}
+                  className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  Atualizar
+            </button>
+            <button
+                  onClick={() => setShowAddUserModal(true)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Adicionar Usuário
+                  </button>
               </div>
             </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+                <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuário</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -338,7 +308,7 @@ export default function AdminPage() {
                           user.isPaid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
                           {user.isPaid ? 'Pago' : 'Não Pago'}
-                        </span>
+                            </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {user.selectedCourse || 'Nenhum'}
@@ -354,16 +324,16 @@ export default function AdminPage() {
                     </tr>
                   ))
                 )}
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
 
         {/* Courses Management Section */}
         <div className="bg-white rounded-lg shadow mb-8">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-800">Gerenciar Cursos</h2>
-          </div>
+              </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <button
@@ -398,7 +368,7 @@ export default function AdminPage() {
                 <div className="text-sm">Flashcards</div>
               </button>
             </div>
-            
+
             <div className="mt-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Cursos Disponíveis</h3>
               {courses.length === 0 ? (
@@ -416,26 +386,26 @@ export default function AdminPage() {
                         >
                           Matérias
                         </button>
-                        <button
+                          <button
                           onClick={() => router.push(`/admin/topics?courseId=${course.id}`)}
                           className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200"
-                        >
+                          >
                           Tópicos
-                        </button>
-                        <button
+                          </button>
+                          <button
                           onClick={() => router.push(`/admin/flashcards?courseId=${course.id}`)}
                           className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded hover:bg-purple-200"
-                        >
+                          >
                           Flashcards
-                        </button>
+                          </button>
                       </div>
                     </div>
                   ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+              </div>
+            )}
+                        </div>
+                        </div>
+                      </div>
 
         {/* Testimonials Section */}
         <div className="bg-white rounded-lg shadow">
@@ -476,12 +446,12 @@ export default function AdminPage() {
                       {testimonial.status === 'approved' ? 'Aprovado' :
                        testimonial.status === 'rejected' ? 'Rejeitado' : 'Pendente'}
                     </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
       </div>
 
       {/* Add User Modal */}
@@ -490,29 +460,29 @@ export default function AdminPage() {
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold mb-4">Adicionar Usuário</h3>
             
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email *
-                </label>
-                <input
-                  type="email"
-                  value={newUser.email}
-                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                  </label>
+                  <input
+                    type="email"
+                    value={newUser.email}
+                    onChange={(e) => setNewUser({...newUser, email: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="exemplo@gmail.com"
                   required
-                />
+                  />
                 <p className="text-xs text-gray-500 mt-1">
                   Digite um email válido (exemplo: usuario@gmail.com)
                 </p>
-              </div>
+                </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                   Nome Completo *
-                </label>
-                <input
+                  </label>
+                  <input
                   type="text"
                   value={newUser.displayName}
                   onChange={(e) => setNewUser({...newUser, displayName: e.target.value})}
@@ -548,48 +518,48 @@ export default function AdminPage() {
                 <p className="text-xs text-gray-500 mt-1">
                   O usuário terá acesso completo ao curso selecionado
                 </p>
-              </div>
+                </div>
 
               <div className="flex items-center">
-                <input
-                  type="checkbox"
+                    <input
+                      type="checkbox"
                   id="isPaid"
-                  checked={newUser.isPaid}
-                  onChange={(e) => setNewUser({...newUser, isPaid: e.target.checked})}
+                      checked={newUser.isPaid}
+                      onChange={(e) => setNewUser({...newUser, isPaid: e.target.checked})}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
+                    />
                 <label htmlFor="isPaid" className="ml-2 block text-sm text-gray-900">
                   Usuário pagante
-                </label>
+                  </label>
               </div>
 
               <div className="flex items-center">
-                <input
-                  type="checkbox"
+                    <input
+                      type="checkbox"
                   id="isAdmin"
-                  checked={newUser.isAdmin}
-                  onChange={(e) => setNewUser({...newUser, isAdmin: e.target.checked})}
+                      checked={newUser.isAdmin}
+                      onChange={(e) => setNewUser({...newUser, isAdmin: e.target.checked})}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
+                    />
                 <label htmlFor="isAdmin" className="ml-2 block text-sm text-gray-900">
                   Administrador
-                </label>
+                  </label>
+                </div>
               </div>
-            </div>
 
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => setShowAddUserModal(false)}
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowAddUserModal(false)}
                 className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleAddUser}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleAddUser}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
+                >
                 Adicionar
-              </button>
+                </button>
             </div>
           </div>
         </div>
