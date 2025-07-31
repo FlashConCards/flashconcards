@@ -61,16 +61,60 @@ export default function CoursesPage() {
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Verificar tamanho do arquivo (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('A imagem é muito grande. Selecione uma imagem menor que 5MB.');
+        return;
+      }
+      
       setSelectedImage(file);
       
-      // Converter para Base64 para evitar problemas de CORS
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64String = e.target?.result as string;
-        setImagePreview(base64String);
-        console.log('Imagem convertida para Base64');
+      // Comprimir imagem antes de converter para Base64
+      const compressImage = (file: File): Promise<string> => {
+        return new Promise((resolve) => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          
+          img.onload = () => {
+            // Calcular novas dimensões (máximo 600x400 para reduzir ainda mais)
+            let { width, height } = img;
+            const maxWidth = 600;
+            const maxHeight = 400;
+            
+            if (width > height) {
+              if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+              }
+            } else {
+              if (height > maxHeight) {
+                width = (width * maxHeight) / height;
+                height = maxHeight;
+              }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Desenhar imagem comprimida
+            ctx?.drawImage(img, 0, 0, width, height);
+            
+            // Converter para Base64 com qualidade ainda mais reduzida
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
+            resolve(compressedBase64);
+          };
+          
+          img.src = URL.createObjectURL(file);
+        });
       };
-      reader.readAsDataURL(file);
+      
+      // Comprimir e criar preview
+      compressImage(file).then((base64String) => {
+        setImagePreview(base64String);
+        console.log('Imagem comprimida com sucesso');
+        console.log('Tamanho do Base64:', base64String.length, 'caracteres');
+      });
     }
   };
 
