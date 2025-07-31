@@ -4,6 +4,16 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
+  // Extrair uid do request primeiro - fora do try para estar disponível em todo o escopo
+  const { uid } = await request.json();
+
+  if (!uid) {
+    return NextResponse.json(
+      { error: 'UID do usuário é obrigatório' },
+      { status: 400 }
+    );
+  }
+
   try {
     // Verificar se as variáveis de ambiente estão configuradas
     if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
@@ -35,16 +45,6 @@ export async function POST(request: NextRequest) {
 
     const adminAuth = getAuth();
     const adminDb = getFirestore();
-
-    // Extrair uid do request primeiro
-    const { uid } = await request.json();
-
-    if (!uid) {
-      return NextResponse.json(
-        { error: 'UID do usuário é obrigatório' },
-        { status: 400 }
-      );
-    }
 
     console.log('Deleting user from Auth:', uid);
 
