@@ -29,6 +29,89 @@ import {
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
+// Componente separado para evitar erro de hooks
+interface SubTopicCardProps {
+  subTopic: SubTopic;
+  onStartStudy: (subTopic: SubTopic) => void;
+  getProgressForSubTopic: (subTopicId: string) => Promise<StudyProgress>;
+  formatLastStudied: (date?: Date) => string;
+}
+
+function SubTopicCard({ subTopic, onStartStudy, getProgressForSubTopic, formatLastStudied }: SubTopicCardProps) {
+  const [progress, setProgress] = useState<StudyProgress>({
+    totalCards: 0,
+    studiedCards: 0,
+    correctCards: 0,
+    wrongCards: 0,
+    accuracy: 0,
+    lastStudied: undefined
+  });
+
+  useEffect(() => {
+    const loadProgress = async () => {
+      const realProgress = await getProgressForSubTopic(subTopic.id);
+      setProgress(realProgress);
+    };
+    loadProgress();
+  }, [subTopic.id, getProgressForSubTopic]);
+
+  const progressPercentage = progress.totalCards > 0 ? (progress.studiedCards / progress.totalCards) * 100 : 0;
+
+  return (
+    <div className="border-2 border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all transform hover:scale-105 bg-white">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <h5 className="font-bold text-gray-900 text-lg mb-3">{subTopic.name}</h5>
+          <p className="text-sm text-gray-600 leading-relaxed mb-4">{subTopic.description}</p>
+        </div>
+      </div>
+      
+      {/* Progress Stats */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-medium text-gray-700">Progresso</span>
+          <span className="text-sm font-bold text-gray-900">{progress.studiedCards}/{progress.totalCards} cards</span>
+        </div>
+        
+        <div className="w-full bg-gray-200 rounded-full h-3">
+          <div
+            className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-300"
+            style={{ width: `${progressPercentage}%` }}
+          ></div>
+        </div>
+        
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center">
+            <div className="text-lg font-bold text-green-600">{progress.correctCards}</div>
+            <div className="text-xs text-gray-500">Acertos</div>
+          </div>
+          <div className="text-center">
+            <div className="text-lg font-bold text-red-600">{progress.wrongCards}</div>
+            <div className="text-xs text-gray-500">Erros</div>
+          </div>
+          <div className="text-center">
+            <div className="text-lg font-bold text-blue-600">{progress.accuracy.toFixed(0)}%</div>
+            <div className="text-xs text-gray-500">Taxa</div>
+          </div>
+        </div>
+        
+        <div className="flex items-center text-xs text-gray-500 mb-4">
+          <ClockIcon className="h-4 w-4 mr-2" />
+          <span>Último estudo: {formatLastStudied(progress.lastStudied)}</span>
+        </div>
+        
+        <button
+          onClick={() => onStartStudy(subTopic)}
+          className="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-4 py-3 rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all transform hover:scale-105 flex items-center justify-center space-x-2 font-medium"
+        >
+          <PlayIcon className="h-5 w-5" />
+          <span>Começar a Estudar</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 interface StudyProgress {
   totalCards: number;
   studiedCards: number;
@@ -369,83 +452,15 @@ export default function StudyAreaPage() {
               {selectedTopic.name} - Sub-tópicos
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {subTopics.map((subTopic) => {
-                const [progress, setProgress] = useState<StudyProgress>({
-                  totalCards: 0,
-                  studiedCards: 0,
-                  correctCards: 0,
-                  wrongCards: 0,
-                  accuracy: 0,
-                  lastStudied: undefined
-                });
-
-                useEffect(() => {
-                  const loadProgress = async () => {
-                    const realProgress = await getProgressForSubTopic(subTopic.id);
-                    setProgress(realProgress);
-                  };
-                  loadProgress();
-                }, [subTopic.id]);
-
-                const progressPercentage = progress.totalCards > 0 ? (progress.studiedCards / progress.totalCards) * 100 : 0;
-
-                return (
-                  <div
-                    key={subTopic.id}
-                    className="border-2 border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all transform hover:scale-105 bg-white"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h5 className="font-bold text-gray-900 text-lg mb-3">{subTopic.name}</h5>
-                        <p className="text-sm text-gray-600 leading-relaxed mb-4">{subTopic.description}</p>
-                      </div>
-                    </div>
-                    
-                    {/* Progress Stats */}
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700">Progresso</span>
-                        <span className="text-sm font-bold text-gray-900">{progress.studiedCards}/{progress.totalCards} cards</span>
-                      </div>
-                      
-                      <div className="w-full bg-gray-200 rounded-full h-3">
-                        <div
-                          className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-300"
-                          style={{ width: `${progressPercentage}%` }}
-                        ></div>
-                      </div>
-                      
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="text-center">
-                          <div className="text-lg font-bold text-green-600">{progress.correctCards}</div>
-                          <div className="text-xs text-gray-500">Acertos</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-lg font-bold text-red-600">{progress.wrongCards}</div>
-                          <div className="text-xs text-gray-500">Erros</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-lg font-bold text-blue-600">{progress.accuracy.toFixed(0)}%</div>
-                          <div className="text-xs text-gray-500">Taxa</div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center text-xs text-gray-500 mb-4">
-                        <ClockIcon className="h-4 w-4 mr-2" />
-                        <span>Último estudo: {formatLastStudied(progress.lastStudied)}</span>
-                      </div>
-                      
-                      <button
-                        onClick={() => handleStartStudy(subTopic)}
-                        className="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-4 py-3 rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all transform hover:scale-105 flex items-center justify-center space-x-2 font-medium"
-                      >
-                        <PlayIcon className="h-5 w-5" />
-                        <span>Começar a Estudar</span>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+              {subTopics.map((subTopic) => (
+                <SubTopicCard 
+                  key={subTopic.id}
+                  subTopic={subTopic}
+                  onStartStudy={handleStartStudy}
+                  getProgressForSubTopic={getProgressForSubTopic}
+                  formatLastStudied={formatLastStudied}
+                />
+              ))}
             </div>
           </div>
         )}
