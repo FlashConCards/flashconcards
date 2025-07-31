@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
+import { 
   getDeepenings,
   createDeepening,
   deleteDeepening,
@@ -126,13 +126,13 @@ export default function DeepeningPage() {
     document.execCommand(command, false, value);
     if (editorRef.current) {
       setNewDeepening({...newDeepening, content: editorRef.current.innerHTML});
-    }
+  }
   };
 
   const insertHTML = (html: string) => {
     if (editorRef.current) {
       const selection = window.getSelection();
-      if (selection && selection.rangeCount > 0) {
+    if (selection && selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
         range.deleteContents();
         const div = document.createElement('div');
@@ -201,14 +201,14 @@ export default function DeepeningPage() {
     <div className="min-h-screen bg-gray-100">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
-          <div>
+              <div>
             <h1 className="text-3xl font-bold text-gray-800">Gerenciar Aprofundamentos</h1>
             {selectedCourse && selectedSubject && selectedTopic && (
               <p className="text-gray-600 mt-2">
                 Curso: {selectedCourse.name} → Matéria: {selectedSubject.name} → Tópico: {selectedTopic.name}
               </p>
             )}
-          </div>
+              </div>
           <div className="flex space-x-4">
             <button
               onClick={() => router.push('/admin')}
@@ -247,15 +247,15 @@ export default function DeepeningPage() {
                               className="text-gray-700"
                               dangerouslySetInnerHTML={{ __html: deepening.content }}
                             />
-                          </div>
-                        </div>
+          </div>
+                      </div>
                         <div className="ml-4">
-                          <button
-                            onClick={() => handleDeleteDeepening(deepening.id)}
-                            className="text-red-600 hover:text-red-900"
-                          >
+                        <button
+                          onClick={() => handleDeleteDeepening(deepening.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
                             Excluir
-                          </button>
+                        </button>
                         </div>
                       </div>
                     </div>
@@ -279,40 +279,40 @@ export default function DeepeningPage() {
                     Conteúdo do Aprofundamento *
                   </label>
                   <div className="border border-gray-300 rounded-md">
-                    {/* Toolbar */}
+                  {/* Toolbar */}
                     <div className="border-b border-gray-300 p-3 bg-gray-50">
                       <div className="flex flex-wrap gap-2">
                         {/* Formatação de texto */}
                         <div className="flex items-center space-x-1">
-                          <button
+                      <button
                             type="button"
-                            onClick={() => execCommand('bold')}
+                        onClick={() => execCommand('bold')}
                             className="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 font-bold"
-                            title="Negrito"
-                          >
+                        title="Negrito"
+                      >
                             B
-                          </button>
-                          <button
+                      </button>
+                      <button
                             type="button"
-                            onClick={() => execCommand('italic')}
+                        onClick={() => execCommand('italic')}
                             className="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 italic"
-                            title="Itálico"
-                          >
+                        title="Itálico"
+                      >
                             I
-                          </button>
-                          <button
+                      </button>
+                      <button
                             type="button"
-                            onClick={() => execCommand('underline')}
+                        onClick={() => execCommand('underline')}
                             className="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 underline"
-                            title="Sublinhado"
-                          >
+                        title="Sublinhado"
+                      >
                             U
-                          </button>
-                        </div>
+                      </button>
+                    </div>
 
                         {/* Tamanhos de fonte */}
                         <div className="flex items-center space-x-1">
-                          <select
+                      <select
                             onChange={(e) => execCommand('fontSize', e.target.value)}
                             className="px-2 py-1 text-sm bg-white border border-gray-300 rounded"
                             title="Tamanho da fonte"
@@ -321,24 +321,24 @@ export default function DeepeningPage() {
                             <option value="3">Normal</option>
                             <option value="5">Grande</option>
                             <option value="7">Muito Grande</option>
-                          </select>
-                        </div>
+                      </select>
+                    </div>
 
                         {/* Família da fonte */}
                         <div className="flex items-center space-x-1">
-                          <select
+                      <select
                             onChange={(e) => execCommand('fontName', e.target.value)}
                             className="px-2 py-1 text-sm bg-white border border-gray-300 rounded"
                             title="Família da fonte"
-                          >
-                            <option value="Arial">Arial</option>
-                            <option value="Times New Roman">Times New Roman</option>
-                            <option value="Courier New">Courier New</option>
-                            <option value="Georgia">Georgia</option>
-                            <option value="Verdana">Verdana</option>
-                            <option value="Helvetica">Helvetica</option>
-                          </select>
-                        </div>
+                      >
+                        <option value="Arial">Arial</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Courier New">Courier New</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Helvetica">Helvetica</option>
+                      </select>
+                  </div>
 
                         {/* Cores */}
                         <div className="flex items-center space-x-1">
@@ -353,8 +353,8 @@ export default function DeepeningPage() {
                             onChange={(e) => execCommand('hiliteColor', e.target.value)}
                             className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
                             title="Cor de fundo"
-                          />
-                        </div>
+                  />
+                </div>
 
                         {/* Alinhamento */}
                         <div className="flex items-center space-x-1">
@@ -439,8 +439,8 @@ export default function DeepeningPage() {
                         >
                           🧹
                         </button>
-                      </div>
-                    </div>
+                  </div>
+                  </div>
 
                     {/* Editor */}
                     <div
@@ -459,27 +459,27 @@ export default function DeepeningPage() {
                   <p className="text-xs text-gray-500 mt-1">
                     Use a barra de ferramentas acima para formatar o texto como no Word.
                   </p>
+                  </div>
                 </div>
-              </div>
 
               <div className="flex justify-end space-x-3 mt-6">
-                <button
+                  <button
                   onClick={() => setShowAddModal(false)}
                   className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  Cancelar
-                </button>
-                <button
+                  >
+                    Cancelar
+                  </button>
+                  <button
                   onClick={handleAddDeepening}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
+                  >
                   Adicionar
-                </button>
+                  </button>
               </div>
             </div>
           </div>
         )}
-      </div>
+        </div>
     </div>
   );
 } 

@@ -698,20 +698,21 @@ export const createPayment = async (paymentData: any) => {
   }
 }
 
-export const updatePaymentStatus = async (paymentId: string, status: string) => {
+export const updatePaymentStatus = async (paymentId: string, status: 'pending' | 'approved' | 'refunded' | 'failed') => {
   try {
-    console.log('Updating payment status:', paymentId, status)
-    const paymentRef = doc(db, 'payments', paymentId)
+    const paymentRef = doc(db, 'payments', paymentId);
     await updateDoc(paymentRef, {
-      status: status,
+      status,
       updatedAt: serverTimestamp()
-    })
-    console.log('Payment status updated successfully')
-  } catch (error) {
-    console.error('Error updating payment status:', error)
-    throw error
+    });
+    console.log('Payment status updated:', paymentId, status);
+  } catch (error: any) {
+    console.error('Error updating payment status:', error);
+    throw error;
   }
-}
+};
+
+
 
 // Buscar pagamentos do usuário
 export const getUserPayments = async (userId: string) => {
