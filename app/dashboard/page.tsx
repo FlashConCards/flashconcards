@@ -346,9 +346,18 @@ export default function DashboardPage() {
         {/* Course Content */}
         {selectedCourse && (
           <div className="bg-white rounded-lg shadow p-6 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              {selectedCourse.name} - Conteúdo
-            </h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {selectedCourse.name} - Conteúdo
+              </h3>
+              <button
+                onClick={() => router.push('/study')}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 flex items-center space-x-2"
+              >
+                <PlayIcon className="h-5 w-5" />
+                <span>Ir para Estudos</span>
+              </button>
+            </div>
             
             {/* Subjects */}
             {subjects.length > 0 && (
