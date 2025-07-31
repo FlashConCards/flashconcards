@@ -149,6 +149,42 @@ export const getAllAuthUsers = async () => {
   }
 }
 
+// Função para verificar se há usuários em diferentes coleções
+export const checkAllUserCollections = async () => {
+  try {
+    console.log('Checking all user collections...')
+    
+    // Verificar coleção /users
+    const usersSnapshot = await getDocs(collection(db, 'users'))
+    console.log('Users in /users collection:', usersSnapshot.docs.length)
+    
+    // Verificar se há usuários em outras coleções antigas
+    try {
+      const adminUsersSnapshot = await getDocs(collection(db, 'admin-users'))
+      console.log('Users in /admin-users collection:', adminUsersSnapshot.docs.length)
+    } catch (error) {
+      console.log('No /admin-users collection found')
+    }
+    
+    // Verificar se há usuários em outras coleções
+    try {
+      const allUsersSnapshot = await getDocs(collection(db, 'all-users'))
+      console.log('Users in /all-users collection:', allUsersSnapshot.docs.length)
+    } catch (error) {
+      console.log('No /all-users collection found')
+    }
+    
+    return {
+      users: usersSnapshot.docs.length,
+      adminUsers: 0, // Será calculado se existir
+      allUsers: 0 // Será calculado se existir
+    }
+  } catch (error) {
+    console.error('Error checking user collections:', error)
+    return { users: 0, adminUsers: 0, allUsers: 0 }
+  }
+}
+
 export const getUserById = async (uid: string) => {
   try {
     const docRef = doc(db, 'users', uid)

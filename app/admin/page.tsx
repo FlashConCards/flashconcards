@@ -12,7 +12,8 @@ import {
   getCourses,
   onUsersChange,
   onTestimonialsChange,
-  onCoursesChange
+  onCoursesChange,
+  checkAllUserCollections
 } from '@/lib/firebase';
 
 interface User {
@@ -210,6 +211,18 @@ export default function AdminPage() {
     }
   };
 
+  const handleCheckAllCollections = async () => {
+    try {
+      console.log('Checking all user collections...')
+      const collections = await checkAllUserCollections()
+      console.log('Collections found:', collections)
+      alert(`Verificação completa!\n\nUsuários encontrados:\n- /users: ${collections.users}\n- /admin-users: ${collections.adminUsers}\n- /all-users: ${collections.allUsers}\n\nVerifique o console (F12) para mais detalhes.`)
+    } catch (error: any) {
+      console.error('Error checking collections:', error)
+      alert(`Erro ao verificar coleções: ${error.message}`)
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -258,20 +271,26 @@ export default function AdminPage() {
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold text-gray-800">Usuários ({users.length})</h2>
-              <div className="flex space-x-2">
-                <button
-                  onClick={loadData}
-                  className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  Atualizar
-                </button>
-                <button
-                  onClick={() => setShowAddUserModal(true)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Adicionar Usuário
-                </button>
-              </div>
+                             <div className="flex space-x-2">
+                 <button
+                   onClick={loadData}
+                   className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                 >
+                   Atualizar
+                 </button>
+                 <button
+                   onClick={handleCheckAllCollections}
+                   className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+                 >
+                   Verificar Coleções
+                 </button>
+                 <button
+                   onClick={() => setShowAddUserModal(true)}
+                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                 >
+                   Adicionar Usuário
+                 </button>
+               </div>
             </div>
             
             {/* Debug Info */}
