@@ -147,15 +147,18 @@ export default function StatsPage() {
           }
         }
 
-        const correctRate = subjectStudiedCards > 0 ? (subjectCorrectCards / subjectStudiedCards) * 100 : 0;
-        
-        subjectProgressData.push({
-          name: subject.name,
-          totalCards: subjectTotalCards,
-          studiedCards: subjectStudiedCards,
-          correctRate,
-          subjectId: subject.id
-        });
+        // Only include subjects that have flashcards
+        if (subjectTotalCards > 0) {
+          const correctRate = subjectStudiedCards > 0 ? (subjectCorrectCards / subjectStudiedCards) * 100 : 0;
+          
+          subjectProgressData.push({
+            name: subject.name,
+            totalCards: subjectTotalCards,
+            studiedCards: subjectStudiedCards,
+            correctRate,
+            subjectId: subject.id
+          });
+        }
       }
 
       setStudySessions(sessionsForCharts);
