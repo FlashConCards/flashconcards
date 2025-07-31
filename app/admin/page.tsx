@@ -15,7 +15,7 @@ import {
 } from '@/lib/firebase';
 
 interface User {
-  id: string;
+  uid: string;
   displayName: string;
   email: string;
   isPaid: boolean;
@@ -99,12 +99,12 @@ export default function AdminPage() {
       setTestimonials(testimonialsData || []);
       setCourses(coursesData || []);
 
-      // Carregar pagamentos de todos os usuários
-      const allPayments: Payment[] = [];
-      for (const user of usersData || []) {
-        const userPayments = await getUserPayments(user.id);
-        allPayments.push(...userPayments);
-      }
+             // Carregar pagamentos de todos os usuários
+       const allPayments: Payment[] = [];
+       for (const user of usersData || []) {
+         const userPayments = await getUserPayments(user.uid);
+         allPayments.push(...userPayments);
+       }
       setPayments(allPayments);
 
       // Calcular métricas financeiras
@@ -382,8 +382,8 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {users.map((user) => (
-                      <tr key={user.id}>
+                                         {users.map((user) => (
+                       <tr key={user.uid}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
@@ -404,18 +404,18 @@ export default function AdminPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleRefundUser(user.id)}
-                              className="text-orange-600 hover:text-orange-900"
-                            >
-                              Reembolsar
-                            </button>
-                            <button
-                              onClick={() => handleDeleteUser(user.id)}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              Excluir
-                            </button>
+                                                         <button
+                               onClick={() => handleRefundUser(user.uid)}
+                               className="text-orange-600 hover:text-orange-900"
+                             >
+                               Reembolsar
+                             </button>
+                             <button
+                               onClick={() => handleDeleteUser(user.uid)}
+                               className="text-red-600 hover:text-red-900"
+                             >
+                               Excluir
+                             </button>
                           </div>
                         </td>
                       </tr>
@@ -458,9 +458,9 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {payments.map((payment) => {
-                      const user = users.find(u => u.id === payment.userId);
-                      const course = courses.find(c => c.id === payment.courseId);
+                                         {payments.map((payment) => {
+                       const user = users.find(u => u.uid === payment.userId);
+                       const course = courses.find(c => c.id === payment.courseId);
                       
                       return (
                         <tr key={payment.id}>
