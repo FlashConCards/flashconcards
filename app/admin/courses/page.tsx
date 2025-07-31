@@ -81,9 +81,10 @@ export default function CoursesPage() {
 
   const handleAddCourse = async () => {
     try {
-      console.log('Iniciando criação do curso...');
+      console.log('=== INICIANDO CRIAÇÃO DO CURSO ===');
       console.log('Dados do curso:', newCourse);
       console.log('Imagem selecionada:', selectedImage);
+      console.log('Image preview:', imagePreview ? 'Existe' : 'Não existe');
       
       if (!newCourse.name || !newCourse.description) {
         alert('Preencha todos os campos obrigatórios');
@@ -97,8 +98,10 @@ export default function CoursesPage() {
       if (selectedImage && imagePreview) {
         console.log('Usando imagem em Base64...');
         imageUrl = imagePreview; // Base64 string
+        console.log('Base64 length:', imageUrl.length);
       } else {
         // Usar imagem padrão se não foi selecionada
+        console.log('Usando imagem padrão...');
         imageUrl = 'https://via.placeholder.com/400x300/cccccc/666666?text=Curso';
       }
 
@@ -124,7 +127,9 @@ export default function CoursesPage() {
       setShowAddModal(false);
       setUploading(false);
       alert('Curso criado com sucesso!');
+      console.log('=== CURSO CRIADO COM SUCESSO ===');
     } catch (error: any) {
+      console.error('=== ERRO AO CRIAR CURSO ===');
       console.error('Error creating course:', error);
       console.error('Error details:', {
         message: error.message,
