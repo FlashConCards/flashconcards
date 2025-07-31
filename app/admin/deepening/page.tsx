@@ -7,8 +7,6 @@ import {
   getDeepenings,
   createDeepening,
   deleteDeepening,
-  getFlashcards,
-  getSubTopics,
   getTopics,
   getSubjects,
   getCourses
@@ -16,23 +14,10 @@ import {
 
 interface Deepening {
   id: string;
-  flashcardId: string;
+  topicId: string;
   content: string;
   createdAt: any;
   updatedAt: any;
-}
-
-interface Flashcard {
-  id: string;
-  question: string;
-  answer: string;
-  subTopicId: string;
-}
-
-interface SubTopic {
-  id: string;
-  name: string;
-  topicId: string;
 }
 
 interface Topic {
@@ -56,21 +41,21 @@ export default function DeepeningPage() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const topicId = searchParams.get('topicId');
+  const subjectId = searchParams.get('subjectId');
+  const courseId = searchParams.get('courseId');
+  
   const [deepenings, setDeepenings] = useState<Deepening[]>([]);
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
-  const [subTopics, setSubTopics] = useState<SubTopic[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('');
-  const [selectedTopic, setSelectedTopic] = useState('');
-  const [selectedSubTopic, setSelectedSubTopic] = useState('');
-  const [selectedFlashcard, setSelectedFlashcard] = useState('');
   const [newDeepening, setNewDeepening] = useState({
-    flashcardId: '',
+    topicId: '',
     content: ''
   });
   const editorRef = useRef<HTMLDivElement>(null);
@@ -92,9 +77,36 @@ export default function DeepeningPage() {
       const coursesData = await getCourses();
       setCourses(coursesData || []);
       
-      // Carregar aprofundamentos existentes
-      const deepeningsData = await getDeepenings();
-      setDeepenings(deepeningsData || []);
+      if (courseId) {
+        const course = coursesData?.find(c => c.id === courseId);
+        setSelectedCourse(course || null);
+        
+        if (course) {
+          const subjectsData = await getSubjects(courseId);
+          setSubjects(subjectsData || []);
+          
+          if (subjectId) {
+            const subject = subjectsData?.find(s => s.id === subjectId);
+            setSelectedSubject(subject || null);
+            
+            if (subject) {
+              const topicsData = await getTopics(subjectId);
+              setTopics(topicsData || []);
+              
+              if (topicId) {
+                const topic = topicsData?.find(t => t.id === topicId);
+                setSelectedTopic(topic || null);
+                setNewDeepening({...newDeepening, topicId: topicId});
+                
+                // Carregar aprofundamentos do tópico
+                const deepeningsData = await getDeepenings();
+                const topicDeepenings = deepeningsData?.filter(d => d.topicId === topicId) || [];
+                setDeepenings(topicDeepenings);
+              }
+            }
+          }
+        }
+      }
       
       setLoading(false);
     } catch (error) {
@@ -107,49 +119,7 @@ export default function DeepeningPage() {
     if (user?.isAdmin) {
       loadData();
     }
-  }, [user]);
-
-  const loadSubjects = async (courseId: string) => {
-    try {
-      const subjectsData = await getSubjects(courseId);
-      setSubjects(subjectsData || []);
-      setTopics([]);
-      setSubTopics([]);
-      setFlashcards([]);
-    } catch (error) {
-      console.error('Erro ao carregar matérias:', error);
-    }
-  };
-
-  const loadTopics = async (subjectId: string) => {
-    try {
-      const topicsData = await getTopics(subjectId);
-      setTopics(topicsData || []);
-      setSubTopics([]);
-      setFlashcards([]);
-    } catch (error) {
-      console.error('Erro ao carregar tópicos:', error);
-    }
-  };
-
-  const loadSubTopics = async (topicId: string) => {
-    try {
-      const subTopicsData = await getSubTopics(topicId);
-      setSubTopics(subTopicsData || []);
-      setFlashcards([]);
-    } catch (error) {
-      console.error('Erro ao carregar sub-tópicos:', error);
-    }
-  };
-
-  const loadFlashcards = async (subTopicId: string) => {
-    try {
-      const flashcardsData = await getFlashcards(subTopicId);
-      setFlashcards(flashcardsData || []);
-    } catch (error) {
-      console.error('Erro ao carregar flashcards:', error);
-    }
-  };
+  }, [user, courseId, subjectId, topicId]);
 
   // Funções do editor rico
   const execCommand = (command: string, value: string = '') => {
@@ -179,7 +149,7 @@ export default function DeepeningPage() {
 
   const handleAddDeepening = async () => {
     try {
-      if (!newDeepening.flashcardId || !newDeepening.content.trim()) {
+      if (!newDeepening.topicId || !newDeepening.content.trim()) {
         alert('Preencha todos os campos obrigatórios');
         return;
       }
@@ -188,7 +158,7 @@ export default function DeepeningPage() {
       await loadData();
       
       setNewDeepening({
-        flashcardId: '',
+        topicId: '',
         content: ''
       });
       setShowAddModal(false);
@@ -231,209 +201,79 @@ export default function DeepeningPage() {
     <div className="min-h-screen bg-gray-100">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Gerenciar Aprofundamentos</h1>
-          <button
-            onClick={() => router.push('/admin')}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-          >
-            Voltar ao Painel
-          </button>
-        </div>
-
-        {/* Add Deepening Button */}
-        <div className="mb-6">
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Adicionar Aprofundamento
-          </button>
-        </div>
-
-        {/* Deepenings List */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-800">Aprofundamentos ({deepenings.length})</h2>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Gerenciar Aprofundamentos</h1>
+            {selectedCourse && selectedSubject && selectedTopic && (
+              <p className="text-gray-600 mt-2">
+                Curso: {selectedCourse.name} → Matéria: {selectedSubject.name} → Tópico: {selectedTopic.name}
+              </p>
+            )}
           </div>
-          <div className="p-6">
-            {deepenings.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">Nenhum aprofundamento cadastrado ainda.</p>
-            ) : (
-              <div className="space-y-4">
-                {deepenings.map((deepening) => (
-                  <div key={deepening.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-800 mb-2">Flashcard ID: {deepening.flashcardId}</h3>
-                        <div className="prose max-w-none">
-                          <div 
-                            className="text-gray-700"
-                            dangerouslySetInnerHTML={{ __html: deepening.content }}
-                          />
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <button
-                          onClick={() => handleDeleteDeepening(deepening.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Excluir
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <div className="flex space-x-4">
+            <button
+              onClick={() => router.push('/admin')}
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Voltar ao Painel
+            </button>
+            {selectedTopic && (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Adicionar Aprofundamento
+              </button>
             )}
           </div>
         </div>
-      </div>
 
-      {/* Add Deepening Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">Adicionar Aprofundamento</h3>
-            
-            <div className="space-y-4">
-              {/* Course Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Curso *
-                </label>
-                <select
-                  value={selectedCourse}
-                  onChange={(e) => {
-                    setSelectedCourse(e.target.value);
-                    setSelectedSubject('');
-                    setSelectedTopic('');
-                    setSelectedSubTopic('');
-                    setSelectedFlashcard('');
-                    if (e.target.value) {
-                      loadSubjects(e.target.value);
-                    }
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Selecione um curso</option>
-                  {courses.map((course) => (
-                    <option key={course.id} value={course.id}>
-                      {course.name}
-                    </option>
+        {/* Deepenings List */}
+        {selectedTopic && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-800">Aprofundamentos do Tópico "{selectedTopic.name}" ({deepenings.length})</h2>
+            </div>
+            <div className="p-6">
+              {deepenings.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">Nenhum aprofundamento cadastrado para este tópico ainda.</p>
+              ) : (
+                <div className="space-y-4">
+                  {deepenings.map((deepening) => (
+                    <div key={deepening.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="prose max-w-none">
+                            <div 
+                              className="text-gray-700"
+                              dangerouslySetInnerHTML={{ __html: deepening.content }}
+                            />
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <button
+                            onClick={() => handleDeleteDeepening(deepening.id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   ))}
-                </select>
-              </div>
-
-              {/* Subject Selection */}
-              {selectedCourse && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Matéria *
-                  </label>
-                  <select
-                    value={selectedSubject}
-                    onChange={(e) => {
-                      setSelectedSubject(e.target.value);
-                      setSelectedTopic('');
-                      setSelectedSubTopic('');
-                      setSelectedFlashcard('');
-                      if (e.target.value) {
-                        loadTopics(e.target.value);
-                      }
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Selecione uma matéria</option>
-                    {subjects.map((subject) => (
-                      <option key={subject.id} value={subject.id}>
-                        {subject.name}
-                      </option>
-                    ))}
-                  </select>
                 </div>
               )}
+            </div>
+          </div>
+        )}
 
-              {/* Topic Selection */}
-              {selectedSubject && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tópico *
-                  </label>
-                  <select
-                    value={selectedTopic}
-                    onChange={(e) => {
-                      setSelectedTopic(e.target.value);
-                      setSelectedSubTopic('');
-                      setSelectedFlashcard('');
-                      if (e.target.value) {
-                        loadSubTopics(e.target.value);
-                      }
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Selecione um tópico</option>
-                    {topics.map((topic) => (
-                      <option key={topic.id} value={topic.id}>
-                        {topic.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* SubTopic Selection */}
-              {selectedTopic && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Sub-tópico *
-                  </label>
-                  <select
-                    value={selectedSubTopic}
-                    onChange={(e) => {
-                      setSelectedSubTopic(e.target.value);
-                      setSelectedFlashcard('');
-                      if (e.target.value) {
-                        loadFlashcards(e.target.value);
-                      }
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Selecione um sub-tópico</option>
-                    {subTopics.map((subTopic) => (
-                      <option key={subTopic.id} value={subTopic.id}>
-                        {subTopic.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Flashcard Selection */}
-              {selectedSubTopic && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Flashcard *
-                  </label>
-                  <select
-                    value={selectedFlashcard}
-                    onChange={(e) => {
-                      setSelectedFlashcard(e.target.value);
-                      setNewDeepening({...newDeepening, flashcardId: e.target.value});
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Selecione um flashcard</option>
-                    {flashcards.map((flashcard) => (
-                      <option key={flashcard.id} value={flashcard.id}>
-                        {flashcard.question}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Rich Text Editor */}
-              {selectedFlashcard && (
+        {/* Add Deepening Modal */}
+        {showAddModal && selectedTopic && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+              <h3 className="text-lg font-semibold mb-4">Adicionar Aprofundamento para "{selectedTopic.name}"</h3>
+              
+              <div className="space-y-4">
+                {/* Rich Text Editor */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Conteúdo do Aprofundamento *
@@ -620,26 +460,26 @@ export default function DeepeningPage() {
                     Use a barra de ferramentas acima para formatar o texto como no Word.
                   </p>
                 </div>
-              )}
-            </div>
+              </div>
 
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleAddDeepening}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Adicionar
-              </button>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleAddDeepening}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Adicionar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 } 

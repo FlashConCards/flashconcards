@@ -232,6 +232,12 @@ export default function TopicsPage() {
                         <span className="text-sm text-gray-500">Ordem: {topic.order}</span>
                         <div className="flex space-x-2">
                           <button
+                            onClick={() => router.push(`/admin/deepening?topicId=${topic.id}&subjectId=${selectedSubject.id}&courseId=${selectedCourse.id}`)}
+                            className="text-xs bg-green-100 text-green-800 px-3 py-1 rounded hover:bg-green-200"
+                          >
+                            Aprofundamento
+                          </button>
+                          <button
                             onClick={() => router.push(`/admin/subtopics?topicId=${topic.id}&subjectId=${selectedSubject.id}&courseId=${selectedCourse.id}`)}
                             className="text-xs bg-purple-100 text-purple-800 px-3 py-1 rounded hover:bg-purple-200"
                           >
