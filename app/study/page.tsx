@@ -14,7 +14,10 @@ import {
   CheckCircleIcon, 
   XCircleIcon, 
   ArrowLeftIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  PlayIcon,
+  ArrowRightIcon,
+  ArrowLeftIcon as ArrowLeft
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import FlashcardComponent from '@/components/flashcards/Flashcard';
@@ -61,6 +64,32 @@ export default function StudyPage() {
 
     return () => clearInterval(interval);
   }, [sessionStartTime]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (sessionCompleted || loading) return;
+
+      switch (event.key) {
+        case 'ArrowRight':
+        case ' ':
+          handleNextCard();
+          break;
+        case 'ArrowLeft':
+          handlePreviousCard();
+          break;
+        case '1':
+          handleCardResponse(false); // Errei
+          break;
+        case '2':
+          handleCardResponse(true); // Acertei
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [currentIndex, studyQueue, sessionCompleted, loading]);
 
   // Load flashcards
   useEffect(() => {
@@ -136,7 +165,13 @@ export default function StudyPage() {
       setStudyQueue(prev => [...prev.slice(currentIndex + 1), currentCard]);
     }
 
-    // Move to next card
+    // Auto-advance to next card after a short delay
+    setTimeout(() => {
+      handleNextCard();
+    }, 500);
+  };
+
+  const handleNextCard = () => {
     if (currentIndex + 1 < studyQueue.length) {
       setCurrentIndex(prev => prev + 1);
       setShowAnswer(false);
@@ -149,6 +184,13 @@ export default function StudyPage() {
         // Session completed - all cards studied
         handleSessionComplete();
       }
+    }
+  };
+
+  const handlePreviousCard = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+      setShowAnswer(false);
     }
   };
 
@@ -213,6 +255,12 @@ export default function StudyPage() {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  // Calculate correct progress percentage
+  const calculateProgress = () => {
+    if (studyQueue.length === 0) return 0;
+    return Math.round(((currentIndex + 1) / studyQueue.length) * 100);
   };
 
   if (loading) {
@@ -303,7 +351,7 @@ export default function StudyPage() {
               onClick={() => router.push('/dashboard')}
               className="flex items-center text-gray-600 hover:text-gray-900"
             >
-              <ArrowLeftIcon className="w-5 h-5 mr-2" />
+              <ArrowLeft className="w-5 h-5 mr-2" />
               Voltar
             </button>
 
@@ -324,12 +372,12 @@ export default function StudyPage() {
         <div className="mb-8">
           <div className="flex justify-between text-sm text-gray-600 mb-2">
             <span>Progresso da Sessão</span>
-            <span>{Math.round(((currentIndex + 1) / studyQueue.length) * 100)}%</span>
+            <span>{calculateProgress()}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${((currentIndex + 1) / studyQueue.length) * 100}%` }}
+              style={{ width: `${calculateProgress()}%` }}
             ></div>
           </div>
           
@@ -366,25 +414,54 @@ export default function StudyPage() {
           />
         </div>
 
-        {/* Answer Buttons */}
-        {showAnswer && (
+        {/* Navigation Buttons */}
+        <div className="flex justify-between items-center">
+          <button
+            onClick={handlePreviousCard}
+            disabled={currentIndex === 0}
+            className="flex items-center px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Anterior
+          </button>
+
           <div className="flex space-x-4">
             <button
               onClick={() => handleCardResponse(false)}
-              className="flex-1 bg-red-600 text-white py-4 px-6 rounded-lg hover:bg-red-700 flex items-center justify-center"
+              className="flex items-center px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700"
             >
-              <XCircleIcon className="w-6 h-6 mr-2" />
-              Errei
+              <XCircleIcon className="w-5 h-5 mr-2" />
+              Errei (1)
             </button>
             <button
               onClick={() => handleCardResponse(true)}
-              className="flex-1 bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-green-700 flex items-center justify-center"
+              className="flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
-              <CheckCircleIcon className="w-6 h-6 mr-2" />
-              Acertei
+              <CheckCircleIcon className="w-5 h-5 mr-2" />
+              Acertei (2)
             </button>
           </div>
-        )}
+
+          <button
+            onClick={handleNextCard}
+            disabled={currentIndex >= studyQueue.length - 1}
+            className="flex items-center px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Próximo
+            <ArrowRightIcon className="w-4 h-4 ml-2" />
+          </button>
+        </div>
+
+        {/* Keyboard Shortcuts */}
+        <div className="mt-8 text-center text-sm text-gray-500">
+          <p>Atalhos do teclado:</p>
+          <div className="flex justify-center space-x-6 mt-2">
+            <span>← → Navegar</span>
+            <span>1 = Errei</span>
+            <span>2 = Acertei</span>
+            <span>Espaço = Próximo</span>
+          </div>
+        </div>
       </div>
 
       {/* Deepening Modal */}
