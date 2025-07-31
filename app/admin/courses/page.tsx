@@ -81,7 +81,6 @@ export default function CoursesPage() {
     try {
       console.log('Iniciando criação do curso...');
       console.log('Dados do curso:', newCourse);
-      console.log('Imagem selecionada:', selectedImage);
       
       if (!newCourse.name || !newCourse.description) {
         alert('Preencha todos os campos obrigatórios');
@@ -89,30 +88,14 @@ export default function CoursesPage() {
       }
 
       setUploading(true);
-      let imageUrl = '';
 
-      // Upload da imagem se foi selecionada
-      if (selectedImage) {
-        try {
-          console.log('Iniciando upload da imagem...');
-          const imagePath = `courses/${Date.now()}_${selectedImage.name}`;
-          console.log('Caminho da imagem:', imagePath);
-          
-          imageUrl = await uploadFile(selectedImage, imagePath);
-          console.log('Upload da imagem concluído:', imageUrl);
-        } catch (error) {
-          console.error('Error uploading image:', error);
-          console.log('Continuando sem imagem...');
-          // Continuar sem imagem se o upload falhar
-          imageUrl = '';
-        }
-      }
-
-      // Criar curso com a imagem
+      // Criar curso SEM imagem por enquanto (para resolver o problema de CORS)
       console.log('Criando curso no Firebase...');
       const courseData = {
-        ...newCourse,
-        image: imageUrl
+        name: newCourse.name,
+        description: newCourse.description,
+        price: newCourse.price,
+        image: '' // Sem imagem por enquanto
       };
       console.log('Dados finais do curso:', courseData);
       
@@ -286,6 +269,7 @@ export default function CoursesPage() {
                   />
                 </div>
 
+                {/* Temporariamente desabilitado devido ao problema de CORS
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Imagem do Curso
@@ -327,6 +311,7 @@ export default function CoursesPage() {
                     </div>
                   )}
                 </div>
+                */}
               </div>
 
               <div className="flex justify-end space-x-3 mt-6">
