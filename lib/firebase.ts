@@ -530,6 +530,34 @@ export const getDeepenings = async (flashcardId?: string) => {
   }
 }
 
+export const createDeepening = async (deepeningData: any) => {
+  try {
+    const deepeningDoc = {
+      flashcardId: deepeningData.flashcardId,
+      content: deepeningData.content,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }
+    
+    const docRef = await addDoc(collection(db, 'deepenings'), deepeningDoc)
+    console.log('Deepening created with ID:', docRef.id)
+    return docRef.id
+  } catch (error) {
+    console.error('Error creating deepening:', error)
+    throw error
+  }
+}
+
+export const deleteDeepening = async (deepeningId: string) => {
+  try {
+    await deleteDoc(doc(db, 'deepenings', deepeningId))
+    console.log('Deepening deleted:', deepeningId)
+  } catch (error) {
+    console.error('Error deleting deepening:', error)
+    throw error
+  }
+}
+
 // ===== DEPOIMENTOS (/testimonials) =====
 export const getTestimonials = async (status?: 'pending' | 'approved' | 'rejected' | 'all') => {
   try {

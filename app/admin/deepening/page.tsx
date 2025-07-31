@@ -1,590 +1,527 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useAuth } from '@/components/auth/AuthProvider'
-import { useRouter } from 'next/navigation'
-import { 
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  ArrowLeftIcon,
-  BoldIcon,
-  ItalicIcon,
-  UnderlineIcon,
-  Bars3Icon,
-  ListBulletIcon,
-  LinkIcon,
-  PhotoIcon,
-  PlayIcon,
-  DocumentIcon
-} from '@heroicons/react/24/outline'
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  getDeepenings,
+  createDeepening,
+  deleteDeepening,
+  getFlashcards,
+  getSubTopics,
+  getTopics,
+  getSubjects,
+  getCourses
+} from '@/lib/firebase';
 
 interface Deepening {
-  id: string
-  flashcardId: string
-  title: string
-  content: string
-  images: string[]
-  videos: string[]
-  pdfs: string[]
-  externalLinks: string[]
-  isActive: boolean
+  id: string;
+  flashcardId: string;
+  content: string;
+  createdAt: any;
+  updatedAt: any;
 }
 
-// Mock data
-const mockDeepenings: Deepening[] = [
-  {
-    id: '1',
-    flashcardId: '1',
-    title: 'Soberania Popular - Aprofundamento',
-    content: `
-      <h2 style="color: #1f2937; font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">Fundamentação Legal</h2>
-      <p style="margin-bottom: 1rem;"><strong style="color: #059669;">Art. 1º da Constituição Federal:</strong> A República Federativa do Brasil, formada pela união indissolúvel dos Estados e Municípios e do Distrito Federal, constitui-se em Estado Democrático de Direito e tem como fundamentos:</p>
-      <ul style="margin-bottom: 1rem; padding-left: 2rem;">
-        <li style="margin-bottom: 0.5rem;"><strong style="color: #dc2626;">I</strong> - a soberania;</li>
-        <li style="margin-bottom: 0.5rem;"><strong style="color: #dc2626;">II</strong> - a cidadania;</li>
-        <li style="margin-bottom: 0.5rem;"><strong style="color: #dc2626;">III</strong> - a dignidade da pessoa humana;</li>
-        <li style="margin-bottom: 0.5rem;"><strong style="color: #dc2626;">IV</strong> - os valores sociais do trabalho e da livre iniciativa;</li>
-        <li style="margin-bottom: 0.5rem;"><strong style="color: #dc2626;">V</strong> - o pluralismo político.</li>
-      </ul>
-      <h2 style="color: #1f2937; font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">Explicação Detalhada</h2>
-      <p style="margin-bottom: 1rem;">A <em style="color: #7c3aed;">soberania popular</em> é o princípio fundamental que estabelece que todo o poder emana do povo, que o exerce por meio de representantes eleitos ou diretamente, nos termos desta Constituição.</p>
-    `,
-    images: ['/api/placeholder/400/200'],
-    videos: ['https://www.youtube.com/watch?v=example'],
-    pdfs: ['/api/placeholder/400/600'],
-    externalLinks: ['https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm'],
-    isActive: true,
-  },
-  {
-    id: '2',
-    flashcardId: '2',
-    title: 'Separação de Poderes - Aprofundamento',
-    content: `
-      <h2 style="color: #1f2937; font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">Conceito</h2>
-      <p style="margin-bottom: 1rem;">A <strong style="color: #059669;">separação de poderes</strong> é um princípio fundamental da democracia que visa evitar a concentração de poder em uma única pessoa ou órgão.</p>
-      <h2 style="color: #1f2937; font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">Os Três Poderes</h2>
-      <ol style="margin-bottom: 1rem; padding-left: 2rem;">
-        <li style="margin-bottom: 0.5rem;"><strong style="color: #dc2626;">Poder Legislativo:</strong> Cria as leis</li>
-        <li style="margin-bottom: 0.5rem;"><strong style="color: #dc2626;">Poder Executivo:</strong> Executa as leis</li>
-        <li style="margin-bottom: 0.5rem;"><strong style="color: #dc2626;">Poder Judiciário:</strong> Julga conflitos</li>
-      </ol>
-    `,
-    images: ['/api/placeholder/400/200'],
-    videos: ['https://www.youtube.com/watch?v=example2'],
-    pdfs: ['/api/placeholder/400/600'],
-    externalLinks: ['https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm'],
-    isActive: true,
-  },
-]
+interface Flashcard {
+  id: string;
+  question: string;
+  answer: string;
+  subTopicId: string;
+}
 
-export default function AdminDeepeningPage() {
-  const { user } = useAuth()
-  const router = useRouter()
-  const [deepenings, setDeepenings] = useState<Deepening[]>(mockDeepenings)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [showModal, setShowModal] = useState(false)
-  const [editingDeepening, setEditingDeepening] = useState<Deepening | null>(null)
-  const [content, setContent] = useState('')
-  const [title, setTitle] = useState('')
-  const [flashcardId, setFlashcardId] = useState('')
+interface SubTopic {
+  id: string;
+  name: string;
+  topicId: string;
+}
 
-  // Editor states
-  const [isBold, setIsBold] = useState(false)
-  const [isItalic, setIsItalic] = useState(false)
-  const [isUnderline, setIsUnderline] = useState(false)
-  const [textColor, setTextColor] = useState('#000000')
-  const [backgroundColor, setBackgroundColor] = useState('#ffffff')
-  const [fontSize, setFontSize] = useState('16px')
-  const [fontFamily, setFontFamily] = useState('Arial')
+interface Topic {
+  id: string;
+  name: string;
+  subjectId: string;
+}
 
-  // Verificar se é admin
-  const isAdmin = user?.isAdmin || user?.email === 'admin@flashconcards.com' || 
-                  user?.email === 'claudioghabryel.cg@gmail.com' || 
-                  user?.email === 'natalhia775@gmail.com'
+interface Subject {
+  id: string;
+  name: string;
+  courseId: string;
+}
 
-  if (!user || !isAdmin) {
+interface Course {
+  id: string;
+  name: string;
+}
+
+export default function DeepeningPage() {
+  const { user } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [deepenings, setDeepenings] = useState<Deepening[]>([]);
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [subTopics, setSubTopics] = useState<SubTopic[]>([]);
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [selectedTopic, setSelectedTopic] = useState('');
+  const [selectedSubTopic, setSelectedSubTopic] = useState('');
+  const [selectedFlashcard, setSelectedFlashcard] = useState('');
+  const [newDeepening, setNewDeepening] = useState({
+    flashcardId: '',
+    content: ''
+  });
+
+  // Check if user is admin
+  useEffect(() => {
+    if (user && !user.isAdmin) {
+      router.push('/dashboard');
+    } else if (!user) {
+      router.push('/login');
+    }
+  }, [user, router]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      
+      // Carregar cursos
+      const coursesData = await getCourses();
+      setCourses(coursesData || []);
+      
+      // Carregar aprofundamentos existentes
+      const deepeningsData = await getDeepenings();
+      setDeepenings(deepeningsData || []);
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.isAdmin) {
+      loadData();
+    }
+  }, [user]);
+
+  const loadSubjects = async (courseId: string) => {
+    try {
+      const subjectsData = await getSubjects(courseId);
+      setSubjects(subjectsData || []);
+      setTopics([]);
+      setSubTopics([]);
+      setFlashcards([]);
+    } catch (error) {
+      console.error('Erro ao carregar matérias:', error);
+    }
+  };
+
+  const loadTopics = async (subjectId: string) => {
+    try {
+      const topicsData = await getTopics(subjectId);
+      setTopics(topicsData || []);
+      setSubTopics([]);
+      setFlashcards([]);
+    } catch (error) {
+      console.error('Erro ao carregar tópicos:', error);
+    }
+  };
+
+  const loadSubTopics = async (topicId: string) => {
+    try {
+      const subTopicsData = await getSubTopics(topicId);
+      setSubTopics(subTopicsData || []);
+      setFlashcards([]);
+    } catch (error) {
+      console.error('Erro ao carregar sub-tópicos:', error);
+    }
+  };
+
+  const loadFlashcards = async (subTopicId: string) => {
+    try {
+      const flashcardsData = await getFlashcards(subTopicId);
+      setFlashcards(flashcardsData || []);
+    } catch (error) {
+      console.error('Erro ao carregar flashcards:', error);
+    }
+  };
+
+  const handleAddDeepening = async () => {
+    try {
+      if (!newDeepening.flashcardId || !newDeepening.content.trim()) {
+        alert('Preencha todos os campos obrigatórios');
+        return;
+      }
+
+      await createDeepening(newDeepening);
+      await loadData();
+      
+      setNewDeepening({
+        flashcardId: '',
+        content: ''
+      });
+      setShowAddModal(false);
+      alert('Aprofundamento adicionado com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao adicionar aprofundamento:', error);
+      alert(`Erro ao adicionar aprofundamento: ${error.message}`);
+    }
+  };
+
+  const handleDeleteDeepening = async (deepeningId: string) => {
+    if (confirm('Tem certeza que deseja excluir este aprofundamento?')) {
+      try {
+        await deleteDeepening(deepeningId);
+        await loadData();
+        alert('Aprofundamento excluído com sucesso!');
+      } catch (error: any) {
+        console.error('Erro ao excluir aprofundamento:', error);
+        alert(`Erro ao excluir aprofundamento: ${error.message}`);
+      }
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Acesso Negado</h2>
-          <p className="text-gray-600 mb-4">Você não tem permissão para acessar esta página.</p>
-          <button
-            onClick={() => router.push('/admin')}
-            className="btn-primary"
-          >
-            Voltar ao Admin
-          </button>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando aprofundamentos...</p>
         </div>
       </div>
-    )
+    );
   }
 
-  const handleAddDeepening = () => {
-    setEditingDeepening(null)
-    setTitle('')
-    setContent('')
-    setFlashcardId('')
-    setShowModal(true)
+  if (!user?.isAdmin) {
+    return null;
   }
-
-  const handleEditDeepening = (deepening: Deepening) => {
-    setEditingDeepening(deepening)
-    setTitle(deepening.title)
-    setContent(deepening.content)
-    setFlashcardId(deepening.flashcardId)
-    setShowModal(true)
-  }
-
-  const handleToggleStatus = (deepeningId: string) => {
-    setDeepenings(prev => prev.map(deepening => 
-      deepening.id === deepeningId 
-        ? { ...deepening, isActive: !deepening.isActive }
-        : deepening
-    ))
-  }
-
-  const handleDeleteDeepening = (deepeningId: string) => {
-    if (confirm('Tem certeza que deseja excluir este aprofundamento?')) {
-      setDeepenings(prev => prev.filter(deepening => deepening.id !== deepeningId))
-    }
-  }
-
-  const handleSave = () => {
-    if (!title.trim() || !content.trim()) {
-      alert('Preencha todos os campos obrigatórios')
-      return
-    }
-
-    if (editingDeepening) {
-      setDeepenings(prev => prev.map(deepening => 
-        deepening.id === editingDeepening.id 
-          ? { ...deepening, title, content, flashcardId }
-          : deepening
-      ))
-    } else {
-      const newDeepening: Deepening = {
-        id: Date.now().toString(),
-        flashcardId,
-        title,
-        content,
-        images: [],
-        videos: [],
-        pdfs: [],
-        externalLinks: [],
-        isActive: true,
-      }
-      setDeepenings(prev => [...prev, newDeepening])
-    }
-    setShowModal(false)
-  }
-
-  // Editor functions
-  const execCommand = (command: string, value: string = '') => {
-    document.execCommand(command, false, value)
-  }
-
-  const insertHTML = (html: string) => {
-    const selection = window.getSelection()
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0)
-      range.deleteContents()
-      const div = document.createElement('div')
-      div.innerHTML = html
-      range.insertNode(div.firstChild || div)
-    }
-  }
-
-  const filteredDeepenings = deepenings.filter(deepening =>
-    deepening.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    deepening.content.toLowerCase().includes(searchTerm.toLowerCase())
-  )
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push('/admin')}
-                className="btn-outline flex items-center gap-2"
-              >
-                <ArrowLeftIcon className="w-5 h-5" />
-                Voltar
-              </button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Gerenciar Aprofundamentos</h1>
-                <p className="text-gray-600">Crie e edite conteúdo detalhado para flashcards</p>
-              </div>
-            </div>
-            <button
-              onClick={handleAddDeepening}
-              className="btn-primary flex items-center gap-2"
-            >
-              <PlusIcon className="w-5 h-5" />
-              Adicionar Aprofundamento
-            </button>
-          </div>
+    <div className="min-h-screen bg-gray-100">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">Gerenciar Aprofundamentos</h1>
+          <button
+            onClick={() => router.push('/admin')}
+            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            Voltar ao Painel
+          </button>
         </div>
-      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search */}
+        {/* Add Deepening Button */}
         <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Buscar aprofundamentos..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="input-field w-full max-w-md"
-          />
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Adicionar Aprofundamento
+          </button>
         </div>
 
         {/* Deepenings List */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Aprofundamentos ({filteredDeepenings.length})</h3>
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-800">Aprofundamentos ({deepenings.length})</h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Título
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Flashcard ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Mídia
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredDeepenings.map((deepening) => (
-                  <tr key={deepening.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{deepening.title}</div>
-                      <div className="text-sm text-gray-500 max-w-xs truncate" 
-                           dangerouslySetInnerHTML={{ __html: deepening.content.substring(0, 100) + '...' }} />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {deepening.flashcardId}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        deepening.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {deepening.isActive ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div className="flex items-center space-x-2">
-                        {deepening.images.length > 0 && <PhotoIcon className="w-4 h-4 text-blue-600" />}
-                        {deepening.videos.length > 0 && <PlayIcon className="w-4 h-4 text-red-600" />}
-                        {deepening.pdfs.length > 0 && <DocumentIcon className="w-4 h-4 text-green-600" />}
-                        <span>{deepening.images.length + deepening.videos.length + deepening.pdfs.length} arquivos</span>
+          <div className="p-6">
+            {deepenings.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">Nenhum aprofundamento cadastrado ainda.</p>
+            ) : (
+              <div className="space-y-4">
+                {deepenings.map((deepening) => (
+                  <div key={deepening.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-800 mb-2">Flashcard ID: {deepening.flashcardId}</h3>
+                        <div className="prose max-w-none">
+                          <div 
+                            className="text-gray-700"
+                            dangerouslySetInnerHTML={{ __html: deepening.content }}
+                          />
+                        </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleEditDeepening(deepening)}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          <PencilIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleToggleStatus(deepening.id)}
-                          className={deepening.isActive ? 'text-yellow-600 hover:text-yellow-900' : 'text-green-600 hover:text-green-900'}
-                        >
-                          {deepening.isActive ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
-                        </button>
+                      <div className="ml-4">
                         <button
                           onClick={() => handleDeleteDeepening(deepening.id)}
                           className="text-red-600 hover:text-red-900"
                         >
-                          <TrashIcon className="w-4 h-4" />
+                          Excluir
                         </button>
                       </div>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold text-gray-900">
-                  {editingDeepening ? 'Editar Aprofundamento' : 'Adicionar Aprofundamento'}
-                </h3>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl"
+      {/* Add Deepening Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">Adicionar Aprofundamento</h3>
+            
+            <div className="space-y-4">
+              {/* Course Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Curso *
+                </label>
+                <select
+                  value={selectedCourse}
+                  onChange={(e) => {
+                    setSelectedCourse(e.target.value);
+                    setSelectedSubject('');
+                    setSelectedTopic('');
+                    setSelectedSubTopic('');
+                    setSelectedFlashcard('');
+                    if (e.target.value) {
+                      loadSubjects(e.target.value);
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  ×
-                </button>
+                  <option value="">Selecione um curso</option>
+                  {courses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div className="space-y-6">
-                {/* Basic Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Flashcard ID
-                    </label>
-                    <input
-                      type="text"
-                      value={flashcardId}
-                      onChange={(e) => setFlashcardId(e.target.value)}
-                      className="input-field"
-                      placeholder="ID do flashcard"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Título
-                    </label>
-                    <input
-                      type="text"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="input-field"
-                      placeholder="Título do aprofundamento"
-                    />
-                  </div>
-                </div>
-
-                {/* Rich Text Editor */}
+              {/* Subject Selection */}
+              {selectedCourse && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Conteúdo (Editor Rico)
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Matéria *
                   </label>
-                  
-                  {/* Toolbar */}
-                  <div className="border border-gray-300 rounded-t-lg bg-gray-50 p-2 flex flex-wrap items-center gap-2">
-                    {/* Text Formatting */}
-                    <div className="flex items-center space-x-1 border-r border-gray-300 pr-2">
-                      <button
-                        onClick={() => execCommand('bold')}
-                        className={`p-2 rounded hover:bg-gray-200 ${isBold ? 'bg-gray-300' : ''}`}
-                        title="Negrito"
-                      >
-                        <BoldIcon className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => execCommand('italic')}
-                        className={`p-2 rounded hover:bg-gray-200 ${isItalic ? 'bg-gray-300' : ''}`}
-                        title="Itálico"
-                      >
-                        <ItalicIcon className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => execCommand('underline')}
-                        className={`p-2 rounded hover:bg-gray-200 ${isUnderline ? 'bg-gray-300' : ''}`}
-                        title="Sublinhado"
-                      >
-                        <UnderlineIcon className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {/* Alignment */}
-                    <div className="flex items-center space-x-1 border-r border-gray-300 pr-2">
-                      <button
-                        onClick={() => execCommand('justifyLeft')}
-                        className="p-2 rounded hover:bg-gray-200"
-                        title="Alinhar à Esquerda"
-                      >
-                        <Bars3Icon className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => execCommand('justifyCenter')}
-                        className="p-2 rounded hover:bg-gray-200"
-                        title="Centralizar"
-                      >
-                        <Bars3Icon className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => execCommand('justifyRight')}
-                        className="p-2 rounded hover:bg-gray-200"
-                        title="Alinhar à Direita"
-                      >
-                        <Bars3Icon className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {/* Lists */}
-                    <div className="flex items-center space-x-1 border-r border-gray-300 pr-2">
-                      <button
-                        onClick={() => execCommand('insertUnorderedList')}
-                        className="p-2 rounded hover:bg-gray-200"
-                        title="Lista não ordenada"
-                      >
-                        <ListBulletIcon className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => execCommand('insertOrderedList')}
-                        className="p-2 rounded hover:bg-gray-200"
-                        title="Lista ordenada"
-                      >
-                        <ListBulletIcon className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {/* Colors */}
-                    <div className="flex items-center space-x-2 border-r border-gray-300 pr-2">
-                      <label className="text-xs text-gray-600">Cor:</label>
-                      <input
-                        type="color"
-                        value={textColor}
-                        onChange={(e) => {
-                          setTextColor(e.target.value)
-                          execCommand('foreColor', e.target.value)
-                        }}
-                        className="w-8 h-8 rounded border border-gray-300"
-                      />
-                      <label className="text-xs text-gray-600">Fundo:</label>
-                      <input
-                        type="color"
-                        value={backgroundColor}
-                        onChange={(e) => {
-                          setBackgroundColor(e.target.value)
-                          execCommand('hiliteColor', e.target.value)
-                        }}
-                        className="w-8 h-8 rounded border border-gray-300"
-                      />
-                    </div>
-
-                    {/* Font Size */}
-                    <div className="flex items-center space-x-2 border-r border-gray-300 pr-2">
-                      <label className="text-xs text-gray-600">Tamanho:</label>
-                      <select
-                        value={fontSize}
-                        onChange={(e) => {
-                          setFontSize(e.target.value)
-                          execCommand('fontSize', e.target.value)
-                        }}
-                        className="text-xs border border-gray-300 rounded px-1 py-1"
-                      >
-                        <option value="12px">12px</option>
-                        <option value="14px">14px</option>
-                        <option value="16px">16px</option>
-                        <option value="18px">18px</option>
-                        <option value="20px">20px</option>
-                        <option value="24px">24px</option>
-                        <option value="28px">28px</option>
-                        <option value="32px">32px</option>
-                      </select>
-                    </div>
-
-                    {/* Font Family */}
-                    <div className="flex items-center space-x-2">
-                      <label className="text-xs text-gray-600">Fonte:</label>
-                      <select
-                        value={fontFamily}
-                        onChange={(e) => {
-                          setFontFamily(e.target.value)
-                          execCommand('fontName', e.target.value)
-                        }}
-                        className="text-xs border border-gray-300 rounded px-1 py-1"
-                      >
-                        <option value="Arial">Arial</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                        <option value="Courier New">Courier New</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Verdana">Verdana</option>
-                        <option value="Helvetica">Helvetica</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Editor Area */}
-                  <div
-                    contentEditable
-                    className="border border-gray-300 rounded-b-lg p-4 min-h-64 max-h-96 overflow-y-auto focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    onInput={(e) => setContent(e.currentTarget.innerHTML)}
-                    dangerouslySetInnerHTML={{ __html: content }}
-                    style={{ fontFamily, fontSize }}
-                  />
-                </div>
-
-                {/* Media Upload */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2 flex items-center">
-                      <PhotoIcon className="w-4 h-4 mr-2" />
-                      Imagens
-                    </h4>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="input-field"
-                    />
-                  </div>
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2 flex items-center">
-                      <PlayIcon className="w-4 h-4 mr-2" />
-                      Vídeos
-                    </h4>
-                    <input
-                      type="file"
-                      accept="video/*"
-                      multiple
-                      className="input-field"
-                    />
-                  </div>
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2 flex items-center">
-                      <DocumentIcon className="w-4 h-4 mr-2" />
-                      PDFs
-                    </h4>
-                    <input
-                      type="file"
-                      accept=".pdf"
-                      multiple
-                      className="input-field"
-                    />
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex justify-end space-x-3">
-                  <button
-                    onClick={() => setShowModal(false)}
-                    className="btn-outline"
+                  <select
+                    value={selectedSubject}
+                    onChange={(e) => {
+                      setSelectedSubject(e.target.value);
+                      setSelectedTopic('');
+                      setSelectedSubTopic('');
+                      setSelectedFlashcard('');
+                      if (e.target.value) {
+                        loadTopics(e.target.value);
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    className="btn-primary"
-                  >
-                    {editingDeepening ? 'Salvar' : 'Adicionar'}
-                  </button>
+                    <option value="">Selecione uma matéria</option>
+                    {subjects.map((subject) => (
+                      <option key={subject.id} value={subject.id}>
+                        {subject.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              </div>
+              )}
+
+              {/* Topic Selection */}
+              {selectedSubject && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tópico *
+                  </label>
+                  <select
+                    value={selectedTopic}
+                    onChange={(e) => {
+                      setSelectedTopic(e.target.value);
+                      setSelectedSubTopic('');
+                      setSelectedFlashcard('');
+                      if (e.target.value) {
+                        loadSubTopics(e.target.value);
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Selecione um tópico</option>
+                    {topics.map((topic) => (
+                      <option key={topic.id} value={topic.id}>
+                        {topic.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* SubTopic Selection */}
+              {selectedTopic && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Sub-tópico *
+                  </label>
+                  <select
+                    value={selectedSubTopic}
+                    onChange={(e) => {
+                      setSelectedSubTopic(e.target.value);
+                      setSelectedFlashcard('');
+                      if (e.target.value) {
+                        loadFlashcards(e.target.value);
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Selecione um sub-tópico</option>
+                    {subTopics.map((subTopic) => (
+                      <option key={subTopic.id} value={subTopic.id}>
+                        {subTopic.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Flashcard Selection */}
+              {selectedSubTopic && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Flashcard *
+                  </label>
+                  <select
+                    value={selectedFlashcard}
+                    onChange={(e) => {
+                      setSelectedFlashcard(e.target.value);
+                      setNewDeepening({...newDeepening, flashcardId: e.target.value});
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Selecione um flashcard</option>
+                    {flashcards.map((flashcard) => (
+                      <option key={flashcard.id} value={flashcard.id}>
+                        {flashcard.question}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Rich Text Editor */}
+              {selectedFlashcard && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Conteúdo do Aprofundamento *
+                  </label>
+                  <div className="border border-gray-300 rounded-md">
+                    {/* Toolbar */}
+                    <div className="border-b border-gray-300 p-2 bg-gray-50">
+                      <div className="flex space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const textarea = document.getElementById('content-editor') as HTMLTextAreaElement;
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const text = textarea.value;
+                            const before = text.substring(0, start);
+                            const selected = text.substring(start, end);
+                            const after = text.substring(end);
+                            textarea.value = before + `<strong>${selected}</strong>` + after;
+                            setNewDeepening({...newDeepening, content: textarea.value});
+                          }}
+                          className="px-2 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
+                          title="Negrito"
+                        >
+                          <strong>B</strong>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const textarea = document.getElementById('content-editor') as HTMLTextAreaElement;
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const text = textarea.value;
+                            const before = text.substring(0, start);
+                            const selected = text.substring(start, end);
+                            const after = text.substring(end);
+                            textarea.value = before + `<em>${selected}</em>` + after;
+                            setNewDeepening({...newDeepening, content: textarea.value});
+                          }}
+                          className="px-2 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
+                          title="Itálico"
+                        >
+                          <em>I</em>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const textarea = document.getElementById('content-editor') as HTMLTextAreaElement;
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const text = textarea.value;
+                            const before = text.substring(0, start);
+                            const selected = text.substring(start, end);
+                            const after = text.substring(end);
+                            textarea.value = before + `<h3>${selected}</h3>` + after;
+                            setNewDeepening({...newDeepening, content: textarea.value});
+                          }}
+                          className="px-2 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
+                          title="Título"
+                        >
+                          H3
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const textarea = document.getElementById('content-editor') as HTMLTextAreaElement;
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const text = textarea.value;
+                            const before = text.substring(0, start);
+                            const selected = text.substring(start, end);
+                            const after = text.substring(end);
+                            textarea.value = before + `<ul><li>${selected}</li></ul>` + after;
+                            setNewDeepening({...newDeepening, content: textarea.value});
+                          }}
+                          className="px-2 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
+                          title="Lista"
+                        >
+                          • Lista
+                        </button>
+                      </div>
+                    </div>
+                    {/* Textarea */}
+                    <textarea
+                      id="content-editor"
+                      value={newDeepening.content}
+                      onChange={(e) => setNewDeepening({...newDeepening, content: e.target.value})}
+                      className="w-full p-4 min-h-[300px] focus:outline-none"
+                      placeholder="Digite o conteúdo do aprofundamento aqui... Você pode usar HTML para formatação."
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Use os botões acima para formatar o texto ou digite HTML diretamente.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleAddDeepening}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Adicionar
+              </button>
             </div>
           </div>
         </div>
       )}
     </div>
-  )
+  );
 } 

@@ -284,12 +284,20 @@ export default function FlashcardsPage() {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-500">Ordem: {flashcard.order}</span>
-                        <button
-                          onClick={() => handleDeleteFlashcard(flashcard.id)}
-                          className="text-xs bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200"
-                        >
-                          Excluir
-                        </button>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => router.push(`/admin/deepening?flashcardId=${flashcard.id}`)}
+                            className="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded hover:bg-blue-200"
+                          >
+                            Aprofundamento
+                          </button>
+                          <button
+                            onClick={() => handleDeleteFlashcard(flashcard.id)}
+                            className="text-xs bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200"
+                          >
+                            Excluir
+                          </button>
+                        </div>
                       </div>
                     </div>
                 ))}
