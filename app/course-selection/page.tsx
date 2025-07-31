@@ -62,9 +62,15 @@ export default function CourseSelectionPage() {
     try {
       setSaving(true);
       
-      // Atualizar o curso selecionado do usuário
+      // Calcular data de expiração baseada no curso
+      const currentDate = new Date();
+      const expiryDate = new Date(currentDate);
+      expiryDate.setMonth(expiryDate.getMonth() + (selectedCourse.expirationMonths || 6));
+      
+      // Atualizar o curso selecionado e data de expiração do usuário
       await updateUser(user.uid, {
-        selectedCourse: selectedCourse.id
+        selectedCourse: selectedCourse.id,
+        courseAccessExpiry: expiryDate
       });
 
       // Redirecionar para o dashboard

@@ -12,6 +12,7 @@ export interface User {
   cardsWrong: number;
   createdByAdmin?: boolean;
   selectedCourse?: string;
+  courseAccessExpiry?: any; // Data de expiração do acesso ao curso
   lastLoginAt?: any;
   createdAt?: any;
   updatedAt?: any;
@@ -23,6 +24,7 @@ export interface Course {
   description: string;
   image: string;
   price: number;
+  expirationMonths: number; // Padrão: 6 meses
   isActive: boolean;
   createdAt: any;
   updatedAt: any;

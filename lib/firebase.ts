@@ -27,6 +27,7 @@ import {
   CollectionReference
 } from 'firebase/firestore'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { Course } from '@/types'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -353,6 +354,7 @@ export const createCourse = async (courseData: any) => {
     
     const docRef = await addDoc(collection(db, 'courses'), {
       ...courseData,
+      expirationMonths: courseData.expirationMonths || 6, // Padrão: 6 meses
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     })
@@ -779,28 +781,37 @@ export const getUserAccessibleCourses = async (userId: string) => {
 // Buscar cursos com controle de acesso
 export const getCoursesWithAccess = async (userId: string) => {
   try {
-    // Buscar todos os cursos
-    const allCourses = await getCourses()
-    
-    // Se for admin, retornar todos os cursos
-    const userData = await getUserData(userId)
-    if (userData?.isAdmin) {
-      return allCourses
+    // Primeiro, verificar se o acesso do usuário expirou
+    const userData = await getUserData(userId);
+    if (userData && userData.courseAccessExpiry) {
+      const expiryDate = userData.courseAccessExpiry.toDate();
+      const currentDate = new Date();
+      
+      if (currentDate > expiryDate) {
+        // Acesso expirou, remover curso selecionado
+        await updateUser(userId, {
+          selectedCourse: '',
+          isPaid: false
+        });
+        console.log('User access expired, removed course access');
+        return [];
+      }
     }
 
-    // Se não for admin, verificar acesso
-    const accessibleCourseIds = await getUserAccessibleCourses(userId)
-    
-    // Filtrar apenas cursos que o usuário tem acesso
-    const accessibleCourses = allCourses?.filter(course => 
-      accessibleCourseIds.includes(course.id)
-    ) || []
+    // Se o usuário tem um curso selecionado, retornar apenas esse curso
+    if (userData && userData.selectedCourse) {
+      const courseData = await getCourseById(userData.selectedCourse);
+      if (courseData) {
+        return [courseData];
+      }
+    }
 
-    console.log('Courses with access control:', accessibleCourses.length)
-    return accessibleCourses
-  } catch (error: any) {
-    console.error('Error getting courses with access:', error)
-    return []
+    // Se não tem curso selecionado, retornar todos os cursos disponíveis
+    const allCourses = await getCourses();
+    return allCourses || [];
+  } catch (error) {
+    console.error('Error getting courses with access:', error);
+    return [];
   }
 }
 
@@ -935,3 +946,48 @@ export const uploadFile = async (file: File, path: string) => {
 export const signInUser = signIn
 export const createUser = signUp
 export const updateUserData = updateUser 
+
+// Verificar se o acesso do usuário expirou
+export const checkUserAccessExpiry = async (userId: string) => {
+  try {
+    const userData = await getUserData(userId);
+    if (!userData || !userData.courseAccessExpiry) {
+      return false; // Sem data de expiração = acesso válido
+    }
+
+    const expiryDate = userData.courseAccessExpiry.toDate();
+    const currentDate = new Date();
+    
+    return currentDate > expiryDate; // true se expirou
+  } catch (error) {
+    console.error('Error checking user access expiry:', error);
+    return false;
+  }
+}
+
+// Calcular data de expiração baseada no curso
+export const calculateAccessExpiry = (expirationMonths: number) => {
+  const currentDate = new Date();
+  const expiryDate = new Date(currentDate);
+  expiryDate.setMonth(expiryDate.getMonth() + expirationMonths);
+  return expiryDate;
+} 
+
+export const getCourseById = async (courseId: string) => {
+  try {
+    const courseRef = doc(db, 'courses', courseId);
+    const courseSnap = await getDoc(courseRef);
+    
+    if (courseSnap.exists()) {
+      return {
+        id: courseSnap.id,
+        ...courseSnap.data()
+      } as Course;
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error('Error getting course by ID:', error);
+    return null;
+  }
+} 

@@ -26,7 +26,8 @@ export default function CoursesPage() {
     name: '',
     description: '',
     image: '',
-    price: 0
+    price: 0,
+    expirationMonths: 6 // Padrão: 6 meses
   });
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
@@ -121,7 +122,7 @@ export default function CoursesPage() {
       console.log('Recarregando lista de cursos...');
       await loadCourses();
       
-      setNewCourse({ name: '', description: '', image: '', price: 0 });
+      setNewCourse({ name: '', description: '', image: '', price: 0, expirationMonths: 6 });
       setSelectedImage(null);
       setImagePreview('');
       setShowAddModal(false);
@@ -289,6 +290,24 @@ export default function CoursesPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Expiração (meses)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="60"
+                    value={newCourse.expirationMonths}
+                    onChange={(e) => setNewCourse({...newCourse, expirationMonths: parseInt(e.target.value) || 6})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="6"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Tempo de acesso ao curso em meses (padrão: 6 meses)
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Imagem do Curso
                   </label>
                   
@@ -334,7 +353,7 @@ export default function CoursesPage() {
                 <button
                   onClick={() => {
                     setShowAddModal(false);
-                    setNewCourse({ name: '', description: '', image: '', price: 0 });
+                    setNewCourse({ name: '', description: '', image: '', price: 0, expirationMonths: 6 });
                     setSelectedImage(null);
                     setImagePreview('');
                   }}
