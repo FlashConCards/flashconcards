@@ -20,7 +20,14 @@ import {
   Legend, 
   ResponsiveContainer 
 } from 'recharts';
-import { getUserStudySessions } from '@/lib/firebase';
+import { 
+  getUserStudySessions, 
+  getFlashcards, 
+  getSubTopics, 
+  getTopics, 
+  getSubjects,
+  getUserProgress 
+} from '@/lib/firebase';
 import { 
   BookOpenIcon, 
   CheckCircleIcon, 
@@ -39,6 +46,8 @@ interface StudySession {
   correctCards: number;
   wrongCards: number;
   studyTime: number;
+  subTopicId?: string;
+  subjectId?: string;
 }
 
 interface SubjectProgress {
@@ -46,6 +55,7 @@ interface SubjectProgress {
   totalCards: number;
   studiedCards: number;
   correctRate: number;
+  subjectId: string;
 }
 
 export default function StatsPage() {
@@ -91,31 +101,72 @@ export default function StatsPage() {
         cardsStudied: session.flashcardsCount || 0,
         correctCards: session.correctCards || 0,
         wrongCards: session.wrongCards || 0,
-        studyTime: session.studyTime || 0
+        studyTime: session.studyTime || 0,
+        subTopicId: session.subTopicId,
+        subjectId: session.subjectId
       }));
 
-      // Mock subject progress for now - can be enhanced with real data
-      const mockSubjectProgress: SubjectProgress[] = [
-        { name: 'Direito Constitucional', totalCards: 100, studiedCards: 80, correctRate: 85 },
-        { name: 'Direito Administrativo', totalCards: 150, studiedCards: 120, correctRate: 78 },
-        { name: 'Direito Civil', totalCards: 200, studiedCards: 150, correctRate: 82 },
-        { name: 'Direito Penal', totalCards: 120, studiedCards: 90, correctRate: 75 },
-      ];
-
-      setStudySessions(sessionsForCharts);
-      setSubjectProgress(mockSubjectProgress);
-
-      // Calculate total stats from real data
-      const totalCards = mockSubjectProgress.reduce((sum, subject) => sum + subject.totalCards, 0);
-      const studiedCards = mockSubjectProgress.reduce((sum, subject) => sum + subject.studiedCards, 0);
+      // Calculate total stats from real sessions
       const totalCorrect = sessionsForCharts.reduce((sum, session) => sum + session.correctCards, 0);
       const totalWrong = sessionsForCharts.reduce((sum, session) => sum + session.wrongCards, 0);
       const totalStudyTime = sessionsForCharts.reduce((sum, session) => sum + session.studyTime, 0);
+      const totalStudied = sessionsForCharts.reduce((sum, session) => sum + session.cardsStudied, 0);
       const averageAccuracy = totalCorrect + totalWrong > 0 ? (totalCorrect / (totalCorrect + totalWrong)) * 100 : 0;
+
+      // Get all subjects and their flashcards for accurate progress calculation
+      const subjects = await getSubjects();
+      const subjectProgressData: SubjectProgress[] = [];
+
+      for (const subject of subjects) {
+        const topics = await getTopics(subject.id);
+        let subjectTotalCards = 0;
+        let subjectStudiedCards = 0;
+        let subjectCorrectCards = 0;
+
+        for (const topic of topics) {
+          const subTopics = await getSubTopics(topic.id);
+          
+          for (const subTopic of subTopics) {
+            const flashcards = await getFlashcards(subTopic.id);
+            subjectTotalCards += flashcards.length;
+
+            // Count studied cards for this sub-topic from sessions
+            const subTopicSessions = sessionsForCharts.filter(session => 
+              session.subTopicId === subTopic.id
+            );
+            
+            const subTopicStudied = subTopicSessions.reduce((sum, session) => 
+              sum + session.cardsStudied, 0
+            );
+            const subTopicCorrect = subTopicSessions.reduce((sum, session) => 
+              sum + session.correctCards, 0
+            );
+            
+            subjectStudiedCards += subTopicStudied;
+            subjectCorrectCards += subTopicCorrect;
+          }
+        }
+
+        const correctRate = subjectStudiedCards > 0 ? (subjectCorrectCards / subjectStudiedCards) * 100 : 0;
+        
+        subjectProgressData.push({
+          name: subject.name,
+          totalCards: subjectTotalCards,
+          studiedCards: subjectStudiedCards,
+          correctRate,
+          subjectId: subject.id
+        });
+      }
+
+      setStudySessions(sessionsForCharts);
+      setSubjectProgress(subjectProgressData);
+
+      // Calculate total cards across all subjects
+      const totalCards = subjectProgressData.reduce((sum, subject) => sum + subject.totalCards, 0);
 
       setTotalStats({
         totalCards,
-        studiedCards,
+        studiedCards: totalStudied,
         correctCards: totalCorrect,
         wrongCards: totalWrong,
         totalStudyTime,
@@ -199,17 +250,17 @@ export default function StatsPage() {
             </div>
           </div>
 
-                     <div className="bg-white rounded-lg shadow p-6">
-             <div className="flex items-center">
-               <div className="p-2 bg-yellow-100 rounded-lg">
-                 <ChartBarIcon className="w-6 h-6 text-yellow-600" />
-               </div>
-               <div className="ml-4">
-                 <p className="text-sm font-medium text-gray-600">Taxa de Acerto</p>
-                 <p className="text-2xl font-bold text-gray-900">{totalStats.averageAccuracy.toFixed(1)}%</p>
-               </div>
-             </div>
-           </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-yellow-100 rounded-lg">
+                <ChartBarIcon className="w-6 h-6 text-yellow-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Taxa de Acerto</p>
+                <p className="text-2xl font-bold text-gray-900">{totalStats.averageAccuracy.toFixed(1)}%</p>
+              </div>
+            </div>
+          </div>
 
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
@@ -345,7 +396,7 @@ export default function StatsPage() {
                       {session.wrongCards}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {((session.correctCards / session.cardsStudied) * 100).toFixed(1)}%
+                      {session.cardsStudied > 0 ? ((session.correctCards / session.cardsStudied) * 100).toFixed(1) : 0}%
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatTime(session.studyTime)}

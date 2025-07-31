@@ -165,7 +165,7 @@ export default function StudyPage() {
     setSessionStats(finalStats);
     setSessionCompleted(true);
 
-    // Save session data
+    // Save session data with correct statistics
     try {
       if (courseId && subjectId && topicId && subTopicId) {
         await createStudySession({
@@ -174,8 +174,12 @@ export default function StudyPage() {
           subjectId,
           topicId,
           subTopicId,
-          flashcardsCount: flashcards.length,
-          startTime: new Date()
+          flashcardsCount: sessionStats.totalCards,
+          correctCards: sessionStats.correctCards,
+          wrongCards: sessionStats.wrongCards,
+          studyTime: studyTime,
+          startTime: sessionStartTime,
+          endTime: new Date()
         })
       }
     } catch (error) {
