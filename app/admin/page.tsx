@@ -9,7 +9,9 @@ import {
   getCourses,
   getUserPayments,
   updatePaymentStatus,
-  updateUser
+  updateUser,
+  createUserByAdmin,
+  deleteUserByAdmin
 } from '@/lib/firebase';
 
 interface User {
@@ -166,8 +168,15 @@ export default function AdminPage() {
 
       console.log('Adding user:', { ...newUser, password: '***' });
       
-      // Aqui você chamaria a função para criar usuário
-      // await createUserByAdmin(newUser);
+      // Criar usuário usando a função do Firebase
+      await createUserByAdmin({
+        email: newUser.email,
+        displayName: newUser.displayName,
+        password: newUser.password,
+        selectedCourse: newUser.selectedCourse,
+        isPaid: false,
+        isAdmin: false
+      });
       
       await loadData();
       
@@ -188,7 +197,7 @@ export default function AdminPage() {
   const handleDeleteUser = async (userId: string) => {
     if (confirm('Tem certeza que deseja excluir este usuário?')) {
       try {
-        // await deleteUserByAdmin(userId);
+        await deleteUserByAdmin(userId);
         await loadData();
         alert('Usuário excluído com sucesso!');
       } catch (error: any) {
