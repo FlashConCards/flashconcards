@@ -266,10 +266,21 @@ export const createUserByAdmin = async (userData: any) => {
 
 export const deleteUserByAdmin = async (uid: string) => {
   try {
+    console.log('deleteUserByAdmin: Starting to delete user:', uid)
+    
+    // Deletar documento do Firestore
     await deleteDoc(doc(db, 'users', uid))
-    console.log('User deleted:', uid)
-  } catch (error) {
-    console.error('Error deleting user:', error)
+    console.log('deleteUserByAdmin: User document deleted from Firestore:', uid)
+    
+    // Nota: Para deletar do Firebase Auth, precisaríamos de Admin SDK
+    // Por enquanto, apenas deletamos do Firestore
+    // O usuário não conseguirá mais fazer login, mas a conta Auth permanece
+    
+    console.log('deleteUserByAdmin: User deletion completed successfully')
+  } catch (error: any) {
+    console.error('deleteUserByAdmin: Error deleting user:', error)
+    console.error('deleteUserByAdmin: Error code:', error.code)
+    console.error('deleteUserByAdmin: Error message:', error.message)
     throw error
   }
 }

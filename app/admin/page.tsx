@@ -146,7 +146,7 @@ export default function AdminPage() {
 
   const handleAddUser = async () => {
     try {
-      if (!newUser.email || !newUser.displayName || !newUser.selectedCourse) {
+      if (!newUser.email || !newUser.displayName || !newUser.selectedCourse || !newUser.password) {
         alert('Preencha todos os campos obrigatórios');
         return;
       }
@@ -164,7 +164,13 @@ export default function AdminPage() {
         return;
       }
 
-      console.log('Adding user:', newUser);
+      // Validar senha
+      if (newUser.password.length < 6) {
+        alert('A senha deve ter pelo menos 6 caracteres');
+        return;
+      }
+
+      console.log('Adding user:', { ...newUser, password: '***' });
       await createUserByAdmin(newUser);
       
       // Reload data to update UI
@@ -478,22 +484,39 @@ export default function AdminPage() {
                 </p>
                 </div>
               
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Nome Completo *
-                  </label>
-                  <input
-                  type="text"
-                  value={newUser.displayName}
-                  onChange={(e) => setNewUser({...newUser, displayName: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Nome completo do usuário"
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Digite o nome completo (mínimo 2 caracteres)
-                </p>
-              </div>
+                </label>
+                <input
+                type="text"
+                value={newUser.displayName}
+                onChange={(e) => setNewUser({...newUser, displayName: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Nome completo do usuário"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Digite o nome completo (mínimo 2 caracteres)
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Senha *
+              </label>
+              <input
+                type="password"
+                value={newUser.password}
+                onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Digite a senha do usuário"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Senha mínima de 6 caracteres (padrão: 123456)
+              </p>
+            </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
