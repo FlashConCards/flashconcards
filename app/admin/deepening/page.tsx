@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -73,6 +73,7 @@ export default function DeepeningPage() {
     flashcardId: '',
     content: ''
   });
+  const editorRef = useRef<HTMLDivElement>(null);
 
   // Check if user is admin
   useEffect(() => {
@@ -147,6 +148,32 @@ export default function DeepeningPage() {
       setFlashcards(flashcardsData || []);
     } catch (error) {
       console.error('Erro ao carregar flashcards:', error);
+    }
+  };
+
+  // Funções do editor rico
+  const execCommand = (command: string, value: string = '') => {
+    document.execCommand(command, false, value);
+    if (editorRef.current) {
+      setNewDeepening({...newDeepening, content: editorRef.current.innerHTML});
+    }
+  };
+
+  const insertHTML = (html: string) => {
+    if (editorRef.current) {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        const fragment = document.createDocumentFragment();
+        while (div.firstChild) {
+          fragment.appendChild(div.firstChild);
+        }
+        range.insertNode(fragment);
+        setNewDeepening({...newDeepening, content: editorRef.current.innerHTML});
+      }
     }
   };
 
@@ -265,7 +292,7 @@ export default function DeepeningPage() {
       {/* Add Deepening Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold mb-4">Adicionar Aprofundamento</h3>
             
             <div className="space-y-4">
@@ -413,93 +440,184 @@ export default function DeepeningPage() {
                   </label>
                   <div className="border border-gray-300 rounded-md">
                     {/* Toolbar */}
-                    <div className="border-b border-gray-300 p-2 bg-gray-50">
-                      <div className="flex space-x-2">
+                    <div className="border-b border-gray-300 p-3 bg-gray-50">
+                      <div className="flex flex-wrap gap-2">
+                        {/* Formatação de texto */}
+                        <div className="flex items-center space-x-1">
+                          <button
+                            type="button"
+                            onClick={() => execCommand('bold')}
+                            className="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 font-bold"
+                            title="Negrito"
+                          >
+                            B
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => execCommand('italic')}
+                            className="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 italic"
+                            title="Itálico"
+                          >
+                            I
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => execCommand('underline')}
+                            className="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 underline"
+                            title="Sublinhado"
+                          >
+                            U
+                          </button>
+                        </div>
+
+                        {/* Tamanhos de fonte */}
+                        <div className="flex items-center space-x-1">
+                          <select
+                            onChange={(e) => execCommand('fontSize', e.target.value)}
+                            className="px-2 py-1 text-sm bg-white border border-gray-300 rounded"
+                            title="Tamanho da fonte"
+                          >
+                            <option value="1">Pequeno</option>
+                            <option value="3">Normal</option>
+                            <option value="5">Grande</option>
+                            <option value="7">Muito Grande</option>
+                          </select>
+                        </div>
+
+                        {/* Família da fonte */}
+                        <div className="flex items-center space-x-1">
+                          <select
+                            onChange={(e) => execCommand('fontName', e.target.value)}
+                            className="px-2 py-1 text-sm bg-white border border-gray-300 rounded"
+                            title="Família da fonte"
+                          >
+                            <option value="Arial">Arial</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Verdana">Verdana</option>
+                            <option value="Helvetica">Helvetica</option>
+                          </select>
+                        </div>
+
+                        {/* Cores */}
+                        <div className="flex items-center space-x-1">
+                          <input
+                            type="color"
+                            onChange={(e) => execCommand('foreColor', e.target.value)}
+                            className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                            title="Cor do texto"
+                          />
+                          <input
+                            type="color"
+                            onChange={(e) => execCommand('hiliteColor', e.target.value)}
+                            className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                            title="Cor de fundo"
+                          />
+                        </div>
+
+                        {/* Alinhamento */}
+                        <div className="flex items-center space-x-1">
+                          <button
+                            type="button"
+                            onClick={() => execCommand('justifyLeft')}
+                            className="px-2 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
+                            title="Alinhar à esquerda"
+                          >
+                            ⬅️
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => execCommand('justifyCenter')}
+                            className="px-2 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
+                            title="Centralizar"
+                          >
+                            ↔️
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => execCommand('justifyRight')}
+                            className="px-2 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
+                            title="Alinhar à direita"
+                          >
+                            ➡️
+                          </button>
+                        </div>
+
+                        {/* Listas */}
+                        <div className="flex items-center space-x-1">
+                          <button
+                            type="button"
+                            onClick={() => execCommand('insertUnorderedList')}
+                            className="px-2 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
+                            title="Lista com marcadores"
+                          >
+                            •
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => execCommand('insertOrderedList')}
+                            className="px-2 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
+                            title="Lista numerada"
+                          >
+                            1.
+                          </button>
+                        </div>
+
+                        {/* Links e imagens */}
+                        <div className="flex items-center space-x-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const url = prompt('Digite a URL do link:');
+                              if (url) execCommand('createLink', url);
+                            }}
+                            className="px-2 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
+                            title="Inserir link"
+                          >
+                            🔗
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const url = prompt('Digite a URL da imagem:');
+                              if (url) insertHTML(`<img src="${url}" alt="Imagem" style="max-width: 100%; height: auto;" />`);
+                            }}
+                            className="px-2 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
+                            title="Inserir imagem"
+                          >
+                            🖼️
+                          </button>
+                        </div>
+
+                        {/* Limpar formatação */}
                         <button
                           type="button"
-                          onClick={() => {
-                            const textarea = document.getElementById('content-editor') as HTMLTextAreaElement;
-                            const start = textarea.selectionStart;
-                            const end = textarea.selectionEnd;
-                            const text = textarea.value;
-                            const before = text.substring(0, start);
-                            const selected = text.substring(start, end);
-                            const after = text.substring(end);
-                            textarea.value = before + `<strong>${selected}</strong>` + after;
-                            setNewDeepening({...newDeepening, content: textarea.value});
-                          }}
+                          onClick={() => execCommand('removeFormat')}
                           className="px-2 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
-                          title="Negrito"
+                          title="Limpar formatação"
                         >
-                          <strong>B</strong>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const textarea = document.getElementById('content-editor') as HTMLTextAreaElement;
-                            const start = textarea.selectionStart;
-                            const end = textarea.selectionEnd;
-                            const text = textarea.value;
-                            const before = text.substring(0, start);
-                            const selected = text.substring(start, end);
-                            const after = text.substring(end);
-                            textarea.value = before + `<em>${selected}</em>` + after;
-                            setNewDeepening({...newDeepening, content: textarea.value});
-                          }}
-                          className="px-2 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
-                          title="Itálico"
-                        >
-                          <em>I</em>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const textarea = document.getElementById('content-editor') as HTMLTextAreaElement;
-                            const start = textarea.selectionStart;
-                            const end = textarea.selectionEnd;
-                            const text = textarea.value;
-                            const before = text.substring(0, start);
-                            const selected = text.substring(start, end);
-                            const after = text.substring(end);
-                            textarea.value = before + `<h3>${selected}</h3>` + after;
-                            setNewDeepening({...newDeepening, content: textarea.value});
-                          }}
-                          className="px-2 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
-                          title="Título"
-                        >
-                          H3
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const textarea = document.getElementById('content-editor') as HTMLTextAreaElement;
-                            const start = textarea.selectionStart;
-                            const end = textarea.selectionEnd;
-                            const text = textarea.value;
-                            const before = text.substring(0, start);
-                            const selected = text.substring(start, end);
-                            const after = text.substring(end);
-                            textarea.value = before + `<ul><li>${selected}</li></ul>` + after;
-                            setNewDeepening({...newDeepening, content: textarea.value});
-                          }}
-                          className="px-2 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50"
-                          title="Lista"
-                        >
-                          • Lista
+                          🧹
                         </button>
                       </div>
                     </div>
-                    {/* Textarea */}
-                    <textarea
-                      id="content-editor"
-                      value={newDeepening.content}
-                      onChange={(e) => setNewDeepening({...newDeepening, content: e.target.value})}
-                      className="w-full p-4 min-h-[300px] focus:outline-none"
-                      placeholder="Digite o conteúdo do aprofundamento aqui... Você pode usar HTML para formatação."
+
+                    {/* Editor */}
+                    <div
+                      ref={editorRef}
+                      contentEditable
+                      onInput={(e) => setNewDeepening({...newDeepening, content: e.currentTarget.innerHTML})}
+                      className="w-full p-4 min-h-[400px] focus:outline-none prose max-w-none"
+                      style={{
+                        fontFamily: 'Arial, sans-serif',
+                        fontSize: '14px',
+                        lineHeight: '1.6'
+                      }}
+                      data-placeholder="Digite o conteúdo do aprofundamento aqui..."
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    Use os botões acima para formatar o texto ou digite HTML diretamente.
+                    Use a barra de ferramentas acima para formatar o texto como no Word.
                   </p>
                 </div>
               )}
