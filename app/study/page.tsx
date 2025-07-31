@@ -132,7 +132,7 @@ export default function StudyPage() {
       setWrongCards(prev => [...prev, currentCard]);
       setSessionStats(prev => ({ ...prev, wrongCards: prev.wrongCards + 1 }));
       
-      // Add wrong card back to the end of the queue
+      // Add wrong card back to the end of the queue for review
       setStudyQueue(prev => [...prev.slice(currentIndex + 1), currentCard]);
     }
 
@@ -141,8 +141,14 @@ export default function StudyPage() {
       setCurrentIndex(prev => prev + 1);
       setShowAnswer(false);
     } else {
-      // Session completed
-      handleSessionComplete();
+      // Check if there are more cards in the queue (including wrong ones that were added back)
+      if (studyQueue.length > currentIndex + 1) {
+        setCurrentIndex(prev => prev + 1);
+        setShowAnswer(false);
+      } else {
+        // Session completed - all cards studied
+        handleSessionComplete();
+      }
     }
   };
 
@@ -313,7 +319,7 @@ export default function StudyPage() {
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between text-sm text-gray-600 mb-2">
-            <span>Progresso</span>
+            <span>Progresso da Sessão</span>
             <span>{Math.round(((currentIndex + 1) / studyQueue.length) * 100)}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
@@ -321,6 +327,22 @@ export default function StudyPage() {
               className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${((currentIndex + 1) / studyQueue.length) * 100}%` }}
             ></div>
+          </div>
+          
+          {/* Session Stats */}
+          <div className="grid grid-cols-3 gap-4 mt-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">{sessionStats.correctCards}</div>
+              <div className="text-xs text-gray-600">Acertos</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-red-600">{sessionStats.wrongCards}</div>
+              <div className="text-xs text-gray-600">Erros</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">{studyQueue.length - currentIndex - 1}</div>
+              <div className="text-xs text-gray-600">Restantes</div>
+            </div>
           </div>
         </div>
 

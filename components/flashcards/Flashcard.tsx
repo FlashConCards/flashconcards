@@ -13,7 +13,7 @@ import { Flashcard as FlashcardType } from '@/types'
 
 interface FlashcardProps {
   flashcard: FlashcardType
-  onAnswer: (status: 'learned' | 'review_later' | 'wrong') => void
+  onAnswer: (status: 'learned' | 'wrong') => void
   onDeepen: () => void
   showDeepen?: boolean
 }
@@ -34,7 +34,7 @@ export default function Flashcard({
     }
   }
 
-  const handleAnswer = (status: 'learned' | 'review_later' | 'wrong') => {
+  const handleAnswer = (status: 'learned' | 'wrong') => {
     onAnswer(status)
     setIsFlipped(false)
     setShowButtons(false)
@@ -109,14 +109,6 @@ export default function Flashcard({
             </button>
             
             <button
-              onClick={() => handleAnswer('review_later')}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-colors"
-            >
-              <ClockIcon className="w-5 h-5" />
-              Revisar depois
-            </button>
-            
-            <button
               onClick={() => handleAnswer('learned')}
               className="flex items-center justify-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
             >
@@ -136,9 +128,9 @@ export default function Flashcard({
         >
           <button
             onClick={onDeepen}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
           >
-            Aprofundar
+            📚 Aprofundar Conteúdo
             <ChevronRightIcon className="w-4 h-4" />
           </button>
         </motion.div>

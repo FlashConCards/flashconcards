@@ -26,7 +26,8 @@ import {
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
   StarIcon,
-  PlayIcon
+  PlayIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
@@ -258,6 +259,14 @@ export default function DashboardPage() {
             </div>
             
             <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/dashboard/stats')}
+                className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                <ChartBarIcon className="h-5 w-5" />
+                <span>Estatísticas</span>
+              </button>
+              
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
