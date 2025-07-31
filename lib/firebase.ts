@@ -997,4 +997,63 @@ export const getCourseById = async (courseId: string) => {
     console.error('Error getting course by ID:', error);
     return null;
   }
+}
+
+export const getUserStudySessions = async (uid: string) => {
+  try {
+    const q = query(
+      collection(db, 'studySessions'),
+      where('uid', '==', uid),
+      orderBy('createdAt', 'desc')
+    )
+    const querySnapshot = await getDocs(q)
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+  } catch (error: any) {
+    console.error('Error getting user study sessions:', error)
+    return []
+  }
+}
+
+export const getUserProgressBySubTopic = async (uid: string, subTopicId: string) => {
+  try {
+    const q = query(
+      collection(db, 'studySessions'),
+      where('uid', '==', uid),
+      where('subTopicId', '==', subTopicId)
+    )
+    const querySnapshot = await getDocs(q)
+    const sessions = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as any[]
+    
+    const totalCards = sessions.reduce((sum, session) => sum + (session.flashcardsCount || 0), 0)
+    const correctCards = sessions.reduce((sum, session) => sum + (session.correctCards || 0), 0)
+    const wrongCards = sessions.reduce((sum, session) => sum + (session.wrongCards || 0), 0)
+    const studyTime = sessions.reduce((sum, session) => sum + (session.studyTime || 0), 0)
+    
+    return {
+      totalCards,
+      studiedCards: correctCards + wrongCards,
+      correctCards,
+      wrongCards,
+      studyTime,
+      accuracy: totalCards > 0 ? (correctCards / totalCards) * 100 : 0,
+      lastStudied: sessions.length > 0 ? sessions[0].createdAt : null
+    }
+  } catch (error: any) {
+    console.error('Error getting user progress by sub-topic:', error)
+    return {
+      totalCards: 0,
+      studiedCards: 0,
+      correctCards: 0,
+      wrongCards: 0,
+      studyTime: 0,
+      accuracy: 0,
+      lastStudied: null
+    }
+  }
 } 

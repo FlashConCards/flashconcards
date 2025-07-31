@@ -75,15 +75,25 @@ export default function StatsPage() {
     try {
       setLoading(true);
       
-      // Mock data for demonstration - replace with real Firebase data
-      const mockSessions: StudySession[] = [
-        { id: '1', date: '2024-01-01', cardsStudied: 20, correctCards: 18, wrongCards: 2, studyTime: 1200 },
-        { id: '2', date: '2024-01-02', cardsStudied: 25, correctCards: 22, wrongCards: 3, studyTime: 1500 },
-        { id: '3', date: '2024-01-03', cardsStudied: 30, correctCards: 27, wrongCards: 3, studyTime: 1800 },
-        { id: '4', date: '2024-01-04', cardsStudied: 15, correctCards: 14, wrongCards: 1, studyTime: 900 },
-        { id: '5', date: '2024-01-05', cardsStudied: 35, correctCards: 32, wrongCards: 3, studyTime: 2100 },
-      ];
+      if (!user?.uid) {
+        setLoading(false);
+        return;
+      }
 
+      // Get real study sessions from Firebase
+      const realSessions = await getUserStudySessions(user.uid);
+      
+      // Transform sessions for charts
+      const sessionsForCharts: StudySession[] = realSessions.map((session: any) => ({
+        id: session.id,
+        date: session.createdAt?.toDate?.()?.toLocaleDateString() || new Date().toLocaleDateString(),
+        cardsStudied: session.flashcardsCount || 0,
+        correctCards: session.correctCards || 0,
+        wrongCards: session.wrongCards || 0,
+        studyTime: session.studyTime || 0
+      }));
+
+      // Mock subject progress for now - can be enhanced with real data
       const mockSubjectProgress: SubjectProgress[] = [
         { name: 'Direito Constitucional', totalCards: 100, studiedCards: 80, correctRate: 85 },
         { name: 'Direito Administrativo', totalCards: 150, studiedCards: 120, correctRate: 78 },
@@ -91,15 +101,15 @@ export default function StatsPage() {
         { name: 'Direito Penal', totalCards: 120, studiedCards: 90, correctRate: 75 },
       ];
 
-      setStudySessions(mockSessions);
+      setStudySessions(sessionsForCharts);
       setSubjectProgress(mockSubjectProgress);
 
-      // Calculate total stats
+      // Calculate total stats from real data
       const totalCards = mockSubjectProgress.reduce((sum, subject) => sum + subject.totalCards, 0);
       const studiedCards = mockSubjectProgress.reduce((sum, subject) => sum + subject.studiedCards, 0);
-      const totalCorrect = mockSessions.reduce((sum, session) => sum + session.correctCards, 0);
-      const totalWrong = mockSessions.reduce((sum, session) => sum + session.wrongCards, 0);
-      const totalStudyTime = mockSessions.reduce((sum, session) => sum + session.studyTime, 0);
+      const totalCorrect = sessionsForCharts.reduce((sum, session) => sum + session.correctCards, 0);
+      const totalWrong = sessionsForCharts.reduce((sum, session) => sum + session.wrongCards, 0);
+      const totalStudyTime = sessionsForCharts.reduce((sum, session) => sum + session.studyTime, 0);
       const averageAccuracy = totalCorrect + totalWrong > 0 ? (totalCorrect / (totalCorrect + totalWrong)) * 100 : 0;
 
       setTotalStats({

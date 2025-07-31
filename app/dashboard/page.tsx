@@ -260,6 +260,14 @@ export default function DashboardPage() {
             
             <div className="flex items-center space-x-4">
               <button
+                onClick={() => router.push('/dashboard/study-area')}
+                className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <BookOpenIcon className="h-5 w-5" />
+                <span>Área de Estudos</span>
+              </button>
+              
+              <button
                 onClick={() => router.push('/dashboard/stats')}
                 className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
               >
