@@ -104,7 +104,7 @@ export default function CoursesPage() {
           console.error('Error uploading image:', error);
           console.log('Continuando sem imagem...');
           // Continuar sem imagem se o upload falhar
-          imageUrl = '/placeholder-course.jpg';
+          imageUrl = '';
         }
       }
 
@@ -192,14 +192,14 @@ export default function CoursesPage() {
                     alt={course.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      e.currentTarget.src = '/placeholder-course.jpg';
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
                     }}
                   />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                    <PhotoIcon className="h-12 w-12 text-gray-400" />
-                  </div>
-                )}
+                ) : null}
+                <div className={`w-full h-full flex items-center justify-center bg-gray-100 ${course.image ? 'hidden' : ''}`}>
+                  <PhotoIcon className="h-12 w-12 text-gray-400" />
+                </div>
               </div>
 
               <div className="p-6">
