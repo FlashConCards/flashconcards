@@ -80,13 +80,17 @@ export default function DashboardPage() {
     const loadCourses = async () => {
       try {
         setLoading(true);
+        console.log('Loading courses for user:', user?.uid);
         const accessibleCourses = await getCoursesWithAccess(user?.uid || '');
+        console.log('Accessible courses:', accessibleCourses);
         setCourses(accessibleCourses || []);
         
         // Se o usuário tem apenas um curso, selecionar automaticamente
         if (accessibleCourses && accessibleCourses.length === 1) {
+          console.log('Auto-selecting course:', accessibleCourses[0].name);
           setSelectedCourse(accessibleCourses[0]);
           const subjectsData = await getSubjects(accessibleCourses[0].id);
+          console.log('Subjects loaded:', subjectsData);
           setSubjects(subjectsData || []);
         }
         
@@ -123,7 +127,9 @@ export default function DashboardPage() {
     if (selectedCourse) {
       const loadSubjects = async () => {
         try {
+          console.log('Loading subjects for course:', selectedCourse.id);
           const subjectsData = await getSubjects(selectedCourse.id);
+          console.log('Subjects loaded:', subjectsData);
           setSubjects(subjectsData || []);
         } catch (error) {
           console.error('Error loading subjects:', error);
@@ -360,25 +366,38 @@ export default function DashboardPage() {
             </div>
             
             {/* Subjects */}
-            {subjects.length > 0 && (
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-900 mb-3">Matérias</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {subjects.length > 0 ? (
+              <div className="space-y-4">
+                <h4 className="text-md font-semibold text-gray-800">Matérias</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {subjects.map((subject) => (
                     <div
                       key={subject.id}
                       onClick={() => setSelectedSubject(subject)}
-                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
                         selectedSubject?.id === subject.id
-                          ? 'border-green-500 bg-green-50'
-                          : 'border-gray-200 hover:border-green-300'
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-blue-300'
                       }`}
                     >
-                      <h5 className="font-medium text-gray-900">{subject.name}</h5>
-                      <p className="text-xs text-gray-600 mt-1">{subject.description}</p>
+                      <h5 className="font-semibold text-gray-900 mb-2">{subject.name}</h5>
+                      <p className="text-sm text-gray-600">{subject.description}</p>
                     </div>
                   ))}
                 </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <BookOpenIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                  Nenhuma matéria disponível
+                </h4>
+                <p className="text-gray-600 mb-4">
+                  O administrador ainda não adicionou matérias para este curso.
+                </p>
+                <p className="text-sm text-gray-500">
+                  Entre em contato com o administrador para solicitar o conteúdo.
+                </p>
               </div>
             )}
 
