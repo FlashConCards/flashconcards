@@ -102,9 +102,9 @@ export default function CoursesPage() {
           console.log('Upload da imagem concluído:', imageUrl);
         } catch (error) {
           console.error('Error uploading image:', error);
-          alert('Erro ao fazer upload da imagem. Tente novamente.');
-          setUploading(false);
-          return;
+          console.log('Continuando sem imagem...');
+          // Continuar sem imagem se o upload falhar
+          imageUrl = '/placeholder-course.jpg';
         }
       }
 

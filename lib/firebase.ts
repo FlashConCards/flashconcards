@@ -903,12 +903,30 @@ export const onCoursesChange = (callback: (data: any[]) => void) => {
 // Storage functions
 export const uploadFile = async (file: File, path: string) => {
   try {
-    const storageRef = ref(storage, path)
-    const snapshot = await uploadBytes(storageRef, file)
-    const downloadURL = await getDownloadURL(snapshot.ref)
+    console.log('=== UPLOAD FILE START ===');
+    console.log('File:', file.name, 'Size:', file.size, 'Type:', file.type);
+    console.log('Path:', path);
+    console.log('Storage bucket:', storage.app.options.storageBucket);
+    
+    const storageRef = ref(storage, path);
+    console.log('Storage reference created');
+    
+    const snapshot = await uploadBytes(storageRef, file);
+    console.log('Upload completed, getting download URL...');
+    
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    console.log('Download URL:', downloadURL);
+    console.log('=== UPLOAD FILE END ===');
+    
     return downloadURL
-  } catch (error) {
-    console.error('Error uploading file:', error)
+  } catch (error: any) {
+    console.error('=== UPLOAD FILE ERROR ===');
+    console.error('Error uploading file:', error);
+    console.error('Error type:', typeof error);
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    console.error('Error stack:', error.stack);
+    console.error('=== UPLOAD FILE ERROR END ===');
     throw error
   }
 }
