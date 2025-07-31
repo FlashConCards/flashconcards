@@ -12,7 +12,9 @@ import {
   createStudySession,
   updateUserProgress,
   getUserProgress,
-  onCoursesChange
+  onCoursesChange,
+  getTestimonials,
+  getCoursesWithAccess
 } from '@/lib/firebase';
 import { Course, Subject, Topic, SubTopic, Flashcard } from '@/types';
 import { 
@@ -22,9 +24,20 @@ import {
   XCircleIcon,
   UserCircleIcon,
   Cog6ToothIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  StarIcon,
+  PlayIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+
+interface Testimonial {
+  id: string;
+  name: string;
+  content: string;
+  rating: number;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: any;
+}
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
@@ -38,6 +51,7 @@ export default function DashboardPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [subTopics, setSubTopics] = useState<SubTopic[]>([]);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -54,16 +68,28 @@ export default function DashboardPage() {
 
   // Check if user has access
   useEffect(() => {
-    // Remover verificação de pagamento para evitar loop
-    console.log('Dashboard loaded for user:', user?.email)
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    console.log('Dashboard loaded for user:', user?.email);
   }, [user, router]);
 
-  // Load courses in real-time
+  // Load courses with access control
   useEffect(() => {
     const loadCourses = async () => {
       try {
-        const coursesData = await getCourses();
-        setCourses(coursesData || []);
+        setLoading(true);
+        const accessibleCourses = await getCoursesWithAccess(user?.uid || '');
+        setCourses(accessibleCourses || []);
+        
+        // Se o usuário tem apenas um curso, selecionar automaticamente
+        if (accessibleCourses && accessibleCourses.length === 1) {
+          setSelectedCourse(accessibleCourses[0]);
+          const subjectsData = await getSubjects(accessibleCourses[0].id);
+          setSubjects(subjectsData || []);
+        }
+        
         setLoading(false);
       } catch (error) {
         console.error('Error loading courses:', error);
@@ -72,7 +98,24 @@ export default function DashboardPage() {
       }
     };
 
-    loadCourses();
+    if (user) {
+      loadCourses();
+    }
+  }, [user]);
+
+  // Load testimonials
+  useEffect(() => {
+    const loadTestimonials = async () => {
+      try {
+        const testimonialsData = await getTestimonials('approved');
+        setTestimonials(testimonialsData || []);
+      } catch (error) {
+        console.error('Error loading testimonials:', error);
+        setTestimonials([]);
+      }
+    };
+
+    loadTestimonials();
   }, []);
 
   // Load subjects when course is selected
@@ -80,233 +123,114 @@ export default function DashboardPage() {
     if (selectedCourse) {
       const loadSubjects = async () => {
         try {
-          // Temporariamente usando dados mockados até o Firebase estar configurado
-          const mockSubjects: Subject[] = [
-            {
-              id: '1',
-              courseId: selectedCourse.id,
-              name: 'Direito Constitucional',
-              description: 'Princípios fundamentais da Constituição',
-              order: 1,
-              isActive: true,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            },
-            {
-              id: '2',
-              courseId: selectedCourse.id,
-              name: 'Direito Administrativo',
-              description: 'Organização administrativa e atos administrativos',
-              order: 2,
-              isActive: true,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            },
-          ];
-          setSubjects(mockSubjects);
+          const subjectsData = await getSubjects(selectedCourse.id);
+          setSubjects(subjectsData || []);
         } catch (error) {
           console.error('Error loading subjects:', error);
+          setSubjects([]);
         }
       };
+
       loadSubjects();
     }
   }, [selectedCourse]);
 
   // Load topics when subject is selected
   useEffect(() => {
-    if (selectedCourse && selectedSubject) {
+    if (selectedSubject) {
       const loadTopics = async () => {
         try {
-          // Temporariamente usando dados mockados
-          const mockTopics: Topic[] = [
-            {
-              id: '1',
-              subjectId: selectedSubject.id,
-              name: 'Princípios Fundamentais',
-              description: 'Fundamentos da República',
-              order: 1,
-              isActive: true,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            },
-            {
-              id: '2',
-              subjectId: selectedSubject.id,
-              name: 'Direitos e Garantias',
-              description: 'Direitos fundamentais',
-              order: 2,
-              isActive: true,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            },
-          ];
-          setTopics(mockTopics);
+          const topicsData = await getTopics(selectedSubject.id);
+          setTopics(topicsData || []);
         } catch (error) {
           console.error('Error loading topics:', error);
+          setTopics([]);
         }
       };
+
       loadTopics();
     }
-  }, [selectedCourse, selectedSubject]);
+  }, [selectedSubject]);
 
   // Load sub-topics when topic is selected
   useEffect(() => {
-    if (selectedCourse && selectedSubject && selectedTopic) {
+    if (selectedTopic) {
       const loadSubTopics = async () => {
         try {
-          // Temporariamente usando dados mockados
-          const mockSubTopics: SubTopic[] = [
-            {
-              id: '1',
-              topicId: selectedTopic.id,
-              name: 'Soberania Popular',
-              description: 'Poder emana do povo',
-              order: 1,
-              isActive: true,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            },
-            {
-              id: '2',
-              topicId: selectedTopic.id,
-              name: 'Separação de Poderes',
-              description: 'Independência entre os poderes',
-              order: 2,
-              isActive: true,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            },
-          ];
-          setSubTopics(mockSubTopics);
+          const subTopicsData = await getSubTopics(selectedTopic.id);
+          setSubTopics(subTopicsData || []);
         } catch (error) {
           console.error('Error loading sub-topics:', error);
+          setSubTopics([]);
         }
       };
+
       loadSubTopics();
     }
-  }, [selectedCourse, selectedSubject, selectedTopic]);
+  }, [selectedTopic]);
 
   // Load flashcards when sub-topic is selected
   useEffect(() => {
-    if (selectedCourse && selectedSubject && selectedTopic && selectedSubTopic) {
+    if (selectedSubTopic) {
       const loadFlashcards = async () => {
         try {
-          // Temporariamente usando dados mockados
-          const mockFlashcards: Flashcard[] = [
-            {
-              id: '1',
-              subTopicId: selectedSubTopic.id,
-              front: 'O que é a soberania popular?',
-              back: 'É o princípio de que o poder emana do povo',
-              explanation: 'A soberania popular é o fundamento da democracia',
-              isActive: true,
-              order: 1,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            },
-            {
-              id: '2',
-              subTopicId: selectedSubTopic.id,
-              front: 'Como se expressa a soberania popular?',
-              back: 'Através do voto direto, secreto, universal e periódico',
-              explanation: 'O voto é o instrumento de expressão da soberania',
-              isActive: true,
-              order: 2,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            },
-          ];
-          setFlashcards(mockFlashcards);
+          const flashcardsData = await getFlashcards(selectedSubTopic.id);
+          setFlashcards(flashcardsData || []);
         } catch (error) {
           console.error('Error loading flashcards:', error);
+          setFlashcards([]);
         }
       };
+
       loadFlashcards();
     }
-  }, [selectedCourse, selectedSubject, selectedTopic, selectedSubTopic]);
+  }, [selectedSubTopic]);
 
   const handleStartStudy = () => {
-    if (!selectedSubTopic) {
-      toast.error('Selecione um sub-tópico para começar a estudar');
-      return;
+    if (selectedTopic) {
+      router.push(`/study?topicId=${selectedTopic.id}`);
+    } else {
+      toast.error('Selecione um tópico para começar a estudar');
     }
-
-    if (flashcards.length === 0) {
-      toast.error('Não há flashcards disponíveis para este sub-tópico');
-      return;
-    }
-
-    // Save study session
-    if (user && selectedCourse && selectedSubject && selectedTopic && selectedSubTopic) {
-      createStudySession({
-        uid: user.uid,
-        courseId: selectedCourse.id,
-        courseName: selectedCourse.name,
-        subjectId: selectedSubject.id,
-        subjectName: selectedSubject.name,
-        topicId: selectedTopic.id,
-        topicName: selectedTopic.name,
-        subTopicId: selectedSubTopic.id,
-        subTopicName: selectedSubTopic.name,
-        flashcardsCount: flashcards.length,
-        startTime: new Date()
-      })
-    }
-
-    router.push('/study');
   };
 
   const handleLogout = async () => {
     try {
       await logout();
       router.push('/');
-      toast.success('Logout realizado com sucesso');
     } catch (error) {
-      toast.error('Erro ao fazer logout');
+      console.error('Error logging out:', error);
     }
   };
 
   const handleUpdateProfile = async () => {
-    if (!user) return;
-
     try {
-      // Update profile logic would go here
-      toast.success('Perfil atualizado com sucesso');
+      // Implementar atualização do perfil
+      toast.success('Perfil atualizado com sucesso!');
       setShowProfileModal(false);
     } catch (error) {
+      console.error('Error updating profile:', error);
       toast.error('Erro ao atualizar perfil');
     }
   };
 
   const handleUpdatePassword = async () => {
-    if (!user) return;
-
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error('As senhas não coincidem');
-      return;
-    }
-
-    if (passwordData.newPassword.length < 6) {
-      toast.error('A nova senha deve ter pelo menos 6 caracteres');
-      return;
-    }
-
     try {
-      // Update password logic would go here
-      toast.success('Senha atualizada com sucesso');
+      // Implementar atualização de senha
+      toast.success('Senha atualizada com sucesso!');
       setShowPasswordModal(false);
-      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error) {
+      console.error('Error updating password:', error);
       toast.error('Erro ao atualizar senha');
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando dashboard...</p>
         </div>
       </div>
     );
@@ -317,252 +241,231 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">FlashConCards</h1>
+              <BookOpenIcon className="h-8 w-8 text-blue-600" />
+              <h1 className="ml-2 text-2xl font-bold text-gray-900">Dashboard</h1>
             </div>
-
-            {/* User Menu */}
-            <div className="relative">
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center space-x-2 text-gray-700 hover:text-gray-900"
-              >
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full" />
-                ) : (
-                  <UserCircleIcon className="w-8 h-8" />
+            
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center space-x-2 text-gray-700 hover:text-gray-900"
+                >
+                  <UserCircleIcon className="h-6 w-6" />
+                  <span>{user.displayName || user.email}</span>
+                </button>
+                
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                    <button
+                      onClick={() => setShowProfileModal(true)}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Editar Perfil
+                    </button>
+                    <button
+                      onClick={() => setShowPasswordModal(true)}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Alterar Senha
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                    >
+                      Sair
+                    </button>
+                  </div>
                 )}
-                <span className="hidden md:block">{user.displayName}</span>
-              </button>
-
-              {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                  <button
-                    onClick={() => setShowProfileModal(true)}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Editar Perfil
-                  </button>
-                  <button
-                    onClick={() => setShowPasswordModal(true)}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Alterar Senha
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Sair
-                  </button>
-                </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <BookOpenIcon className="w-8 h-8 text-indigo-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Cards Estudados</p>
-                <p className="text-2xl font-semibold text-gray-900">{user.cardsStudied}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <ClockIcon className="w-8 h-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Tempo de Estudo</p>
-                <p className="text-2xl font-semibold text-gray-900">{Math.round(user.studyTime / 60)}min</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <CheckCircleIcon className="w-8 h-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Acertos</p>
-                <p className="text-2xl font-semibold text-gray-900">{user.cardsCorrect}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <XCircleIcon className="w-8 h-8 text-red-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Erros</p>
-                <p className="text-2xl font-semibold text-gray-900">{user.cardsWrong}</p>
-              </div>
-            </div>
-          </div>
+        {/* Welcome Section */}
+        <div className="bg-white rounded-lg shadow p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Bem-vindo, {user.displayName || user.email}!
+          </h2>
+          <p className="text-gray-600">
+            Selecione um curso para começar seus estudos.
+          </p>
         </div>
 
         {/* Course Selection */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Selecionar Conteúdo para Estudar</h2>
-          </div>
-
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Course Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Curso</label>
-                <select
-                  value={selectedCourse?.id || ''}
-                  onChange={(e) => {
-                    const course = courses.find(c => c.id === e.target.value);
-                    setSelectedCourse(course || null);
-                    setSelectedSubject(null);
-                    setSelectedTopic(null);
-                    setSelectedSubTopic(null);
-                  }}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+        {courses.length > 0 && (
+          <div className="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Seus Cursos</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {courses.map((course) => (
+                <div
+                  key={course.id}
+                  onClick={() => setSelectedCourse(course)}
+                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                    selectedCourse?.id === course.id
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-blue-300'
+                  }`}
                 >
-                  <option value="">Selecione um curso</option>
-                  {(courses || []).map((course) => (
-                    <option key={course.id} value={course.id}>
-                      {course.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Subject Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Matéria</label>
-                <select
-                  value={selectedSubject?.id || ''}
-                  onChange={(e) => {
-                    const subject = subjects.find(s => s.id === e.target.value);
-                    setSelectedSubject(subject || null);
-                    setSelectedTopic(null);
-                    setSelectedSubTopic(null);
-                  }}
-                  disabled={!selectedCourse}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
-                >
-                  <option value="">Selecione uma matéria</option>
-                  {(subjects || []).map((subject) => (
-                    <option key={subject.id} value={subject.id}>
-                      {subject.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Topic Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tópico</label>
-                <select
-                  value={selectedTopic?.id || ''}
-                  onChange={(e) => {
-                    const topic = topics.find(t => t.id === e.target.value);
-                    setSelectedTopic(topic || null);
-                    setSelectedSubTopic(null);
-                  }}
-                  disabled={!selectedSubject}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
-                >
-                  <option value="">Selecione um tópico</option>
-                  {(topics || []).map((topic) => (
-                    <option key={topic.id} value={topic.id}>
-                      {topic.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Sub-topic Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Sub-tópico</label>
-                <select
-                  value={selectedSubTopic?.id || ''}
-                  onChange={(e) => {
-                    const subTopic = subTopics.find(st => st.id === e.target.value);
-                    setSelectedSubTopic(subTopic || null);
-                  }}
-                  disabled={!selectedTopic}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
-                >
-                  <option value="">Selecione um sub-tópico</option>
-                  {(subTopics || []).map((subTopic) => (
-                    <option key={subTopic.id} value={subTopic.id}>
-                      {subTopic.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Start Study Button */}
-            <div className="mt-6">
-              <button
-                onClick={handleStartStudy}
-                disabled={!selectedSubTopic || flashcards.length === 0}
-                className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {selectedSubTopic && flashcards.length > 0 
-                  ? `Começar a Estudar (${flashcards.length} cards)`
-                  : 'Selecione um sub-tópico para começar'
-                }
-              </button>
+                  <h4 className="font-semibold text-gray-900">{course.name}</h4>
+                  <p className="text-sm text-gray-600 mt-1">{course.description}</p>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Course Content */}
+        {selectedCourse && (
+          <div className="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              {selectedCourse.name} - Conteúdo
+            </h3>
+            
+            {/* Subjects */}
+            {subjects.length > 0 && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-3">Matérias</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {subjects.map((subject) => (
+                    <div
+                      key={subject.id}
+                      onClick={() => setSelectedSubject(subject)}
+                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                        selectedSubject?.id === subject.id
+                          ? 'border-green-500 bg-green-50'
+                          : 'border-gray-200 hover:border-green-300'
+                      }`}
+                    >
+                      <h5 className="font-medium text-gray-900">{subject.name}</h5>
+                      <p className="text-xs text-gray-600 mt-1">{subject.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Topics */}
+            {selectedSubject && topics.length > 0 && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-3">Tópicos</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {topics.map((topic) => (
+                    <div
+                      key={topic.id}
+                      onClick={() => setSelectedTopic(topic)}
+                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                        selectedTopic?.id === topic.id
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                    >
+                      <h5 className="font-medium text-gray-900">{topic.name}</h5>
+                      <p className="text-xs text-gray-600 mt-1">{topic.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Study Button */}
+            {selectedTopic && (
+              <div className="mt-6">
+                <button
+                  onClick={handleStartStudy}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                >
+                  <PlayIcon className="h-5 w-5" />
+                  <span>Começar a Estudar</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Testimonials */}
+        {testimonials.length > 0 && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Depoimentos</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {testimonials.map((testimonial) => (
+                <div key={testimonial.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center mb-2">
+                    <div className="flex text-yellow-400">
+                      {[...Array(5)].map((_, i) => (
+                        <StarIcon
+                          key={i}
+                          className={`h-4 w-4 ${
+                            i < testimonial.rating ? 'fill-current' : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-gray-700 text-sm mb-2">{testimonial.content}</p>
+                  <p className="text-gray-500 text-xs font-medium">{testimonial.name}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* No Courses Message */}
+        {courses.length === 0 && (
+          <div className="bg-white rounded-lg shadow p-6 text-center">
+            <BookOpenIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Nenhum curso disponível</h3>
+            <p className="text-gray-600 mb-4">
+              Você ainda não tem acesso a nenhum curso. Entre em contato com o administrador.
+            </p>
+            <button
+              onClick={() => router.push('/courses')}
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Ver Cursos Disponíveis
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Profile Modal */}
       {showProfileModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Editar Perfil</h3>
+            <h3 className="text-lg font-semibold mb-4">Editar Perfil</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Nome</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nome
+                </label>
                 <input
                   type="text"
                   value={profileData.displayName}
-                  onChange={(e) => setProfileData({ ...profileData, displayName: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">URL da Foto</label>
-                <input
-                  type="url"
-                  value={profileData.photoURL}
-                  onChange={(e) => setProfileData({ ...profileData, photoURL: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                  onChange={(e) => setProfileData({...profileData, displayName: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
-            <div className="mt-6 flex space-x-3">
-              <button
-                onClick={handleUpdateProfile}
-                className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700"
-              >
-                Salvar
-              </button>
+            <div className="flex justify-end space-x-3 mt-6">
               <button
                 onClick={() => setShowProfileModal(false)}
-                className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400"
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
               >
                 Cancelar
+              </button>
+              <button
+                onClick={handleUpdateProfile}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Salvar
               </button>
             </div>
           </div>
@@ -573,48 +476,54 @@ export default function DashboardPage() {
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Alterar Senha</h3>
+            <h3 className="text-lg font-semibold mb-4">Alterar Senha</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Senha Atual</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Senha Atual
+                </label>
                 <input
                   type="password"
                   value={passwordData.currentPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                  onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Nova Senha</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nova Senha
+                </label>
                 <input
                   type="password"
                   value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                  onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Confirmar Nova Senha</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Confirmar Nova Senha
+                </label>
                 <input
                   type="password"
                   value={passwordData.confirmPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                  onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
-            <div className="mt-6 flex space-x-3">
-              <button
-                onClick={handleUpdatePassword}
-                className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700"
-              >
-                Alterar Senha
-              </button>
+            <div className="flex justify-end space-x-3 mt-6">
               <button
                 onClick={() => setShowPasswordModal(false)}
-                className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400"
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
               >
                 Cancelar
+              </button>
+              <button
+                onClick={handleUpdatePassword}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Alterar
               </button>
             </div>
           </div>

@@ -23,8 +23,14 @@ export default function LoginPage() {
         console.log('Redirecting admin to /admin');
         router.push('/admin');
       } else {
-        console.log('Redirecting user to /dashboard');
-        router.push('/dashboard');
+        // Verificar se o usuário já tem um curso selecionado
+        if (user.selectedCourse) {
+          console.log('User has selected course, redirecting to /dashboard');
+          router.push('/dashboard');
+        } else {
+          console.log('User needs to select course, redirecting to /course-selection');
+          router.push('/course-selection');
+        }
       }
     }
   }, [user, router]);
