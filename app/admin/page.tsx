@@ -12,7 +12,8 @@ import {
   getCourses,
   onUsersChange,
   onTestimonialsChange,
-  onCoursesChange
+  onCoursesChange,
+  checkEmailExists
 } from '@/lib/firebase';
 
 interface User {
@@ -264,19 +265,31 @@ export default function AdminPage() {
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold text-gray-800">Usuários ({users.length})</h2>
-              <div className="flex space-x-2">
-            <button
+                            <div className="flex space-x-2">
+                <button
                   onClick={loadData}
                   className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
                 >
                   Atualizar
-            </button>
-            <button
+                </button>
+                <button
+                  onClick={async () => {
+                    const email = prompt('Digite o email para verificar:')
+                    if (email) {
+                      const exists = await checkEmailExists(email)
+                      alert(`Email ${email} ${exists ? 'EXISTE' : 'NÃO EXISTE'} no sistema`)
+                    }
+                  }}
+                  className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors"
+                >
+                  Verificar Email
+                </button>
+                <button
                   onClick={() => setShowAddUserModal(true)}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Adicionar Usuário
-                  </button>
+                </button>
               </div>
             </div>
           </div>

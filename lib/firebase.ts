@@ -160,6 +160,29 @@ export const getAllUsers = async () => {
   }
 }
 
+// Função para verificar se um email específico existe
+export const checkEmailExists = async (email: string) => {
+  try {
+    console.log('checkEmailExists: Checking email:', email)
+    const usersRef = collection(db, 'users')
+    const q = query(usersRef, where('email', '==', email))
+    const querySnapshot = await getDocs(q)
+    
+    const exists = !querySnapshot.empty
+    console.log('checkEmailExists: Email exists:', exists)
+    
+    if (exists) {
+      const userData = querySnapshot.docs[0].data()
+      console.log('checkEmailExists: Existing user data:', userData)
+    }
+    
+    return exists
+  } catch (error: any) {
+    console.error('checkEmailExists: Error checking email:', error)
+    return false
+  }
+}
+
 export const getUserById = async (uid: string) => {
   try {
     const docRef = doc(db, 'users', uid)
@@ -209,6 +232,16 @@ export const updateUser = async (uid: string, data: any) => {
 export const createUserByAdmin = async (userData: any) => {
   try {
     console.log('Creating user by admin:', userData.email)
+    
+    // Verificar se o email já existe no Firestore primeiro
+    const usersRef = collection(db, 'users')
+    const q = query(usersRef, where('email', '==', userData.email))
+    const querySnapshot = await getDocs(q)
+    
+    if (!querySnapshot.empty) {
+      console.log('Email already exists in Firestore:', userData.email)
+      throw new Error('Este email já está sendo usado por outro usuário')
+    }
     
     // Criar usuário no Firebase Auth primeiro
     const userCredential = await createUserWithEmailAndPassword(
