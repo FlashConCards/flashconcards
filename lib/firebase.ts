@@ -687,7 +687,6 @@ export const createPayment = async (paymentData: any) => {
     console.log('Creating payment:', paymentData)
     const docRef = await addDoc(collection(db, 'payments'), {
       ...paymentData,
-      status: 'pending',
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     })
@@ -711,6 +710,84 @@ export const updatePaymentStatus = async (paymentId: string, status: string) => 
   } catch (error) {
     console.error('Error updating payment status:', error)
     throw error
+  }
+}
+
+// Buscar pagamentos do usuário
+export const getUserPayments = async (userId: string) => {
+  try {
+    const q = query(
+      collection(db, 'payments'),
+      where('userId', '==', userId),
+      where('status', '==', 'approved')
+    )
+    const querySnapshot = await getDocs(q)
+    const payments = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as any[]
+    console.log('User payments loaded:', payments.length)
+    return payments
+  } catch (error: any) {
+    console.error('Error getting user payments:', error)
+    return []
+  }
+}
+
+// Verificar acesso do usuário aos cursos
+export const getUserAccessibleCourses = async (userId: string) => {
+  try {
+    // 1. Buscar dados do usuário para ver permissões do admin
+    const userData = await getUserData(userId)
+    const adminGrantedCourses: string[] = []
+    
+    if (userData?.selectedCourse) {
+      adminGrantedCourses.push(userData.selectedCourse)
+    }
+
+    // 2. Buscar pagamentos aprovados do usuário
+    const payments = await getUserPayments(userId)
+    const paidCourses: string[] = payments.map(payment => payment.courseId).filter(Boolean)
+
+    // 3. Combinar cursos permitidos pelo admin + cursos comprados
+    const allCourseIds = [...adminGrantedCourses, ...paidCourses]
+    const accessibleCourseIds = allCourseIds.filter((courseId, index) => 
+      allCourseIds.indexOf(courseId) === index
+    )
+    
+    console.log('User accessible courses:', accessibleCourseIds)
+    return accessibleCourseIds
+  } catch (error: any) {
+    console.error('Error getting user accessible courses:', error)
+    return []
+  }
+}
+
+// Buscar cursos com controle de acesso
+export const getCoursesWithAccess = async (userId: string) => {
+  try {
+    // Buscar todos os cursos
+    const allCourses = await getCourses()
+    
+    // Se for admin, retornar todos os cursos
+    const userData = await getUserData(userId)
+    if (userData?.isAdmin) {
+      return allCourses
+    }
+
+    // Se não for admin, verificar acesso
+    const accessibleCourseIds = await getUserAccessibleCourses(userId)
+    
+    // Filtrar apenas cursos que o usuário tem acesso
+    const accessibleCourses = allCourses?.filter(course => 
+      accessibleCourseIds.includes(course.id)
+    ) || []
+
+    console.log('Courses with access control:', accessibleCourses.length)
+    return accessibleCourses
+  } catch (error: any) {
+    console.error('Error getting courses with access:', error)
+    return []
   }
 }
 
