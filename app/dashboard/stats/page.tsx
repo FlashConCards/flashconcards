@@ -20,6 +20,7 @@ import {
   Legend, 
   ResponsiveContainer 
 } from 'recharts';
+import { getUserStudySessions } from '@/lib/firebase';
 import { 
   BookOpenIcon, 
   CheckCircleIcon, 
