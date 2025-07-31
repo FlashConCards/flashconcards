@@ -121,15 +121,30 @@ export { onAuthStateChanged }
 // ===== USUÁRIOS (/users) =====
 export const getAllUsers = async () => {
   try {
+    console.log('Fetching users from Firestore...')
     const querySnapshot = await getDocs(collection(db, 'users'))
     const users = querySnapshot.docs.map(doc => ({
       uid: doc.id,
       ...doc.data()
     })) as any[]
-    console.log('Users loaded:', users.length)
+    console.log('Users loaded from Firestore:', users.length)
+    console.log('Users data:', users)
     return users
   } catch (error: any) {
-    console.error('Error getting all users:', error)
+    console.error('Error getting all users from Firestore:', error)
+    return []
+  }
+}
+
+// Função para buscar usuários do Firebase Auth (todos os usuários registrados)
+export const getAllAuthUsers = async () => {
+  try {
+    console.log('Fetching users from Firebase Auth...')
+    // Nota: Firebase Admin SDK seria necessário para listar todos os usuários
+    // Por enquanto, vamos apenas retornar os usuários do Firestore
+    return await getAllUsers()
+  } catch (error: any) {
+    console.error('Error getting auth users:', error)
     return []
   }
 }

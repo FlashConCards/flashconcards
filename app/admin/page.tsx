@@ -273,6 +273,17 @@ export default function AdminPage() {
                 </button>
               </div>
             </div>
+            
+            {/* Debug Info */}
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <h4 className="text-sm font-medium text-yellow-800 mb-2">🔍 Informações de Debug:</h4>
+              <div className="text-xs text-yellow-700 space-y-1">
+                <p>• Usuários carregados: {users.length}</p>
+                <p>• Última atualização: {new Date().toLocaleTimeString()}</p>
+                <p>• Verifique o console do navegador (F12) para mais detalhes</p>
+                <p>• Coleção no Firebase: /users</p>
+              </div>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
