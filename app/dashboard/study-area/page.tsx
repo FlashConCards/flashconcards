@@ -63,9 +63,11 @@ export default function StudyAreaPage() {
       const accessibleCourses = await getCoursesWithAccess(user?.uid || '');
       setCourses(accessibleCourses || []);
       
-      if (accessibleCourses && accessibleCourses.length === 1) {
-        setSelectedCourse(accessibleCourses[0]);
-        await loadSubjects(accessibleCourses[0].id);
+      // Auto-select first course and load subjects directly
+      if (accessibleCourses && accessibleCourses.length > 0) {
+        const firstCourse = accessibleCourses[0];
+        setSelectedCourse(firstCourse);
+        await loadSubjects(firstCourse.id);
       }
       
       setLoading(false);
@@ -217,44 +219,6 @@ export default function StudyAreaPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Course Selection */}
-        {courses.length > 0 && (
-          <div className="bg-white rounded-lg shadow p-6 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Seus Cursos</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {courses.map((course) => (
-                <div
-                  key={course.id}
-                  onClick={() => handleCourseSelect(course)}
-                  className={`border rounded-lg cursor-pointer transition-all overflow-hidden ${
-                    selectedCourse?.id === course.id
-                      ? 'border-blue-500 bg-blue-50 shadow-lg'
-                      : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
-                  }`}
-                >
-                  <div className="aspect-video bg-gray-200 relative overflow-hidden">
-                    {course.image ? (
-                      <img
-                        src={course.image}
-                        alt={course.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                        <BookOpenIcon className="h-12 w-12 text-gray-400" />
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="p-4">
-                    <h4 className="font-semibold text-gray-900 mb-2">{course.name}</h4>
-                    <p className="text-sm text-gray-600">{course.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Subject Selection */}
         {selectedCourse && subjects.length > 0 && (
@@ -400,17 +364,14 @@ export default function StudyAreaPage() {
          )}
 
         {/* No Content Message */}
-        {(!selectedCourse || subjects.length === 0) && (
+        {subjects.length === 0 && (
           <div className="bg-white rounded-lg shadow p-6 text-center">
             <BookOpenIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {!selectedCourse ? 'Selecione um curso' : 'Nenhuma matéria disponível'}
+              Nenhuma matéria disponível
             </h3>
             <p className="text-gray-600 mb-4">
-              {!selectedCourse 
-                ? 'Escolha um curso para começar a estudar.'
-                : 'O administrador ainda não adicionou matérias para este curso.'
-              }
+              O administrador ainda não adicionou matérias para este curso.
             </p>
           </div>
         )}

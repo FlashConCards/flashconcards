@@ -1,0 +1,5 @@
+[33mbbe0ac8[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Corrige importação getUserStudySessions na página de estatísticas
+[33mdbe2dfc[m Adiciona área de estudos organizada e sincroniza estatísticas com dados reais
+[33m925cdbb[m Adiciona página de estatísticas com gráficos de progresso
+[33m55e734e[m Melhorias no sistema de flashcards: sistema rotativo, botão aprofundar, gráficos de progresso
+[33mcf1e692[m Correção dos flashcards - carregamento real do Firebase e navegação correta
