@@ -2,8 +2,8 @@ import { initializeApp } from 'firebase/app'
 import { 
   getAuth, 
   signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
-  signOut,
+  createUserWithEmailAndPassword, 
+  signOut, 
   onAuthStateChanged,
   updateProfile,
   User as FirebaseUser
@@ -531,18 +531,25 @@ export const deleteSubTopic = async (subTopicId: string) => {
 // ===== FLASHCARDS (/flashcards) =====
 export const getFlashcards = async (subTopicId?: string) => {
   try {
+    console.log('Getting flashcards for subTopicId:', subTopicId)
     let q: Query | CollectionReference = collection(db, 'flashcards')
     
     if (subTopicId) {
       q = query(q, where('subTopicId', '==', subTopicId))
+      console.log('Query created with filter for subTopicId:', subTopicId)
     }
     
     const querySnapshot = await getDocs(q)
+    console.log('Query snapshot size:', querySnapshot.size)
+    
     const flashcards = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as any[]
+    
     console.log('Flashcards loaded:', flashcards.length)
+    console.log('Flashcards data:', flashcards)
+    
     return flashcards
   } catch (error: any) {
     console.error('Error getting flashcards:', error)

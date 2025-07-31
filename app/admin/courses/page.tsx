@@ -223,19 +223,19 @@ export default function CoursesPage() {
             onClick={() => setShowAddModal(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Adicionar Curso
-          </button>
-        </div>
+          Adicionar Curso
+        </button>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map((course) => (
             <div key={course.id} className="bg-white rounded-lg shadow overflow-hidden">
               {/* Imagem do curso */}
               <div className="aspect-video bg-gray-200 relative overflow-hidden">
                 {course.image ? (
-                  <img
-                    src={course.image}
-                    alt={course.name}
+              <img
+                src={course.image}
+                alt={course.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
@@ -255,7 +255,7 @@ export default function CoursesPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-semibold text-green-600">
                     R$ {course.price?.toFixed(2).replace('.', ',') || '0,00'}
-                  </span>
+                </span>
                   
                   <div className="flex space-x-2">
                     <button
@@ -282,7 +282,7 @@ export default function CoursesPage() {
             <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Nenhum curso cadastrado</h3>
             <p className="text-gray-600">Clique em "Adicionar Curso" para começar</p>
-          </div>
+      </div>
         )}
 
         {/* Add Course Modal */}
@@ -290,47 +290,47 @@ export default function CoursesPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg font-semibold mb-4">Adicionar Curso</h3>
-              
-              <div className="space-y-4">
-                <div>
+
+            <div className="space-y-4">
+              <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Nome do Curso *
-                  </label>
-                  <input
-                    type="text"
-                    value={newCourse.name}
-                    onChange={(e) => setNewCourse({...newCourse, name: e.target.value})}
+                </label>
+                <input
+                  type="text"
+                  value={newCourse.name}
+                  onChange={(e) => setNewCourse({...newCourse, name: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Nome do curso"
-                  />
-                </div>
+                />
+              </div>
 
-                <div>
+              <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Descrição *
-                  </label>
-                  <textarea
-                    value={newCourse.description}
-                    onChange={(e) => setNewCourse({...newCourse, description: e.target.value})}
+                </label>
+                <textarea
+                  value={newCourse.description}
+                  onChange={(e) => setNewCourse({...newCourse, description: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Descrição do curso"
-                    rows={3}
-                  />
-                </div>
+                  rows={3}
+                />
+              </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Preço
                   </label>
-                  <input
-                    type="number"
+                    <input
+                      type="number"
                     step="0.01"
-                    value={newCourse.price}
+                      value={newCourse.price}
                     onChange={(e) => setNewCourse({...newCourse, price: parseFloat(e.target.value) || 0})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="0.00"
-                  />
-                </div>
+                    />
+                  </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -372,9 +372,9 @@ export default function CoursesPage() {
                   ) : (
                     <div className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center">
                       <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <input
-                        type="file"
-                        accept="image/*"
+                    <input
+                      type="file"
+                      accept="image/*"
                         onChange={handleImageSelect}
                         className="hidden"
                         id="image-upload"
@@ -388,13 +388,13 @@ export default function CoursesPage() {
                       <p className="text-sm text-gray-500 mt-2">
                         JPG, PNG, GIF até 5MB
                       </p>
-                    </div>
+                  </div>
                   )}
-                </div>
               </div>
+            </div>
 
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
                   onClick={() => {
                     setShowAddModal(false);
                     setNewCourse({ name: '', description: '', image: '', price: 0, expirationMonths: 6 });
@@ -416,7 +416,7 @@ export default function CoursesPage() {
             </div>
           </div>
         )}
-      </div>
+        </div>
     </div>
   );
 } 

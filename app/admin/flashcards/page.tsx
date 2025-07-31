@@ -49,8 +49,9 @@ interface SubTopic {
 interface Flashcard {
   id: string;
   subTopicId: string;
-  question: string;
-  answer: string;
+  front: string;
+  back: string;
+  explanation: string;
   order: number;
   isActive: boolean;
   createdAt: any;
@@ -78,8 +79,9 @@ export default function FlashcardsPage() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newFlashcard, setNewFlashcard] = useState({
-    question: '',
-    answer: '',
+    front: '',
+    back: '',
+    explanation: '',
     order: 1
   });
 
@@ -151,7 +153,7 @@ export default function FlashcardsPage() {
 
   const handleAddFlashcard = async () => {
     try {
-      if (!selectedSubTopic || !newFlashcard.question || !newFlashcard.answer) {
+      if (!selectedSubTopic || !newFlashcard.front || !newFlashcard.back) {
         alert('Preencha todos os campos obrigatórios');
         return;
       }
@@ -165,7 +167,7 @@ export default function FlashcardsPage() {
       await createFlashcard(flashcardData);
       await loadData();
       
-      setNewFlashcard({ question: '', answer: '', order: 1 });
+      setNewFlashcard({ front: '', back: '', explanation: '', order: 1 });
       setShowAddModal(false);
       alert('Flashcard criado com sucesso!');
     } catch (error: any) {
@@ -276,11 +278,11 @@ export default function FlashcardsPage() {
                     <div key={flashcard.id} className="border border-gray-200 rounded-lg p-6">
                       <div className="mb-4">
                         <h3 className="text-sm font-medium text-gray-500 mb-1">Pergunta:</h3>
-                        <p className="text-gray-800 font-medium">{flashcard.question}</p>
+                        <p className="text-gray-800 font-medium">{flashcard.front}</p>
                       </div>
                       <div className="mb-4">
                         <h3 className="text-sm font-medium text-gray-500 mb-1">Resposta:</h3>
-                        <p className="text-gray-800">{flashcard.answer}</p>
+                        <p className="text-gray-800">{flashcard.back}</p>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-500">Ordem: {flashcard.order}</span>
@@ -319,8 +321,8 @@ export default function FlashcardsPage() {
                     Pergunta *
                   </label>
                   <textarea
-                    value={newFlashcard.question}
-                    onChange={(e) => setNewFlashcard({...newFlashcard, question: e.target.value})}
+                    value={newFlashcard.front}
+                    onChange={(e) => setNewFlashcard({...newFlashcard, front: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={3}
                     placeholder="Digite a pergunta do flashcard"
@@ -332,26 +334,39 @@ export default function FlashcardsPage() {
                     Resposta *
                   </label>
                   <textarea
-                    value={newFlashcard.answer}
-                    onChange={(e) => setNewFlashcard({...newFlashcard, answer: e.target.value})}
+                    value={newFlashcard.back}
+                    onChange={(e) => setNewFlashcard({...newFlashcard, back: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={3}
                     placeholder="Digite a resposta do flashcard"
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ordem
-                  </label>
-                  <input
-                    type="number"
-                    value={newFlashcard.order}
-                    onChange={(e) => setNewFlashcard({...newFlashcard, order: parseInt(e.target.value) || 1})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="1"
-                  />
-                </div>
+                                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Explicação
+                    </label>
+                    <textarea
+                      value={newFlashcard.explanation}
+                      onChange={(e) => setNewFlashcard({...newFlashcard, explanation: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows={2}
+                      placeholder="Digite uma explicação opcional"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Ordem
+                    </label>
+                    <input
+                      type="number"
+                      value={newFlashcard.order}
+                      onChange={(e) => setNewFlashcard({...newFlashcard, order: parseInt(e.target.value) || 1})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="1"
+                    />
+                  </div>
               </div>
 
               <div className="flex justify-end space-x-3 mt-6">

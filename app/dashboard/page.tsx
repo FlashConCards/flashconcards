@@ -193,10 +193,10 @@ export default function DashboardPage() {
   }, [selectedSubTopic]);
 
   const handleStartStudy = () => {
-    if (selectedTopic) {
-      router.push(`/study?topicId=${selectedTopic.id}`);
+    if (selectedCourse && selectedSubject && selectedTopic && selectedSubTopic) {
+      router.push(`/study?courseId=${selectedCourse.id}&subjectId=${selectedSubject.id}&topicId=${selectedTopic.id}&subTopicId=${selectedSubTopic.id}`);
     } else {
-      toast.error('Selecione um tópico para começar a estudar');
+      toast.error('Selecione um curso, matéria, tópico e sub-tópico para começar a estudar');
     }
   };
 
@@ -424,8 +424,31 @@ export default function DashboardPage() {
               </div>
             )}
 
+            {/* SubTopics */}
+            {selectedTopic && subTopics.length > 0 && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-3">Sub-tópicos</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {subTopics.map((subTopic) => (
+                    <div
+                      key={subTopic.id}
+                      onClick={() => setSelectedSubTopic(subTopic)}
+                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                        selectedSubTopic?.id === subTopic.id
+                          ? 'border-green-500 bg-green-50'
+                          : 'border-gray-200 hover:border-green-300'
+                      }`}
+                    >
+                      <h5 className="font-medium text-gray-900">{subTopic.name}</h5>
+                      <p className="text-xs text-gray-600 mt-1">{subTopic.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Study Button */}
-            {selectedTopic && (
+            {selectedCourse && selectedSubject && selectedTopic && selectedSubTopic && (
               <div className="mt-6">
                 <button
                   onClick={handleStartStudy}

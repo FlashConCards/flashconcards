@@ -48,6 +48,8 @@ export default function StudyPage() {
   const subjectId = searchParams.get('subjectId');
   const topicId = searchParams.get('topicId');
   const subTopicId = searchParams.get('subTopicId');
+  
+  console.log('Study page params:', { courseId, subjectId, topicId, subTopicId });
 
   // Timer effect
   useEffect(() => {
@@ -70,48 +72,47 @@ export default function StudyPage() {
 
     const loadFlashcards = async () => {
       try {
-        // Temporariamente usando dados mockados até o Firebase estar configurado
-        const mockFlashcards: Flashcard[] = [
-          {
-            id: '1',
-            subTopicId: subTopicId,
-            front: 'O que é a soberania popular?',
-            back: 'É o princípio de que o poder emana do povo',
-            explanation: 'A soberania popular é o fundamento da democracia',
-            order: 1,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          {
-            id: '2',
-            subTopicId: subTopicId,
-            front: 'Como se expressa a soberania popular?',
-            back: 'Através do voto direto, secreto, universal e periódico',
-            explanation: 'O voto é o instrumento de expressão da soberania',
-            order: 2,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          {
-            id: '3',
-            subTopicId: subTopicId,
-            front: 'Quais são os poderes da União?',
-            back: 'Legislativo, Executivo e Judiciário',
-            explanation: 'A separação dos poderes é um princípio fundamental',
-            order: 3,
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ];
-        setFlashcards(mockFlashcards);
-        setStudyQueue([...mockFlashcards]);
-        setSessionStats(prev => ({ ...prev, totalCards: mockFlashcards.length }));
+        setLoading(true);
+        
+        // Carregar flashcards reais do Firebase
+        const realFlashcards = await getFlashcards(subTopicId);
+        console.log('Real flashcards from Firebase:', realFlashcards);
+        
+        if (realFlashcards && realFlashcards.length > 0) {
+          // Converter dados do Firebase para o formato esperado
+          const formattedFlashcards: Flashcard[] = realFlashcards.map((card: any) => ({
+            id: card.id,
+            subTopicId: card.subTopicId,
+            front: card.front || card.question, // Suporte para ambos os formatos
+            back: card.back || card.answer, // Suporte para ambos os formatos
+            explanation: card.explanation || '',
+            order: card.order || 1,
+            isActive: card.isActive !== false,
+            deepening: card.deepening || '',
+            createdAt: card.createdAt,
+            updatedAt: card.updatedAt,
+          }));
+          
+          console.log('Formatted flashcards:', formattedFlashcards);
+          
+          setFlashcards(formattedFlashcards);
+          setStudyQueue([...formattedFlashcards]);
+          setSessionStats(prev => ({ ...prev, totalCards: formattedFlashcards.length }));
+          
+          // Inicializar sessão de estudo
+          setSessionStartTime(new Date());
+        } else {
+          // Se não há flashcards, mostrar mensagem
+          setFlashcards([]);
+          setStudyQueue([]);
+          setSessionStats(prev => ({ ...prev, totalCards: 0 }));
+          toast.error('Nenhum flashcard encontrado para este tópico');
+        }
+        
         setLoading(false);
       } catch (error) {
         console.error('Error loading flashcards:', error);
+        toast.error('Erro ao carregar flashcards');
         setLoading(false);
       }
     };

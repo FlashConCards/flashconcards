@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
-import { 
+import {
   getAllUsers, 
   getTestimonials, 
   getCourses,
@@ -174,8 +174,8 @@ export default function AdminPage() {
         displayName: newUser.displayName,
         password: newUser.password,
         selectedCourse: newUser.selectedCourse,
-        isPaid: false,
-        isAdmin: false
+    isPaid: false,
+    isAdmin: false
       });
       
       await loadData();
@@ -291,46 +291,46 @@ export default function AdminPage() {
             <p className="text-3xl font-bold text-green-600">
               R$ {financialMetrics.totalRevenue.toFixed(2).replace('.', ',')}
             </p>
-          </div>
+                  </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Receita do Mês</h3>
             <p className="text-3xl font-bold text-blue-600">
               R$ {financialMetrics.monthlyRevenue.toFixed(2).replace('.', ',')}
             </p>
-          </div>
+                </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Total de Pagamentos</h3>
             <p className="text-3xl font-bold text-purple-600">{financialMetrics.totalPayments}</p>
-          </div>
+              </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Pagamentos Pendentes</h3>
             <p className="text-3xl font-bold text-yellow-600">{financialMetrics.pendingPayments}</p>
-          </div>
+                  </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Reembolsos</h3>
             <p className="text-3xl font-bold text-red-600">{financialMetrics.refundedPayments}</p>
-          </div>
-        </div>
+                </div>
+              </div>
 
         {/* Resumo */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Total de Usuários</h3>
             <p className="text-3xl font-bold text-blue-600">{users.length}</p>
-          </div>
+                  </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Usuários Pagantes</h3>
             <p className="text-3xl font-bold text-green-600">{paidUsers.length}</p>
-          </div>
+                </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Total de Depoimentos</h3>
             <p className="text-3xl font-bold text-purple-600">{testimonials.length}</p>
-          </div>
+              </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Aguardando Aprovação</h3>
             <p className="text-3xl font-bold text-yellow-600">{pendingTestimonials.length}</p>
-          </div>
-        </div>
+              </div>
+            </div>
 
         {/* Usuários */}
         <div className="bg-white rounded-lg shadow mb-8">
@@ -350,12 +350,12 @@ export default function AdminPage() {
                 >
                   Verificar Email
                 </button>
-                <button
+                  <button
                   onClick={() => setShowAddModal(true)}
                   className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
-                >
+                  >
                   Adicionar Usuário
-                </button>
+                  </button>
               </div>
             </div>
           </div>
@@ -364,68 +364,68 @@ export default function AdminPage() {
               <p className="text-gray-500 text-center py-8">Nenhum usuário registrado ainda.</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         USUÁRIO
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         STATUS
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         CURSO
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         AÇÕES
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                                         {users.map((user) => (
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {users.map((user) => (
                        <tr key={user.uid}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
                             <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
-                            <div className="text-sm text-gray-500">{user.email}</div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-500">{user.email}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             user.isPaid 
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-red-100 text-red-800'
                           }`}>
                             {user.isPaid ? 'Pago' : 'Não Pago'}
-                          </span>
-                        </td>
+                            </span>
+                      </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {user.selectedCourse || 'Nenhum'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
                                                          <button
                                onClick={() => handleRefundUser(user.uid)}
                                className="text-orange-600 hover:text-orange-900"
                              >
                                Reembolsar
-                             </button>
+                        </button>
                              <button
                                onClick={() => handleDeleteUser(user.uid)}
                                className="text-red-600 hover:text-red-900"
                              >
                                Excluir
-                             </button>
+                        </button>
                           </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
               </div>
             )}
           </div>
-        </div>
+            </div>
 
         {/* Pagamentos */}
         <div className="bg-white rounded-lg shadow mb-8">
@@ -498,9 +498,9 @@ export default function AdminPage() {
               </div>
             )}
           </div>
-        </div>
+      </div>
 
-        {/* Add User Modal */}
+      {/* Add User Modal */}
         {showAddModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -586,7 +586,7 @@ export default function AdminPage() {
             </div>
           </div>
         )}
-      </div>
+        </div>
     </div>
   );
 } 
