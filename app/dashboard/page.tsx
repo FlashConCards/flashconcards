@@ -304,22 +304,42 @@ export default function DashboardPage() {
         {courses.length > 0 && (
           <div className="bg-white rounded-lg shadow p-6 mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Seus Cursos</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {courses.map((course) => (
-                <div
-                  key={course.id}
-                  onClick={() => setSelectedCourse(course)}
-                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                    selectedCourse?.id === course.id
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-blue-300'
-                  }`}
-                >
-                  <h4 className="font-semibold text-gray-900">{course.name}</h4>
-                  <p className="text-sm text-gray-600 mt-1">{course.description}</p>
-                </div>
-              ))}
-            </div>
+                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+               {courses.map((course) => (
+                 <div
+                   key={course.id}
+                   onClick={() => setSelectedCourse(course)}
+                   className={`border rounded-lg cursor-pointer transition-all overflow-hidden ${
+                     selectedCourse?.id === course.id
+                       ? 'border-blue-500 bg-blue-50 shadow-lg'
+                       : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
+                   }`}
+                 >
+                   {/* Imagem do curso */}
+                   <div className="aspect-video bg-gray-200 relative overflow-hidden">
+                     {course.image ? (
+                       <img
+                         src={course.image}
+                         alt={course.name}
+                         className="w-full h-full object-cover"
+                         onError={(e) => {
+                           e.currentTarget.src = '/placeholder-course.jpg';
+                         }}
+                       />
+                     ) : (
+                       <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                         <BookOpenIcon className="h-12 w-12 text-gray-400" />
+                       </div>
+                     )}
+                   </div>
+                   
+                   <div className="p-4">
+                     <h4 className="font-semibold text-gray-900 mb-2">{course.name}</h4>
+                     <p className="text-sm text-gray-600">{course.description}</p>
+                   </div>
+                 </div>
+               ))}
+             </div>
           </div>
         )}
 

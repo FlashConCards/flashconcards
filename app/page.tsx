@@ -279,11 +279,20 @@ export default function HomePage() {
                   onClick={() => handleCourseClick(course.id)}
                 >
                   <div className="relative">
-                    <img
-                      src={course.image}
-                      alt={course.name}
-                      className="w-full h-48 object-cover"
-                    />
+                    {course.image ? (
+                      <img
+                        src={course.image}
+                        alt={course.name}
+                        className="w-full h-48 object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder-course.jpg';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                        <BookOpenIcon className="h-12 w-12 text-gray-400" />
+                      </div>
+                    )}
                     <div className="absolute top-4 right-4 bg-green-500 text-white px-2 py-1 rounded-full text-sm font-medium">
                       Ativo
                     </div>

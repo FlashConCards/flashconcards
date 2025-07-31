@@ -113,46 +113,65 @@ export default function CourseSelectionPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course) => (
-              <div
-                key={course.id}
-                onClick={() => handleCourseSelect(course)}
-                className={`bg-white rounded-lg shadow p-6 cursor-pointer transition-all ${
-                  selectedCourse?.id === course.id
-                    ? 'ring-2 ring-blue-500 bg-blue-50'
-                    : 'hover:shadow-lg'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <BookOpenIcon className="h-8 w-8 text-blue-600" />
-                  {selectedCourse?.id === course.id && (
-                    <CheckIcon className="h-6 w-6 text-blue-600" />
-                  )}
-                </div>
-                
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  {course.name}
-                </h3>
-                
-                <p className="text-gray-600 mb-4">
-                  {course.description}
-                </p>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">
-                    {course.price ? `R$ ${course.price.toFixed(2).replace('.', ',')}` : 'Gratuito'}
-                  </span>
-                  
-                  {selectedCourse?.id === course.id && (
-                    <span className="text-sm font-medium text-blue-600">
-                      Selecionado
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+             {courses.map((course) => (
+               <div
+                 key={course.id}
+                 onClick={() => handleCourseSelect(course)}
+                 className={`bg-white rounded-lg shadow overflow-hidden cursor-pointer transition-all ${
+                   selectedCourse?.id === course.id
+                     ? 'ring-2 ring-blue-500 bg-blue-50'
+                     : 'hover:shadow-lg'
+                 }`}
+               >
+                 {/* Imagem do curso */}
+                 <div className="aspect-video bg-gray-200 relative overflow-hidden">
+                   {course.image ? (
+                     <img
+                       src={course.image}
+                       alt={course.name}
+                       className="w-full h-full object-cover"
+                       onError={(e) => {
+                         e.currentTarget.src = '/placeholder-course.jpg';
+                       }}
+                     />
+                   ) : (
+                     <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                       <BookOpenIcon className="h-12 w-12 text-gray-400" />
+                     </div>
+                   )}
+                   
+                   {selectedCourse?.id === course.id && (
+                     <div className="absolute top-2 right-2 bg-blue-600 text-white p-1 rounded-full">
+                       <CheckIcon className="h-4 w-4" />
+                     </div>
+                   )}
+                 </div>
+                 
+                 <div className="p-6">
+                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                     {course.name}
+                   </h3>
+                   
+                   <p className="text-gray-600 mb-4">
+                     {course.description}
+                   </p>
+                   
+                   <div className="flex items-center justify-between">
+                     <span className="text-sm text-gray-500">
+                       {course.price ? `R$ ${course.price.toFixed(2).replace('.', ',')}` : 'Gratuito'}
+                     </span>
+                     
+                     {selectedCourse?.id === course.id && (
+                       <span className="text-sm font-medium text-blue-600">
+                         Selecionado
+                       </span>
+                     )}
+                   </div>
+                 </div>
+               </div>
+             ))}
+           </div>
         )}
 
         {selectedCourse && (
