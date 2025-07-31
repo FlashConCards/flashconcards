@@ -28,7 +28,7 @@ import {
   UserCircleIcon,
   ArrowLeftIcon,
   CalendarIcon,
-  TrendingUpIcon
+  ChartBarIcon
 } from '@heroicons/react/24/outline';
 
 interface StudySession {
@@ -188,17 +188,17 @@ export default function StatsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <TrendingUpIcon className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Taxa de Acerto</p>
-                <p className="text-2xl font-bold text-gray-900">{totalStats.averageAccuracy.toFixed(1)}%</p>
-              </div>
-            </div>
-          </div>
+                     <div className="bg-white rounded-lg shadow p-6">
+             <div className="flex items-center">
+               <div className="p-2 bg-yellow-100 rounded-lg">
+                 <ChartBarIcon className="w-6 h-6 text-yellow-600" />
+               </div>
+               <div className="ml-4">
+                 <p className="text-sm font-medium text-gray-600">Taxa de Acerto</p>
+                 <p className="text-2xl font-bold text-gray-900">{totalStats.averageAccuracy.toFixed(1)}%</p>
+               </div>
+             </div>
+           </div>
 
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
