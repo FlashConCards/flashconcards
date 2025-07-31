@@ -18,16 +18,17 @@ const adminAuth = getAuth();
 const adminDb = getFirestore();
 
 export async function POST(request: NextRequest) {
+  // Extrair uid do request primeiro
+  const { uid } = await request.json();
+
+  if (!uid) {
+    return NextResponse.json(
+      { error: 'UID do usuário é obrigatório' },
+      { status: 400 }
+    );
+  }
+
   try {
-    const { uid } = await request.json();
-
-    if (!uid) {
-      return NextResponse.json(
-        { error: 'UID do usuário é obrigatório' },
-        { status: 400 }
-      );
-    }
-
     console.log('Deleting user from Auth:', uid);
 
     // Deletar do Firebase Auth
