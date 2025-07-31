@@ -15,9 +15,8 @@ import {
   XCircleIcon, 
   ArrowLeftIcon,
   InformationCircleIcon,
-  PlayIcon,
-  ArrowRightIcon,
-  ArrowLeftIcon as ArrowLeft
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import FlashcardComponent from '@/components/flashcards/Flashcard';
@@ -71,18 +70,17 @@ export default function StudyPage() {
       if (sessionCompleted || loading) return;
 
       switch (event.key) {
-        case 'ArrowRight':
-        case ' ':
-          handleNextCard();
-          break;
         case 'ArrowLeft':
-          handlePreviousCard();
+          handlePrevious();
+          break;
+        case 'ArrowRight':
+          handleNext();
           break;
         case '1':
-          handleCardResponse(false); // Errei
+          handleCardResponse(false);
           break;
         case '2':
-          handleCardResponse(true); // Acertei
+          handleCardResponse(true);
           break;
       }
     };
@@ -124,8 +122,11 @@ export default function StudyPage() {
           
           console.log('Formatted flashcards:', formattedFlashcards);
           
+          // Embaralhar os flashcards para estudo aleatório
+          const shuffledFlashcards = [...formattedFlashcards].sort(() => Math.random() - 0.5);
+          
           setFlashcards(formattedFlashcards);
-          setStudyQueue([...formattedFlashcards]);
+          setStudyQueue(shuffledFlashcards);
           setSessionStats(prev => ({ ...prev, totalCards: formattedFlashcards.length }));
           
           // Inicializar sessão de estudo
@@ -165,31 +166,34 @@ export default function StudyPage() {
       setStudyQueue(prev => [...prev.slice(currentIndex + 1), currentCard]);
     }
 
-    // Auto-advance to next card after a short delay
+    // Move to next card automatically
     setTimeout(() => {
-      handleNextCard();
-    }, 500);
-  };
-
-  const handleNextCard = () => {
-    if (currentIndex + 1 < studyQueue.length) {
-      setCurrentIndex(prev => prev + 1);
-      setShowAnswer(false);
-    } else {
-      // Check if there are more cards in the queue (including wrong ones that were added back)
-      if (studyQueue.length > currentIndex + 1) {
+      if (currentIndex + 1 < studyQueue.length) {
         setCurrentIndex(prev => prev + 1);
         setShowAnswer(false);
       } else {
-        // Session completed - all cards studied
-        handleSessionComplete();
+        // Check if there are more cards in the queue (including wrong ones that were added back)
+        if (studyQueue.length > currentIndex + 1) {
+          setCurrentIndex(prev => prev + 1);
+          setShowAnswer(false);
+        } else {
+          // Session completed - all cards studied
+          handleSessionComplete();
+        }
       }
+    }, 1000); // Delay de 1 segundo para mostrar o resultado
+  };
+
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+      setShowAnswer(false);
     }
   };
 
-  const handlePreviousCard = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
+  const handleNext = () => {
+    if (currentIndex < studyQueue.length - 1) {
+      setCurrentIndex(prev => prev + 1);
       setShowAnswer(false);
     }
   };
@@ -237,7 +241,9 @@ export default function StudyPage() {
   const handleRestart = () => {
     setCurrentIndex(0);
     setShowAnswer(false);
-    setStudyQueue([...flashcards]);
+    // Embaralhar novamente os flashcards
+    const shuffledFlashcards = [...flashcards].sort(() => Math.random() - 0.5);
+    setStudyQueue(shuffledFlashcards);
     setCompletedCards([]);
     setWrongCards([]);
     setStudyTime(0);
@@ -257,11 +263,9 @@ export default function StudyPage() {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  // Calculate correct progress percentage
-  const calculateProgress = () => {
-    if (studyQueue.length === 0) return 0;
-    return Math.round(((currentIndex + 1) / studyQueue.length) * 100);
-  };
+  // Calcular progresso real baseado no índice atual
+  const progressPercentage = studyQueue.length > 0 ? ((currentIndex + 1) / studyQueue.length) * 100 : 0;
+  const remainingCards = studyQueue.length - currentIndex - 1;
 
   if (loading) {
     return (
@@ -351,7 +355,7 @@ export default function StudyPage() {
               onClick={() => router.push('/dashboard')}
               className="flex items-center text-gray-600 hover:text-gray-900"
             >
-              <ArrowLeft className="w-5 h-5 mr-2" />
+              <ArrowLeftIcon className="w-5 h-5 mr-2" />
               Voltar
             </button>
 
@@ -372,12 +376,12 @@ export default function StudyPage() {
         <div className="mb-8">
           <div className="flex justify-between text-sm text-gray-600 mb-2">
             <span>Progresso da Sessão</span>
-            <span>{calculateProgress()}%</span>
+            <span>{Math.round(progressPercentage)}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${calculateProgress()}%` }}
+              style={{ width: `${progressPercentage}%` }}
             ></div>
           </div>
           
@@ -392,7 +396,7 @@ export default function StudyPage() {
               <div className="text-xs text-gray-600">Erros</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{studyQueue.length - currentIndex - 1}</div>
+              <div className="text-2xl font-bold text-blue-600">{remainingCards}</div>
               <div className="text-xs text-gray-600">Restantes</div>
             </div>
           </div>
@@ -417,50 +421,47 @@ export default function StudyPage() {
         {/* Navigation Buttons */}
         <div className="flex justify-between items-center">
           <button
-            onClick={handlePreviousCard}
+            onClick={handlePrevious}
             disabled={currentIndex === 0}
-            className="flex items-center px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+              currentIndex === 0
+                ? 'text-gray-400 cursor-not-allowed'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ChevronLeftIcon className="w-5 h-5 mr-1" />
             Anterior
           </button>
 
           <div className="flex space-x-4">
             <button
               onClick={() => handleCardResponse(false)}
-              className="flex items-center px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              className="flex items-center space-x-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
             >
-              <XCircleIcon className="w-5 h-5 mr-2" />
-              Errei (1)
+              <XCircleIcon className="w-5 h-5" />
+              <span>Errei (1)</span>
             </button>
             <button
               onClick={() => handleCardResponse(true)}
-              className="flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
             >
-              <CheckCircleIcon className="w-5 h-5 mr-2" />
-              Acertei (2)
+              <CheckCircleIcon className="w-5 h-5" />
+              <span>Acertei (2)</span>
             </button>
           </div>
 
           <button
-            onClick={handleNextCard}
+            onClick={handleNext}
             disabled={currentIndex >= studyQueue.length - 1}
-            className="flex items-center px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+              currentIndex >= studyQueue.length - 1
+                ? 'text-gray-400 cursor-not-allowed'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
           >
             Próximo
-            <ArrowRightIcon className="w-4 h-4 ml-2" />
+            <ChevronRightIcon className="w-5 h-5 ml-1" />
           </button>
-        </div>
-
-        {/* Keyboard Shortcuts */}
-        <div className="mt-8 text-center text-sm text-gray-500">
-          <p>Atalhos do teclado:</p>
-          <div className="flex justify-center space-x-6 mt-2">
-            <span>← → Navegar</span>
-            <span>1 = Errei</span>
-            <span>2 = Acertei</span>
-            <span>Espaço = Próximo</span>
-          </div>
         </div>
       </div>
 
