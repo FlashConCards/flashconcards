@@ -166,7 +166,7 @@ export default function StudyPage() {
       setStudyQueue(prev => [...prev.slice(currentIndex + 1), currentCard]);
     }
 
-    // Move to next card automatically
+    // Move to next card automatically after a short delay
     setTimeout(() => {
       if (currentIndex + 1 < studyQueue.length) {
         setCurrentIndex(prev => prev + 1);
@@ -181,7 +181,7 @@ export default function StudyPage() {
           handleSessionComplete();
         }
       }
-    }, 1000); // Delay de 1 segundo para mostrar o resultado
+    }, 1500); // Delay de 1.5 segundos para mostrar o resultado
   };
 
   const handlePrevious = () => {
@@ -234,8 +234,10 @@ export default function StudyPage() {
   };
 
   const handleDeepening = (content: string) => {
-    setSelectedDeepening(content);
-    setShowDeepening(true);
+    if (content && content.trim()) {
+      setSelectedDeepening(content);
+      setShowDeepening(true);
+    }
   };
 
   const handleRestart = () => {
@@ -413,8 +415,8 @@ export default function StudyPage() {
                 handleCardResponse(false);
               }
             }}
-            onDeepen={() => handleDeepening(currentCard.deepening || '')}
-            showDeepen={!!currentCard.deepening}
+            onDeepen={() => handleDeepening(currentCard?.deepening || '')}
+            showDeepen={!!(currentCard?.deepening && currentCard.deepening.trim())}
           />
         </div>
 
@@ -466,7 +468,7 @@ export default function StudyPage() {
       </div>
 
       {/* Deepening Modal */}
-      {showDeepening && (
+      {showDeepening && selectedDeepening && (
         <DeepeningModal
           isOpen={showDeepening}
           onClose={() => setShowDeepening(false)}

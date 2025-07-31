@@ -25,19 +25,9 @@ export default function Flashcard({
   showDeepen = true 
 }: FlashcardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
-  const [showButtons, setShowButtons] = useState(false)
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped)
-    if (!isFlipped) {
-      setShowButtons(true)
-    }
-  }
-
-  const handleAnswer = (status: 'learned' | 'wrong') => {
-    onAnswer(status)
-    setIsFlipped(false)
-    setShowButtons(false)
   }
 
   return (
@@ -91,36 +81,8 @@ export default function Flashcard({
         </div>
       </motion.div>
 
-      {/* Action Buttons */}
-      <AnimatePresence>
-        {showButtons && isFlipped && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="mt-6 flex flex-col sm:flex-row gap-3 justify-center"
-          >
-            <button
-              onClick={() => handleAnswer('wrong')}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
-            >
-              <XMarkIcon className="w-5 h-5" />
-              Errei
-            </button>
-            
-            <button
-              onClick={() => handleAnswer('learned')}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
-            >
-              <CheckIcon className="w-5 h-5" />
-              Aprendi
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Deepen Button */}
-      {showDeepen && (
+      {showDeepen && isFlipped && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
