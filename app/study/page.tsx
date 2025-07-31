@@ -405,66 +405,84 @@ export default function StudyPage() {
         </div>
 
         {/* Flashcard */}
-        <div className="mb-8">
-          <FlashcardComponent
-            flashcard={currentCard}
-            onAnswer={(status) => {
-              if (status === 'learned') {
-                handleCardResponse(true);
-              } else if (status === 'wrong') {
-                handleCardResponse(false);
-              }
-            }}
-            onDeepen={() => handleDeepening(currentCard?.deepening || '')}
-            showDeepen={!!(currentCard?.deepening && currentCard.deepening.trim())}
-          />
-        </div>
+        {currentCard ? (
+          <div className="mb-8">
+            <FlashcardComponent
+              flashcard={currentCard}
+              onAnswer={(status) => {
+                if (status === 'learned') {
+                  handleCardResponse(true);
+                } else if (status === 'wrong') {
+                  handleCardResponse(false);
+                }
+              }}
+              onDeepen={() => handleDeepening(currentCard?.deepening || '')}
+              showDeepen={!!(currentCard?.deepening && currentCard.deepening.trim())}
+            />
+          </div>
+        ) : (
+          <div className="mb-8 text-center">
+            <div className="bg-white rounded-lg shadow-lg p-8">
+              <CheckCircleIcon className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Sessão Concluída!</h2>
+              <p className="text-gray-600 mb-6">Todos os cards foram estudados.</p>
+              <button
+                onClick={handleRestart}
+                className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                Reiniciar Sessão
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between items-center">
-          <button
-            onClick={handlePrevious}
-            disabled={currentIndex === 0}
-            className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
-              currentIndex === 0
-                ? 'text-gray-400 cursor-not-allowed'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <ChevronLeftIcon className="w-5 h-5 mr-1" />
-            Anterior
-          </button>
-
-          <div className="flex space-x-4">
+        {currentCard && (
+          <div className="flex justify-between items-center">
             <button
-              onClick={() => handleCardResponse(false)}
-              className="flex items-center space-x-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
+              onClick={handlePrevious}
+              disabled={currentIndex === 0}
+              className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+                currentIndex === 0
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
             >
-              <XCircleIcon className="w-5 h-5" />
-              <span>Errei (1)</span>
+              <ChevronLeftIcon className="w-5 h-5 mr-1" />
+              Anterior
             </button>
+
+            <div className="flex space-x-4">
+              <button
+                onClick={() => handleCardResponse(false)}
+                className="flex items-center space-x-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
+              >
+                <XCircleIcon className="w-5 h-5" />
+                <span>Errei (1)</span>
+              </button>
+              <button
+                onClick={() => handleCardResponse(true)}
+                className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <CheckCircleIcon className="w-5 h-5" />
+                <span>Acertei (2)</span>
+              </button>
+            </div>
+
             <button
-              onClick={() => handleCardResponse(true)}
-              className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+              onClick={handleNext}
+              disabled={currentIndex >= studyQueue.length - 1}
+              className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+                currentIndex >= studyQueue.length - 1
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
             >
-              <CheckCircleIcon className="w-5 h-5" />
-              <span>Acertei (2)</span>
+              Próximo
+              <ChevronRightIcon className="w-5 h-5 ml-1" />
             </button>
           </div>
-
-          <button
-            onClick={handleNext}
-            disabled={currentIndex >= studyQueue.length - 1}
-            className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
-              currentIndex >= studyQueue.length - 1
-                ? 'text-gray-400 cursor-not-allowed'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Próximo
-            <ChevronRightIcon className="w-5 h-5 ml-1" />
-          </button>
-        </div>
+        )}
       </div>
 
       {/* Deepening Modal */}
