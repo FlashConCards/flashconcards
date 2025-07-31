@@ -62,10 +62,12 @@ export default function CoursesPage() {
     if (file) {
       setSelectedImage(file);
       
-      // Criar preview da imagem
+      // Converter para Base64 para evitar problemas de CORS
       const reader = new FileReader();
       reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
+        const base64String = e.target?.result as string;
+        setImagePreview(base64String);
+        console.log('Imagem convertida para Base64');
       };
       reader.readAsDataURL(file);
     }
@@ -91,21 +93,13 @@ export default function CoursesPage() {
       setUploading(true);
       let imageUrl = '';
 
-      // Upload da imagem se foi selecionada
-      if (selectedImage) {
-        try {
-          console.log('Iniciando upload da imagem...');
-          const imagePath = `courses/${Date.now()}_${selectedImage.name}`;
-          console.log('Caminho da imagem:', imagePath);
-          
-          imageUrl = await uploadFile(selectedImage, imagePath);
-          console.log('Upload da imagem concluído:', imageUrl);
-        } catch (error) {
-          console.error('Error uploading image:', error);
-          console.log('Usando imagem padrão...');
-          // Usar uma imagem padrão se o upload falhar
-          imageUrl = 'https://via.placeholder.com/400x300/cccccc/666666?text=Curso';
-        }
+      // Usar Base64 se foi selecionada uma imagem
+      if (selectedImage && imagePreview) {
+        console.log('Usando imagem em Base64...');
+        imageUrl = imagePreview; // Base64 string
+      } else {
+        // Usar imagem padrão se não foi selecionada
+        imageUrl = 'https://via.placeholder.com/400x300/cccccc/666666?text=Curso';
       }
 
       // Criar curso com a imagem
