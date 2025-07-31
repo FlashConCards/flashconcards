@@ -29,6 +29,11 @@ FlashConCards/
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // TEMPORÁRIO: Permitir acesso total para debug
+    match /{document=**} {
+      allow read, write: if true;
+    }
+    
     // Permitir acesso autenticado aos dados do usuário
     match /users/{userId} {
       allow read, write: if request.auth != null && 

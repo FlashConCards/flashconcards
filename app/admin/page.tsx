@@ -91,6 +91,7 @@ export default function AdminPage() {
       console.log('Loading admin data...')
       const usersData = await getAllUsers()
       console.log('Users loaded in admin:', usersData?.length || 0)
+      console.log('Users data:', usersData)
       setUsers(usersData || [])
       
       const allTestimonials = await getTestimonials('all')
@@ -256,13 +257,21 @@ export default function AdminPage() {
         <div className="bg-white rounded-lg shadow mb-8">
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-800">Usuários</h2>
-              <button
-                onClick={() => setShowAddUserModal(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Adicionar Usuário
-              </button>
+              <h2 className="text-xl font-semibold text-gray-800">Usuários ({users.length})</h2>
+              <div className="flex space-x-2">
+                <button
+                  onClick={loadData}
+                  className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  Atualizar
+                </button>
+                <button
+                  onClick={() => setShowAddUserModal(true)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Adicionar Usuário
+                </button>
+              </div>
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -276,34 +285,45 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {users.map((user) => (
-                  <tr key={user.uid}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
+                {users.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                      <div className="text-center">
+                        <p className="text-lg font-medium text-gray-900 mb-2">Nenhum usuário cadastrado</p>
+                        <p className="text-sm text-gray-600">Clique em "Adicionar Usuário" para começar</p>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.isPaid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {user.isPaid ? 'Pago' : 'Não Pago'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {user.selectedCourse || 'Nenhum'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleDeleteUser(user.uid)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Excluir
-                      </button>
-                    </td>
                   </tr>
-                ))}
+                ) : (
+                  users.map((user) => (
+                    <tr key={user.uid}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
+                          <div className="text-sm text-gray-500">{user.email}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          user.isPaid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {user.isPaid ? 'Pago' : 'Não Pago'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {user.selectedCourse || 'Nenhum'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => handleDeleteUser(user.uid)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Excluir
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
