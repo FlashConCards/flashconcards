@@ -4,31 +4,48 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
-  // Inicializar Firebase Admin SDK apenas quando a função for chamada
-  if (!getApps().length) {
-    initializeApp({
-      credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
-  }
-
-  const adminAuth = getAuth();
-  const adminDb = getFirestore();
-
-  // Extrair uid do request primeiro
-  const { uid } = await request.json();
-
-  if (!uid) {
-    return NextResponse.json(
-      { error: 'UID do usuário é obrigatório' },
-      { status: 400 }
-    );
-  }
-
   try {
+    // Verificar se as variáveis de ambiente estão configuradas
+    if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
+      console.error('Firebase Admin SDK credentials not configured');
+      return NextResponse.json(
+        { error: 'Configuração do Firebase Admin SDK não encontrada. Configure as variáveis de ambiente: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY' },
+        { status: 500 }
+      );
+    }
+
+    // Inicializar Firebase Admin SDK apenas quando a função for chamada
+    if (!getApps().length) {
+      try {
+        initializeApp({
+          credential: cert({
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+          }),
+        });
+      } catch (initError: any) {
+        console.error('Error initializing Firebase Admin SDK:', initError);
+        return NextResponse.json(
+          { error: `Erro ao inicializar Firebase Admin SDK: ${initError.message}` },
+          { status: 500 }
+        );
+      }
+    }
+
+    const adminAuth = getAuth();
+    const adminDb = getFirestore();
+
+    // Extrair uid do request primeiro
+    const { uid } = await request.json();
+
+    if (!uid) {
+      return NextResponse.json(
+        { error: 'UID do usuário é obrigatório' },
+        { status: 400 }
+      );
+    }
+
     console.log('Deleting user from Auth:', uid);
 
     // Deletar do Firebase Auth
@@ -49,6 +66,7 @@ export async function POST(request: NextRequest) {
     // Se o usuário não existe no Auth, apenas deletar do Firestore
     if (error.code === 'auth/user-not-found') {
       try {
+        const adminDb = getFirestore();
         await adminDb.collection('users').doc(uid).delete();
         console.log('User deleted from Firestore only:', uid);
         return NextResponse.json(
