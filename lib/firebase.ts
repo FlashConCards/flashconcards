@@ -346,16 +346,28 @@ export const getCourses = async () => {
 
 export const createCourse = async (courseData: any) => {
   try {
-    console.log('Creating course:', courseData.name)
+    console.log('=== CREATE COURSE START ===');
+    console.log('Course data received:', courseData);
+    console.log('Firebase auth state:', auth.currentUser);
+    console.log('Firebase project ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+    
     const docRef = await addDoc(collection(db, 'courses'), {
       ...courseData,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     })
-    console.log('Course created successfully:', docRef.id)
+    
+    console.log('Course created successfully with ID:', docRef.id);
+    console.log('=== CREATE COURSE END ===');
     return docRef.id
-  } catch (error) {
-    console.error('Error creating course:', error)
+  } catch (error: any) {
+    console.error('=== CREATE COURSE ERROR ===');
+    console.error('Error creating course:', error);
+    console.error('Error type:', typeof error);
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    console.error('Error stack:', error.stack);
+    console.error('=== CREATE COURSE ERROR END ===');
     throw error
   }
 }

@@ -79,6 +79,10 @@ export default function CoursesPage() {
 
   const handleAddCourse = async () => {
     try {
+      console.log('Iniciando criação do curso...');
+      console.log('Dados do curso:', newCourse);
+      console.log('Imagem selecionada:', selectedImage);
+      
       if (!newCourse.name || !newCourse.description) {
         alert('Preencha todos os campos obrigatórios');
         return;
@@ -90,7 +94,12 @@ export default function CoursesPage() {
       // Upload da imagem se foi selecionada
       if (selectedImage) {
         try {
-          imageUrl = await uploadFile(selectedImage, `courses/${Date.now()}_${selectedImage.name}`);
+          console.log('Iniciando upload da imagem...');
+          const imagePath = `courses/${Date.now()}_${selectedImage.name}`;
+          console.log('Caminho da imagem:', imagePath);
+          
+          imageUrl = await uploadFile(selectedImage, imagePath);
+          console.log('Upload da imagem concluído:', imageUrl);
         } catch (error) {
           console.error('Error uploading image:', error);
           alert('Erro ao fazer upload da imagem. Tente novamente.');
@@ -100,11 +109,17 @@ export default function CoursesPage() {
       }
 
       // Criar curso com a imagem
-      await createCourse({
+      console.log('Criando curso no Firebase...');
+      const courseData = {
         ...newCourse,
         image: imageUrl
-      });
+      };
+      console.log('Dados finais do curso:', courseData);
+      
+      const courseId = await createCourse(courseData);
+      console.log('Curso criado com ID:', courseId);
 
+      console.log('Recarregando lista de cursos...');
       await loadCourses();
       
       setNewCourse({ name: '', description: '', image: '', price: 0 });
@@ -115,6 +130,11 @@ export default function CoursesPage() {
       alert('Curso criado com sucesso!');
     } catch (error: any) {
       console.error('Error creating course:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
       alert(`Erro ao criar curso: ${error.message}`);
       setUploading(false);
     }
