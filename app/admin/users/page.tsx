@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { useRouter } from 'next/navigation'
 import { 
@@ -13,81 +13,127 @@ import {
   ChevronLeftIcon,
   CreditCardIcon,
   ClockIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  PlusIcon
 } from '@heroicons/react/24/outline'
 import { User } from '@/types'
+import { sendGmailDirectAdminEmail } from '@/lib/email-gmail-direct'
+import toast from 'react-hot-toast'
 
 export default function AdminUsersPage() {
   const { user } = useAuth()
   const router = useRouter()
-  const [users, setUsers] = useState<User[]>([
-    {
-      uid: '1',
-      displayName: 'João Silva',
-      email: 'joao@email.com',
-      photoURL: '',
-      isPaid: true,
-      isActive: true,
-      isAdmin: false,
-      createdAt: new Date('2024-01-15'),
-      updatedAt: new Date('2024-01-20'),
-      studyTime: 120, // minutos
-      cardsStudied: 45,
-      cardsCorrect: 38,
-      cardsWrong: 7,
-    },
-    {
-      uid: '2',
-      displayName: 'Maria Santos',
-      email: 'maria@email.com',
-      photoURL: '',
-      isPaid: true,
-      isActive: true,
-      isAdmin: false,
-      createdAt: new Date('2024-01-10'),
-      updatedAt: new Date('2024-01-19'),
-      studyTime: 85,
-      cardsStudied: 32,
-      cardsCorrect: 28,
-      cardsWrong: 4,
-    },
-    {
-      uid: '3',
-      displayName: 'Pedro Costa',
-      email: 'pedro@email.com',
-      photoURL: '',
-      isPaid: false,
-      isActive: true,
-      isAdmin: false,
-      createdAt: new Date('2024-01-18'),
-      updatedAt: new Date('2024-01-20'),
-      studyTime: 0,
-      cardsStudied: 0,
-      cardsCorrect: 0,
-      cardsWrong: 0,
-    },
-    {
-      uid: '4',
-      displayName: 'Ana Oliveira',
-      email: 'ana@email.com',
-      photoURL: '',
-      isPaid: true,
-      isActive: false,
-      isAdmin: false,
-      createdAt: new Date('2024-01-05'),
-      updatedAt: new Date('2024-01-12'),
-      studyTime: 200,
-      cardsStudied: 78,
-      cardsCorrect: 65,
-      cardsWrong: 13,
-    },
-  ])
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showAddUserModal, setShowAddUserModal] = useState(false)
+  const [newUser, setNewUser] = useState({
+    displayName: '',
+    email: '',
+    password: '123456', // Senha padrão
+    courseId: ''
+  })
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterPayment, setFilterPayment] = useState('all')
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [showUserModal, setShowUserModal] = useState(false)
+
+  // Carregar usuários do Firebase
+  useEffect(() => {
+    loadUsers()
+  }, [])
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true)
+      // Aqui você implementaria a busca real no Firebase
+      // Por enquanto, vamos simular
+      const mockUsers: User[] = [
+        {
+          uid: '1',
+          displayName: 'João Silva',
+          email: 'joao@email.com',
+          photoURL: '',
+          isPaid: true,
+          isActive: true,
+          isAdmin: false,
+          createdAt: new Date('2024-01-15'),
+          updatedAt: new Date('2024-01-20'),
+          studyTime: 120,
+          cardsStudied: 45,
+          cardsCorrect: 38,
+          cardsWrong: 7,
+        },
+        // ... outros usuários mockados
+      ]
+      setUsers(mockUsers)
+    } catch (error) {
+      console.error('Erro ao carregar usuários:', error)
+      toast.error('Erro ao carregar usuários')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAddUser = async () => {
+    try {
+      if (!newUser.displayName || !newUser.email) {
+        toast.error('Preencha todos os campos obrigatórios')
+        return
+      }
+
+      // Aqui você implementaria a criação real no Firebase
+      // Por enquanto, vamos simular
+      const userData = {
+        uid: Date.now().toString(),
+        displayName: newUser.displayName,
+        email: newUser.email,
+        photoURL: '',
+        isPaid: false,
+        isActive: true,
+        isAdmin: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        studyTime: 0,
+        cardsStudied: 0,
+        cardsCorrect: 0,
+        cardsWrong: 0,
+      }
+
+      // Adicionar usuário à lista
+      setUsers(prev => [...prev, userData])
+
+      // Enviar email de boas-vindas
+      try {
+        await sendGmailDirectAdminEmail({
+          to: newUser.email,
+          subject: 'Acesso Liberado - FlashConCards!',
+          userName: newUser.displayName,
+          courseName: newUser.courseId || 'Curso Padrão',
+          userEmail: newUser.email,
+          userPassword: newUser.password
+        })
+        toast.success('Usuário adicionado e email enviado com sucesso!')
+      } catch (emailError) {
+        console.error('Erro ao enviar email:', emailError)
+        toast.error('Usuário adicionado, mas erro ao enviar email')
+      }
+
+      // Limpar formulário
+      setNewUser({
+        displayName: '',
+        email: '',
+        password: '123456',
+        courseId: ''
+      })
+      setShowAddUserModal(false)
+
+    } catch (error) {
+      console.error('Erro ao adicionar usuário:', error)
+      toast.error('Erro ao adicionar usuário')
+    }
+  }
 
   const handleToggleUserStatus = (userId: string) => {
     setUsers(prev => prev.map(user => 
@@ -148,6 +194,17 @@ export default function AdminUsersPage() {
     )
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando usuários...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -166,6 +223,13 @@ export default function AdminUsersPage() {
                 <p className="text-gray-600">Gerencie os usuários da plataforma</p>
               </div>
             </div>
+            <button
+              onClick={() => setShowAddUserModal(true)}
+              className="btn-primary flex items-center space-x-2"
+            >
+              <PlusIcon className="w-5 h-5" />
+              <span>Adicionar Usuário</span>
+            </button>
           </div>
         </div>
       </header>
@@ -218,7 +282,7 @@ export default function AdminUsersPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Média de Estudo</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {Math.round(users.reduce((acc, u) => acc + u.studyTime, 0) / users.length)} min
+                  {users.length > 0 ? Math.round(users.reduce((acc, u) => acc + u.studyTime, 0) / users.length) : 0} min
                 </p>
               </div>
             </div>
@@ -413,6 +477,87 @@ export default function AdminUsersPage() {
           </div>
         </div>
       </div>
+
+      {/* Add User Modal */}
+      {showAddUserModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Adicionar Novo Usuário
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nome Completo *
+                  </label>
+                  <input
+                    type="text"
+                    value={newUser.displayName}
+                    onChange={(e) => setNewUser(prev => ({ ...prev, displayName: e.target.value }))}
+                    className="input-field"
+                    placeholder="Nome do usuário"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    value={newUser.email}
+                    onChange={(e) => setNewUser(prev => ({ ...prev, email: e.target.value }))}
+                    className="input-field"
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Curso (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={newUser.courseId}
+                    onChange={(e) => setNewUser(prev => ({ ...prev, courseId: e.target.value }))}
+                    className="input-field"
+                    placeholder="Nome do curso"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Senha Padrão
+                  </label>
+                  <input
+                    type="text"
+                    value={newUser.password}
+                    onChange={(e) => setNewUser(prev => ({ ...prev, password: e.target.value }))}
+                    className="input-field"
+                    placeholder="123456"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    A senha padrão será enviada por email
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowAddUserModal(false)}
+                  className="btn-outline"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleAddUser}
+                  className="btn-primary"
+                >
+                  Adicionar Usuário
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* User Details Modal */}
       {showUserModal && selectedUser && (
