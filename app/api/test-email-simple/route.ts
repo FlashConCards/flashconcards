@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendSimpleWelcomeEmail, sendSimpleAdminEmail } from '@/lib/email-simple';
+import { sendGmailDirectEmail } from '@/lib/email-gmail-direct';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { type, userEmail, userName, courseName } = body;
+    const { userEmail, userName, courseName } = body;
 
     if (!userEmail || !userName || !courseName) {
       return NextResponse.json(
@@ -13,32 +13,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let result;
-    
-    if (type === 'admin') {
-      result = await sendSimpleAdminEmail({
-        userName,
-        userEmail,
-        courseName
-      });
-    } else {
-      result = await sendSimpleWelcomeEmail({
-        userName,
-        userEmail,
-        courseName,
-        accessExpiryDate: '31/12/2024'
-      });
-    }
+    const result = await sendGmailDirectEmail({
+      userName,
+      userEmail,
+      courseName
+    });
 
     return NextResponse.json({
       success: true,
-      message: 'Email enviado com sucesso!',
+      message: 'Email preparado com sucesso!',
       result
     });
   } catch (error: any) {
-    console.error('Error sending test email:', error);
+    console.error('Error preparing email:', error);
     return NextResponse.json(
-      { error: 'Erro ao enviar email', details: error.message },
+      { error: 'Erro ao preparar email', details: error.message },
       { status: 500 }
     );
   }

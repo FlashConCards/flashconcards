@@ -28,7 +28,7 @@ import {
 } from 'firebase/firestore'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { Course } from '@/types'
-import { sendSendGridWelcomeEmail, sendSendGridAdminEmail } from './email-sendgrid'
+import { sendGmailDirectEmail, sendGmailDirectAdminEmail } from './email-gmail-direct'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -291,7 +291,7 @@ export const createUserByAdmin = async (userData: any) => {
       try {
         const course = await getCourseById(userData.selectedCourse)
         if (course) {
-          await sendSendGridAdminEmail({
+          await sendGmailDirectAdminEmail({
             userName: userData.displayName,
             userEmail: userData.email,
             courseName: course.name
@@ -959,7 +959,7 @@ export const updatePaymentStatus = async (paymentId: string, status: 'pending' |
           const course = await getCourseById(paymentData.courseId);
           
           if (userData && course) {
-                          await sendSendGridWelcomeEmail({
+                          await sendGmailDirectEmail({
                               userName: userData.displayName,
                 userEmail: userData.email,
                 courseName: course.name
