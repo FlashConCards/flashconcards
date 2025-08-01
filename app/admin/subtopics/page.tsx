@@ -262,6 +262,12 @@ export default function SubTopicsPage() {
                             Flashcards
                           </button>
                           <button
+                            onClick={() => router.push(`/admin/deepening?subTopicId=${subTopic.id}&topicId=${selectedTopic.id}&subjectId=${selectedSubject.id}&courseId=${selectedCourse.id}`)}
+                            className="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded hover:bg-blue-200"
+                          >
+                            Aprofundamento
+                          </button>
+                          <button
                             onClick={() => handleDeleteSubTopic(subTopic.id)}
                             className="text-xs bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200"
                           >
