@@ -8,6 +8,15 @@ const client = new MercadoPagoConfig({
 
 export async function POST(request: NextRequest) {
   try {
+    // Verificar se as variáveis de ambiente estão configuradas
+    if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
+      console.error('MERCADOPAGO_ACCESS_TOKEN não configurado');
+      return NextResponse.json(
+        { error: 'Configuração de pagamento não encontrada' },
+        { status: 500 }
+      );
+    }
+
     const {
       courseId,
       courseName,
@@ -61,6 +70,15 @@ export async function POST(request: NextRequest) {
       }
     };
 
+    console.log('Creating payment preference with data:', {
+      courseId,
+      courseName,
+      amount,
+      paymentMethod,
+      userId,
+      userEmail
+    });
+
     const result = await preference.create({ body: preferenceData });
 
     console.log('Payment preference created:', result.id);
@@ -74,8 +92,14 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Error creating payment:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack
+    });
+    
     return NextResponse.json(
-      { error: 'Erro ao criar pagamento' },
+      { error: `Erro ao criar pagamento: ${error.message}` },
       { status: 500 }
     );
   }
