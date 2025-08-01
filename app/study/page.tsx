@@ -107,21 +107,110 @@ export default function StudyPage() {
         // Carregar flashcards reais do Firebase
         const realFlashcards = await getFlashcards(subTopicId);
         console.log('Real flashcards from Firebase:', realFlashcards);
+        console.log('Real flashcards structure:', JSON.stringify(realFlashcards, null, 2));
         
         if (realFlashcards && realFlashcards.length > 0) {
           // Converter dados do Firebase para o formato esperado
-          const formattedFlashcards: Flashcard[] = realFlashcards.map((card: any) => ({
-            id: card.id,
-            subTopicId: card.subTopicId,
-            front: card.front || card.question, // Suporte para ambos os formatos
-            back: card.back || card.answer, // Suporte para ambos os formatos
-            explanation: card.explanation || '',
-            order: card.order || 1,
-            isActive: card.isActive !== false,
-            deepening: card.deepening || '',
-            createdAt: card.createdAt,
-            updatedAt: card.updatedAt,
-          }));
+          const formattedFlashcards: Flashcard[] = realFlashcards.map((card: any) => {
+            console.log('Processing card:', card);
+            console.log('Card fields:', {
+              id: card.id,
+              front: card.front,
+              back: card.back,
+              question: card.question,
+              answer: card.answer,
+              explanation: card.explanation,
+              subTopicId: card.subTopicId,
+              order: card.order,
+              isActive: card.isActive
+            });
+            
+            const formattedCard = {
+              id: card.id,
+              subTopicId: card.subTopicId,
+              front: card.front || card.question || 'Pergunta não definida', // Suporte para ambos os formatos
+              back: card.back || card.answer || 'Resposta não definida', // Suporte para ambos os formatos
+              explanation: card.explanation || '',
+              order: card.order || 1,
+              isActive: card.isActive !== false,
+              deepening: card.deepening || '',
+              createdAt: card.createdAt,
+              updatedAt: card.updatedAt,
+            };
+            
+            // Verificar se os campos estão vazios
+            if (!formattedCard.front || formattedCard.front === 'Pergunta não definida') {
+              console.warn('Flashcard sem pergunta:', card);
+            }
+            if (!formattedCard.back || formattedCard.back === 'Resposta não definida') {
+              console.warn('Flashcard sem resposta:', card);
+            }
+            
+            // Verificar se os campos estão vazios no card original
+            if (!card.front && !card.question) {
+              console.error('Card original sem pergunta:', card);
+            }
+            if (!card.back && !card.answer) {
+              console.error('Card original sem resposta:', card);
+            }
+            
+            // Verificar se os campos estão vazios no card formatado
+            if (!formattedCard.front || formattedCard.front === 'Pergunta não definida') {
+              console.error('Card formatado sem pergunta:', formattedCard);
+            }
+            if (!formattedCard.back || formattedCard.back === 'Resposta não definida') {
+              console.error('Card formatado sem resposta:', formattedCard);
+            }
+            
+            // Verificar se os campos estão sendo processados corretamente
+            console.log('Card processing check:', {
+              id: card.id,
+              originalFront: card.front,
+              originalBack: card.back,
+              originalQuestion: card.question,
+              originalAnswer: card.answer,
+              formattedFront: formattedCard.front,
+              formattedBack: formattedCard.back,
+              frontLength: card.front?.length || 0,
+              backLength: card.back?.length || 0,
+              frontType: typeof card.front,
+              backType: typeof card.back,
+              allFields: Object.keys(card),
+              cardKeys: Object.keys(card),
+              cardValues: Object.values(card),
+              cardEntries: Object.entries(card),
+              cardStringified: JSON.stringify(card, null, 2),
+              cardRaw: card,
+              cardNull: card === null,
+              cardUndefined: card === undefined,
+              cardEmpty: Object.keys(card).length === 0,
+              cardHasSubTopicId: !!card.subTopicId,
+              cardHasFront: !!card.front,
+              cardHasBack: !!card.back,
+              cardFrontEmpty: card.front === '',
+              cardBackEmpty: card.back === '',
+              cardFrontNull: card.front === null,
+              cardBackNull: card.back === null,
+              cardFrontUndefined: card.front === undefined,
+              cardBackUndefined: card.back === undefined,
+              cardFrontTruthy: !!card.front,
+              cardBackTruthy: !!card.back,
+              cardFrontLength: card.front?.length || 0,
+              cardBackLength: card.back?.length || 0,
+              cardFrontString: String(card.front),
+              cardBackString: String(card.back),
+              cardFrontTrimmed: card.front?.trim(),
+              cardBackTrimmed: card.back?.trim(),
+              cardFrontTrimmedLength: card.front?.trim()?.length || 0,
+              cardBackTrimmedLength: card.back?.trim()?.length || 0,
+              cardFrontTrimmedTruthy: !!card.front?.trim(),
+              cardBackTrimmedTruthy: !!card.back?.trim(),
+              cardFrontTrimmedEmpty: card.front?.trim() === '',
+              cardBackTrimmedEmpty: card.back?.trim() === ''
+            });
+            console.log('Formatted card:', formattedCard);
+            return formattedCard;
+          });
           
           console.log('Formatted flashcards:', formattedFlashcards);
           

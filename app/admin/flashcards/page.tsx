@@ -49,9 +49,11 @@ interface SubTopic {
 interface Flashcard {
   id: string;
   subTopicId: string;
-  front: string;
-  back: string;
-  explanation: string;
+  front?: string;
+  back?: string;
+  question?: string;
+  answer?: string;
+  explanation?: string;
   order: number;
   isActive: boolean;
   createdAt: any;
@@ -132,6 +134,7 @@ export default function FlashcardsPage() {
                       console.log('Flashcards loaded:', flashcardsData);
                       console.log('First flashcard details:', flashcardsData[0]);
                       console.log('subTopicId being used:', subTopicId);
+                      console.log('All flashcards data:', JSON.stringify(flashcardsData, null, 2));
                       setFlashcards(flashcardsData || []);
                     }
                   }
@@ -161,11 +164,46 @@ export default function FlashcardsPage() {
         return;
       }
 
+      console.log('Creating flashcard with data:', {
+        front: newFlashcard.front,
+        back: newFlashcard.back,
+        explanation: newFlashcard.explanation,
+        order: newFlashcard.order,
+        subTopicId: selectedSubTopic.id,
+        isActive: true
+      });
+
       const flashcardData = {
-        ...newFlashcard,
+        front: newFlashcard.front.trim(),
+        back: newFlashcard.back.trim(),
+        explanation: newFlashcard.explanation.trim(),
+        order: newFlashcard.order,
         subTopicId: selectedSubTopic.id,
         isActive: true
       };
+      
+      // Verificar se os dados estão corretos antes de salvar
+      if (!flashcardData.front || flashcardData.front.length === 0) {
+        alert('A pergunta não pode estar vazia');
+        return;
+      }
+      
+      if (!flashcardData.back || flashcardData.back.length === 0) {
+        alert('A resposta não pode estar vazia');
+        return;
+      }
+      
+      // Verificar se os dados estão sendo passados corretamente
+      console.log('Flashcard data before save:', {
+        front: flashcardData.front,
+        back: flashcardData.back,
+        explanation: flashcardData.explanation,
+        order: flashcardData.order,
+        subTopicId: flashcardData.subTopicId,
+        isActive: flashcardData.isActive
+      });
+
+      console.log('Flashcard data to save:', flashcardData);
 
       await createFlashcard(flashcardData);
       await loadData();
@@ -279,19 +317,85 @@ export default function FlashcardsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {flashcards.map((flashcard) => {
                     console.log('Rendering flashcard:', flashcard);
+                    console.log('Flashcard front:', flashcard.front);
+                    console.log('Flashcard back:', flashcard.back);
+                    console.log('Flashcard question:', flashcard.question);
+                    console.log('Flashcard answer:', flashcard.answer);
+                    
+                    // Verificar se os campos estão vazios
+                    if (!flashcard.front && !flashcard.question) {
+                      console.error('Flashcard sem pergunta:', flashcard);
+                    }
+                    if (!flashcard.back && !flashcard.answer) {
+                      console.error('Flashcard sem resposta:', flashcard);
+                    }
+                    
+                    // Verificar se os campos estão sendo exibidos corretamente
+                    console.log('Flashcard display check:', {
+                      id: flashcard.id,
+                      hasFront: !!flashcard.front,
+                      hasBack: !!flashcard.back,
+                      hasQuestion: !!flashcard.question,
+                      hasAnswer: !!flashcard.answer,
+                      frontLength: flashcard.front?.length || 0,
+                      backLength: flashcard.back?.length || 0,
+                      frontValue: flashcard.front,
+                      backValue: flashcard.back,
+                      frontType: typeof flashcard.front,
+                      backType: typeof flashcard.back,
+                      allFields: Object.keys(flashcard),
+                      flashcardKeys: Object.keys(flashcard),
+                      flashcardValues: Object.values(flashcard),
+                      flashcardEntries: Object.entries(flashcard),
+                      flashcardStringified: JSON.stringify(flashcard, null, 2),
+                      flashcardRaw: flashcard,
+                      flashcardNull: flashcard === null,
+                      flashcardUndefined: flashcard === undefined,
+                      flashcardEmpty: Object.keys(flashcard).length === 0,
+                      flashcardHasSubTopicId: !!flashcard.subTopicId,
+                      flashcardHasFront: !!flashcard.front,
+                      flashcardHasBack: !!flashcard.back,
+                      flashcardFrontEmpty: flashcard.front === '',
+                      flashcardBackEmpty: flashcard.back === '',
+                      flashcardFrontNull: flashcard.front === null,
+                      flashcardBackNull: flashcard.back === null,
+                      flashcardFrontUndefined: flashcard.front === undefined,
+                      flashcardBackUndefined: flashcard.back === undefined,
+                      flashcardFrontTruthy: !!flashcard.front,
+                      flashcardBackTruthy: !!flashcard.back,
+                      flashcardFrontLength: flashcard.front?.length || 0,
+                      flashcardBackLength: flashcard.back?.length || 0,
+                      flashcardFrontString: String(flashcard.front),
+                      flashcardBackString: String(flashcard.back),
+                      flashcardFrontTrimmed: flashcard.front?.trim(),
+                      flashcardBackTrimmed: flashcard.back?.trim(),
+                      flashcardFrontTrimmedLength: flashcard.front?.trim()?.length || 0,
+                      flashcardBackTrimmedLength: flashcard.back?.trim()?.length || 0,
+                      flashcardFrontTrimmedTruthy: !!flashcard.front?.trim(),
+                      flashcardBackTrimmedTruthy: !!flashcard.back?.trim(),
+                      flashcardFrontTrimmedEmpty: flashcard.front?.trim() === '',
+                      flashcardBackTrimmedEmpty: flashcard.back?.trim() === ''
+                    });
+                    
                     return (
                       <div key={flashcard.id} className="border border-gray-200 rounded-lg p-6 bg-white hover:shadow-md transition-shadow">
                         <div className="mb-4">
                           <h3 className="text-sm font-medium text-gray-500 mb-1">Pergunta:</h3>
                           <p className="text-gray-800 font-medium min-h-[3rem]">
-                            {flashcard.front || 'Pergunta não definida'}
+                            {flashcard.front || flashcard.question || 'Pergunta não definida'}
                           </p>
+                          {(!flashcard.front && !flashcard.question) && (
+                            <p className="text-red-500 text-xs mt-1">⚠️ Campo vazio no banco de dados</p>
+                          )}
                         </div>
                         <div className="mb-4">
                           <h3 className="text-sm font-medium text-gray-500 mb-1">Resposta:</h3>
                           <p className="text-gray-800 min-h-[3rem]">
-                            {flashcard.back || 'Resposta não definida'}
+                            {flashcard.back || flashcard.answer || 'Resposta não definida'}
                           </p>
+                          {(!flashcard.back && !flashcard.answer) && (
+                            <p className="text-red-500 text-xs mt-1">⚠️ Campo vazio no banco de dados</p>
+                          )}
                         </div>
                         {flashcard.explanation && (
                           <div className="mb-4">
