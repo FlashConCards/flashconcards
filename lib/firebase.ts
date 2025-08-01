@@ -1100,6 +1100,22 @@ export const getUserAccessibleCourses = async (userId: string) => {
   }
 }
 
+// Buscar todos os cursos disponíveis para compra (públicos)
+export const getPublicCourses = async () => {
+  try {
+    const allCourses = await getCourses();
+    // Filtrar apenas cursos ativos e disponíveis para compra
+    const publicCourses = allCourses.filter(course => 
+      course.isActive !== false && course.isPublic !== false
+    );
+    console.log('Public courses loaded:', publicCourses.length);
+    return publicCourses;
+  } catch (error: any) {
+    console.error('Error getting public courses:', error);
+    return [];
+  }
+}
+
 // Buscar cursos com controle de acesso
 export const getCoursesWithAccess = async (userId: string) => {
   try {

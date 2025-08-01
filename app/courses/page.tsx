@@ -154,12 +154,20 @@ export default function CoursesPage() {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Acesso Restrito</h2>
           <p className="text-gray-600 mb-4">Você precisa ter acesso pago para ver os cursos.</p>
-          <button
-            onClick={() => router.push('/contact')}
-            className="btn-primary"
-          >
-            Entrar em Contato
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={() => router.push('/course-selection')}
+              className="btn-primary"
+            >
+              Ver Cursos Disponíveis
+            </button>
+            <button
+              onClick={() => router.push('/contact')}
+              className="btn-outline block w-full"
+            >
+              Entrar em Contato
+            </button>
+          </div>
         </div>
       </div>
     )
