@@ -31,15 +31,15 @@ export async function POST(request: NextRequest) {
           if (userId && courseId) {
             try {
               // Buscar informações do usuário e curso
-              const user = await getUserById(userId)
-              const course = await getCourseById(courseId)
+              const user = await getUserById(userId) as any
+              const course = await getCourseById(courseId) as any
               
               if (user && course) {
                 // Enviar email de boas-vindas automaticamente
                 await sendGmailDirectEmail({
-                  userName: user.displayName,
-                  userEmail: user.email,
-                  courseName: course.name,
+                  userName: user.displayName || 'Usuário',
+                  userEmail: user.email || '',
+                  courseName: course.name || 'Curso',
                   accessExpiryDate: user.accessExpiryDate
                 })
                 
