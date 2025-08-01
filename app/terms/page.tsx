@@ -134,9 +134,9 @@ export default function TermsPage() {
             </p>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-gray-600">
-                <strong>E-mail:</strong> termos@flashconcards.com<br />
-                <strong>Telefone:</strong> (11) 99999-9999<br />
-                <strong>Endereço:</strong> Rua das Flores, 123 - São Paulo, SP
+                <strong>E-mail:</strong> flashconcards@gmail.com<br />
+                <strong>Telefone:</strong> (62) 98184-1878<br />
+                                  <strong>Atendimento:</strong> 100% online
               </p>
             </div>
           </div>

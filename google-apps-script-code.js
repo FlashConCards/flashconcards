@@ -48,7 +48,7 @@ function doPost(e) {
     GmailApp.sendEmail(to, subject, '', {
       htmlBody: htmlContent,
       name: 'FlashConCards',
-      replyTo: 'suporte@flashconcards.com'
+      replyTo: 'flashconcards@gmail.com'
     });
 
     return ContentService.createTextOutput(JSON.stringify({
@@ -276,13 +276,13 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl, userEm
       <div class="email-container">
         <div class="header">
           <h1>FlashConCards</h1>
-          <h2>Parabens pela sua escolha!</h2>
+          <h2>Parabéns pela sua escolha!</h2>
         </div>
         
         <div class="content">
           <div class="welcome-message">
-            <p>Ola <strong>${userName}</strong>!</p>
-            <p>Estamos muito felizes em ter voce conosco! Voce acaba de dar um passo importante para alavancar seus estudos e alcancar seus objetivos.</p>
+            <p>Olá <strong>${userName}</strong>!</p>
+            <p>Estamos muito felizes em ter você conosco! Você acaba de dar um passo importante para alavancar seus estudos e alcançar seus objetivos.</p>
           </div>
           
           <div class="course-highlight">
@@ -300,27 +300,27 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl, userEm
           </div>
           
           <div class="features-section">
-            <h3>O que voce tem acesso agora:</h3>
+            <h3>O que você tem acesso agora:</h3>
             <div class="features-grid">
               <div class="feature-card">
                 <h4>Flashcards Interativos</h4>
                 <p>Estude com flashcards personalizados e inteligentes que se adaptam ao seu progresso.</p>
               </div>
               <div class="feature-card">
-                <h4>Estatisticas Detalhadas</h4>
-                <p>Acompanhe seu progresso com graficos e relatorios em tempo real.</p>
+                <h4>Estatísticas Detalhadas</h4>
+                <p>Acompanhe seu progresso com gráficos e relatórios em tempo real.</p>
               </div>
               <div class="feature-card">
-                <h4>Conteudo de Aprofundamento</h4>
+                <h4>Conteúdo de Aprofundamento</h4>
                 <p>Acesse material complementar para consolidar seu conhecimento.</p>
               </div>
               <div class="feature-card">
-                <h4>Estudo Flexivel</h4>
+                <h4>Estudo Flexível</h4>
                 <p>Estude no seu ritmo, quando e onde quiser, em qualquer dispositivo.</p>
               </div>
               <div class="feature-card">
                 <h4>Interface Moderna</h4>
-                <p>Desfrute de uma interface intuitiva e responsiva para uma experiencia incrivel.</p>
+                <p>Desfrute de uma interface intuitiva e responsiva para uma experiência incrível.</p>
               </div>
               <div class="feature-card">
                 <h4>Animações Interativas</h4>
@@ -330,36 +330,36 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl, userEm
           </div>
           
           <div class="tips-section">
-            <h3>Como comecar a estudar:</h3>
+            <h3>Como começar a estudar:</h3>
             <ul class="tips-list">
-              <li>Faca login com suas credenciais acima</li>
-              <li>Explore a area de estudos e familiarize-se com a interface</li>
-              <li>Comece pelos subtopicos que voce tem mais dificuldade</li>
+              <li>Faça login com suas credenciais acima</li>
+              <li>Explore a área de estudos e familiarize-se com a interface</li>
+              <li>Comece pelos subtópicos que você tem mais dificuldade</li>
               <li>Use o sistema de aprofundamento para consolidar o conhecimento</li>
-              <li>Acompanhe suas estatisticas para identificar pontos de melhoria</li>
-              <li>Estude regularmente para manter o conteudo fresco na memoria</li>
-              <li>Configure lembretes para manter a consistencia nos estudos</li>
+              <li>Acompanhe suas estatísticas para identificar pontos de melhoria</li>
+              <li>Estude regularmente para manter o conteúdo fresco na memória</li>
+              <li>Configure lembretes para manter a consistência nos estudos</li>
             </ul>
           </div>
           
           <div style="text-align: center;">
             <a href="${appUrl}/login" class="cta-button">
-              Acessar Minha Area de Estudos
+              Acessar Minha Área de Estudos
             </a>
           </div>
           
           <div class="bonus-section">
-            <h4>Bonus Especial:</h4>
-            <p>Como voce e um dos nossos primeiros alunos, voce tem acesso completo a todas as funcionalidades premium, incluindo animações interativas e conteudo exclusivo!</p>
+            <h4>Bônus Especial:</h4>
+            <p>Como você é um dos nossos primeiros alunos, você tem acesso completo a todas as funcionalidades premium, incluindo animações interativas e conteúdo exclusivo!</p>
           </div>
         </div>
         
         <div class="footer">
-          <p>Se voce tiver alguma duvida, nao hesite em nos contatar!</p>
-          <p class="contact">suporte@flashconcards.com</p>
-          <p>Estamos aqui para ajudar voce a alcancar seus objetivos!</p>
+          <p>Se você tiver alguma dúvida, não hesite em nos contatar!</p>
+          <p class="contact">flashconcards@gmail.com</p>
+          <p>Estamos aqui para ajudar você a alcançar seus objetivos!</p>
           <br>
-          <p><small>Este email foi enviado automaticamente. Nao responda a este email.</small></p>
+          <p><small>Este email foi enviado automaticamente. Não responda a este email.</small></p>
         </div>
       </div>
     </body>
@@ -592,13 +592,13 @@ function createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassw
         
         <div class="content">
           <div class="welcome-message">
-            <p>Ola <strong>${userName}</strong>!</p>
-            <p>Otimas noticias! Seu acesso ao curso foi liberado pelo administrador e voce ja pode comecar a estudar!</p>
+            <p>Olá <strong>${userName}</strong>!</p>
+            <p>Ótimas notícias! Seu acesso ao curso foi liberado pelo administrador e você já pode começar a estudar!</p>
           </div>
           
           <div class="course-highlight">
             <h3>${courseName}</h3>
-            <p><strong>Seu acesso esta ativo e pronto para uso!</strong></p>
+            <p><strong>Seu acesso está ativo e pronto para uso!</strong></p>
           </div>
           
           <div class="login-info">
@@ -611,27 +611,27 @@ function createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassw
           </div>
           
           <div class="features-section">
-            <h3>O que voce tem acesso agora:</h3>
+            <h3>O que você tem acesso agora:</h3>
             <div class="features-grid">
               <div class="feature-card">
                 <h4>Flashcards Interativos</h4>
                 <p>Estude com flashcards personalizados e inteligentes que se adaptam ao seu progresso.</p>
               </div>
               <div class="feature-card">
-                <h4>Estatisticas Detalhadas</h4>
-                <p>Acompanhe seu progresso com graficos e relatorios em tempo real.</p>
+                <h4>Estatísticas Detalhadas</h4>
+                <p>Acompanhe seu progresso com gráficos e relatórios em tempo real.</p>
               </div>
               <div class="feature-card">
-                <h4>Conteudo de Aprofundamento</h4>
+                <h4>Conteúdo de Aprofundamento</h4>
                 <p>Acesse material complementar para consolidar seu conhecimento.</p>
               </div>
               <div class="feature-card">
-                <h4>Estudo Flexivel</h4>
+                <h4>Estudo Flexível</h4>
                 <p>Estude no seu ritmo, quando e onde quiser, em qualquer dispositivo.</p>
               </div>
               <div class="feature-card">
                 <h4>Interface Moderna</h4>
-                <p>Desfrute de uma interface intuitiva e responsiva para uma experiencia incrivel.</p>
+                <p>Desfrute de uma interface intuitiva e responsiva para uma experiência incrível.</p>
               </div>
               <div class="feature-card">
                 <h4>Animações Interativas</h4>
@@ -641,12 +641,12 @@ function createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassw
           </div>
           
           <div class="steps-section">
-            <h3>Como comecar:</h3>
+            <h3>Como começar:</h3>
             <ul class="steps-list">
-              <li>Faca login com suas credenciais acima</li>
-              <li>Explore a area de estudos e familiarize-se com a interface</li>
-              <li>Escolha a materia que deseja estudar</li>
-              <li>Navegue pelos topicos e subtopicos</li>
+              <li>Faça login com suas credenciais acima</li>
+              <li>Explore a área de estudos e familiarize-se com a interface</li>
+              <li>Escolha a matéria que deseja estudar</li>
+              <li>Navegue pelos tópicos e subtópicos</li>
               <li>Comece com os flashcards</li>
               <li>Use o aprofundamento para consolidar o conhecimento</li>
             </ul>
@@ -654,22 +654,22 @@ function createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassw
           
           <div style="text-align: center;">
             <a href="${appUrl}/login" class="cta-button">
-              Acessar Minha Area de Estudos
+              Acessar Minha Área de Estudos
             </a>
           </div>
           
           <div class="bonus-section">
-            <h4>Bonus:</h4>
-            <p>Como voce foi adicionado pelo administrador, voce tem acesso completo a todas as funcionalidades, incluindo animações interativas e conteudo exclusivo!</p>
+            <h4>Bônus:</h4>
+            <p>Como você foi adicionado pelo administrador, você tem acesso completo a todas as funcionalidades, incluindo animações interativas e conteúdo exclusivo!</p>
           </div>
         </div>
         
         <div class="footer">
-          <p>Se voce tiver alguma duvida, nao hesite em nos contatar!</p>
-          <p class="contact">suporte@flashconcards.com</p>
-          <p>Estamos aqui para ajudar voce a alcancar seus objetivos!</p>
+          <p>Se você tiver alguma dúvida, não hesite em nos contatar!</p>
+          <p class="contact">flashconcards@gmail.com</p>
+          <p>Estamos aqui para ajudar você a alcançar seus objetivos!</p>
           <br>
-          <p><small>Este email foi enviado automaticamente. Nao responda a este email.</small></p>
+          <p><small>Este email foi enviado automaticamente. Não responda a este email.</small></p>
         </div>
       </div>
     </body>

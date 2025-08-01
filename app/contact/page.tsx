@@ -40,7 +40,7 @@ export default function ContactPage() {
                   <div>
                     <h4 className="font-semibold text-gray-900">E-mail</h4>
                     <p className="text-gray-600">contato@flashconcards.com</p>
-                    <p className="text-gray-600">suporte@flashconcards.com</p>
+                    <p className="text-gray-600">flashconcards@gmail.com</p>
                   </div>
                 </div>
 
@@ -48,7 +48,7 @@ export default function ContactPage() {
                   <PhoneIcon className="w-6 h-6 text-primary-600 mr-4 mt-1" />
                   <div>
                     <h4 className="font-semibold text-gray-900">Telefone</h4>
-                    <p className="text-gray-600">(11) 99999-9999</p>
+                    <p className="text-gray-600">(62) 98184-1878</p>
                     <p className="text-gray-600">Segunda a Sexta: 9h às 18h</p>
                   </div>
                 </div>
@@ -56,11 +56,11 @@ export default function ContactPage() {
                 <div className="flex items-start">
                   <MapPinIcon className="w-6 h-6 text-primary-600 mr-4 mt-1" />
                   <div>
-                    <h4 className="font-semibold text-gray-900">Endereço</h4>
+                    <h4 className="font-semibold text-gray-900">Atendimento</h4>
                     <p className="text-gray-600">
-                      Rua das Flores, 123<br />
-                      Bairro Centro<br />
-                      São Paulo, SP - 01234-567
+                      Atendimento 100% online<br />
+                      Suporte via WhatsApp e Email<br />
+                      Resposta em até 24h
                     </p>
                   </div>
                 </div>
