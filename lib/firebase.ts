@@ -28,7 +28,7 @@ import {
 } from 'firebase/firestore'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { Course } from '@/types'
-import { sendAdminWelcomeEmail, sendWelcomeEmail } from './email'
+import { sendGmailAdminEmail, sendGmailWelcomeEmail } from './email-gmail'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -291,7 +291,7 @@ export const createUserByAdmin = async (userData: any) => {
       try {
         const course = await getCourseById(userData.selectedCourse)
         if (course) {
-          await sendAdminWelcomeEmail({
+          await sendGmailAdminEmail({
             userName: userData.displayName,
             userEmail: userData.email,
             courseName: course.name
@@ -959,7 +959,7 @@ export const updatePaymentStatus = async (paymentId: string, status: 'pending' |
           const course = await getCourseById(paymentData.courseId);
           
           if (userData && course) {
-            await sendWelcomeEmail({
+                          await sendGmailWelcomeEmail({
               userName: userData.displayName,
               userEmail: userData.email,
               courseName: course.name,
