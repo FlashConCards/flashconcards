@@ -99,6 +99,40 @@ export const signUp = async (email: string, password: string, displayName: strin
   }
 }
 
+// Nova função createUser que aceita objeto userData
+export const createUser = async (email: string, password: string, userData: any) => {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+    
+    await updateProfile(userCredential.user, {
+      displayName: userData.displayName
+    })
+
+    // Create user document in /users collection
+    await setDoc(doc(db, 'users', userCredential.user.uid), {
+      uid: userCredential.user.uid,
+      email: email,
+      displayName: userData.displayName,
+      photoURL: userData.photoURL || '',
+      isAdmin: userData.isAdmin || false,
+      isPaid: userData.isPaid || false,
+      isActive: userData.isActive || true,
+      studyTime: userData.studyTime || 0,
+      cardsStudied: userData.cardsStudied || 0,
+      cardsCorrect: userData.cardsCorrect || 0,
+      cardsWrong: userData.cardsWrong || 0,
+      lastLoginAt: serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+
+    return userCredential.user
+  } catch (error) {
+    console.error('Error creating user:', error)
+    throw error
+  }
+}
+
 export const signOutUser = async () => {
   try {
     await signOut(auth)
@@ -1225,7 +1259,6 @@ export const uploadFile = async (file: File, path: string) => {
 
 // Aliases for backward compatibility
 export const signInUser = signIn
-export const createUser = signUp
 export const updateUserData = updateUser 
 
 // Verificar se o acesso do usuário expirou

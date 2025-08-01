@@ -334,12 +334,12 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl, userEm
             <ul class="tips-list">
               <li>Faça login com suas credenciais acima</li>
               <li>Explore a área de estudos e familiarize-se com a interface</li>
-              <li>Comece pelos subtópicos que você tem mais dificuldade</li>
-              <li>Use o sistema de aprofundamento para consolidar o conhecimento</li>
-              <li>Acompanhe suas estatísticas para identificar pontos de melhoria</li>
-              <li>Estude regularmente para manter o conteúdo fresco na memória</li>
+            <li>Comece pelos subtópicos que você tem mais dificuldade</li>
+            <li>Use o sistema de aprofundamento para consolidar o conhecimento</li>
+            <li>Acompanhe suas estatísticas para identificar pontos de melhoria</li>
+            <li>Estude regularmente para manter o conteúdo fresco na memória</li>
               <li>Configure lembretes para manter a consistência nos estudos</li>
-            </ul>
+          </ul>
           </div>
           
           <div style="text-align: center;">
@@ -645,10 +645,10 @@ function createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassw
             <ul class="steps-list">
               <li>Faça login com suas credenciais acima</li>
               <li>Explore a área de estudos e familiarize-se com a interface</li>
-              <li>Escolha a matéria que deseja estudar</li>
-              <li>Navegue pelos tópicos e subtópicos</li>
-              <li>Comece com os flashcards</li>
-              <li>Use o aprofundamento para consolidar o conhecimento</li>
+            <li>Escolha a matéria que deseja estudar</li>
+            <li>Navegue pelos tópicos e subtópicos</li>
+            <li>Comece com os flashcards</li>
+            <li>Use o aprofundamento para consolidar o conhecimento</li>
             </ul>
           </div>
           
