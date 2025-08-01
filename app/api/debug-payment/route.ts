@@ -32,11 +32,7 @@ export async function GET() {
 
     // Testar conexão com Mercado Pago
     const client = new MercadoPagoConfig({ 
-      accessToken,
-      options: {
-        clientId,
-        clientSecret
-      }
+      accessToken
     });
 
     // Testar criação de preferência

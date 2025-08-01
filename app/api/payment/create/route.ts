@@ -3,11 +3,7 @@ import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 
 // Configurar Mercado Pago com todas as credenciais
 const client = new MercadoPagoConfig({ 
-  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
-  options: {
-    clientId: process.env.MERCADOPAGO_CLIENT_ID,
-    clientSecret: process.env.MERCADOPAGO_CLIENT_SECRET
-  }
+  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || ''
 });
 
 export async function POST(request: NextRequest) {

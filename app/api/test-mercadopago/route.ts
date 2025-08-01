@@ -4,11 +4,7 @@ import { MercadoPagoConfig, Preference } from 'mercadopago';
 export async function GET() {
   try {
     const client = new MercadoPagoConfig({ 
-      accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
-      options: {
-        clientId: process.env.MERCADOPAGO_CLIENT_ID,
-        clientSecret: process.env.MERCADOPAGO_CLIENT_SECRET
-      }
+      accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || ''
     });
 
     console.log('Testando credenciais:', {
