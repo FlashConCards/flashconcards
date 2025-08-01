@@ -357,6 +357,14 @@ export default function StudyPage() {
         };
         
         console.log('Saving study session:', sessionData);
+        console.log('Session data structure:', {
+          uid: sessionData.uid,
+          subTopicId: sessionData.subTopicId,
+          correctCards: sessionData.correctCards,
+          wrongCards: sessionData.wrongCards,
+          studyTime: sessionData.studyTime
+        });
+        
         const sessionId = await createStudySession(sessionData);
         console.log('Study session saved with ID:', sessionId);
         

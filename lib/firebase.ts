@@ -1203,7 +1203,7 @@ export const getCourseById = async (courseId: string) => {
 export const getUserStudySessions = async (uid: string) => {
   try {
     const q = query(
-      collection(db, 'studySessions'),
+      collection(db, 'study-sessions'),
       where('uid', '==', uid),
       orderBy('createdAt', 'desc')
     )
@@ -1220,13 +1220,16 @@ export const getUserStudySessions = async (uid: string) => {
 
 export const getUserProgressBySubTopic = async (uid: string, subTopicId: string) => {
   try {
+    console.log('Getting progress for user:', uid, 'subTopic:', subTopicId);
+    
     // Buscar flashcards do sub-tópico
     const flashcards = await getFlashcards(subTopicId);
     const totalCards = flashcards.length;
+    console.log('Total flashcards found:', totalCards);
     
     // Buscar sessões de estudo do usuário para este sub-tópico
     const q = query(
-      collection(db, 'studySessions'),
+      collection(db, 'study-sessions'),
       where('uid', '==', uid),
       where('subTopicId', '==', subTopicId)
     )
@@ -1236,12 +1239,15 @@ export const getUserProgressBySubTopic = async (uid: string, subTopicId: string)
       ...doc.data()
     })) as any[]
     
+    console.log('Study sessions found:', sessions.length);
+    console.log('Sessions data:', sessions);
+    
     const correctCards = sessions.reduce((sum, session) => sum + (session.correctCards || 0), 0)
     const wrongCards = sessions.reduce((sum, session) => sum + (session.wrongCards || 0), 0)
     const studyTime = sessions.reduce((sum, session) => sum + (session.studyTime || 0), 0)
     const studiedCards = correctCards + wrongCards
     
-    return {
+    const result = {
       totalCards,
       studiedCards,
       correctCards,
@@ -1249,7 +1255,10 @@ export const getUserProgressBySubTopic = async (uid: string, subTopicId: string)
       studyTime,
       accuracy: studiedCards > 0 ? (correctCards / studiedCards) * 100 : 0,
       lastStudied: sessions.length > 0 ? sessions[0].createdAt : null
-    }
+    };
+    
+    console.log('Progress result:', result);
+    return result;
   } catch (error: any) {
     console.error('Error getting user progress by sub-topic:', error)
     return {
