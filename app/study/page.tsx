@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
@@ -44,6 +45,8 @@ export default function StudyPage() {
     wrongCards: 0,
     studyTime: 0
   });
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionDirection, setTransitionDirection] = useState<'left' | 'right'>('right');
 
   // Get course info from URL params
   const courseId = searchParams.get('courseId');
@@ -151,7 +154,7 @@ export default function StudyPage() {
   }, [courseId, subjectId, topicId, subTopicId, router]);
 
   const handleCardResponse = (isCorrect: boolean) => {
-    if (!user || currentIndex >= studyQueue.length) return;
+    if (!user || currentIndex >= studyQueue.length || isTransitioning) return;
 
     const currentCard = studyQueue[currentIndex];
     
@@ -172,6 +175,10 @@ export default function StudyPage() {
       });
     }
 
+    // Animate transition
+    setIsTransitioning(true);
+    setTransitionDirection('right');
+
     // Move to next card automatically after a short delay
     setTimeout(() => {
       // Se ainda há cards na fila, continua
@@ -187,20 +194,35 @@ export default function StudyPage() {
         // Só finaliza quando não há mais cards na fila
         handleSessionComplete();
       }
+      
+      // End transition after animation
+      setTimeout(() => setIsTransitioning(false), 300);
     }, 1500); // Delay de 1.5 segundos para mostrar o resultado
   };
 
   const handlePrevious = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-      setShowAnswer(false);
+    if (currentIndex > 0 && !isTransitioning) {
+      setIsTransitioning(true);
+      setTransitionDirection('left');
+      
+      setTimeout(() => {
+        setCurrentIndex(prev => prev - 1);
+        setShowAnswer(false);
+        setTimeout(() => setIsTransitioning(false), 300);
+      }, 150);
     }
   };
 
   const handleNext = () => {
-    if (currentIndex < studyQueue.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-      setShowAnswer(false);
+    if (currentIndex < studyQueue.length - 1 && !isTransitioning) {
+      setIsTransitioning(true);
+      setTransitionDirection('right');
+      
+      setTimeout(() => {
+        setCurrentIndex(prev => prev + 1);
+        setShowAnswer(false);
+        setTimeout(() => setIsTransitioning(false), 300);
+      }, 150);
     }
   };
 
@@ -388,33 +410,82 @@ export default function StudyPage() {
             <span>Progresso da Sessão</span>
             <span>{Math.round(progressPercentage)}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${progressPercentage}%` }}
-            ></div>
+          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+            <motion.div
+              className="bg-indigo-600 h-2 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPercentage}%` }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 100, 
+                damping: 20,
+                duration: 0.5
+              }}
+            />
           </div>
           
           {/* Session Stats */}
           <div className="grid grid-cols-3 gap-4 mt-4">
-            <div className="text-center">
+            <motion.div 
+              className="text-center"
+              key={`correct-${sessionStats.correctCards}`}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
               <div className="text-2xl font-bold text-green-600">{sessionStats.correctCards}</div>
               <div className="text-xs text-gray-600">Acertos</div>
-            </div>
-            <div className="text-center">
+            </motion.div>
+            <motion.div 
+              className="text-center"
+              key={`wrong-${sessionStats.wrongCards}`}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
               <div className="text-2xl font-bold text-red-600">{sessionStats.wrongCards}</div>
               <div className="text-xs text-gray-600">Erros</div>
-            </div>
-            <div className="text-center">
+            </motion.div>
+            <motion.div 
+              className="text-center"
+              key={`remaining-${remainingCards}`}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
               <div className="text-2xl font-bold text-blue-600">{remainingCards}</div>
               <div className="text-xs text-gray-600">Restantes</div>
-            </div>
+            </motion.div>
           </div>
         </div>
 
         {/* Flashcard */}
         {currentCard && studyQueue.length > 0 ? (
-          <div className="mb-8">
+          <motion.div 
+            className="mb-8"
+            key={`${currentCard.id}-${currentIndex}`}
+            initial={{ 
+              opacity: 0, 
+              x: transitionDirection === 'right' ? 100 : -100,
+              scale: 0.9
+            }}
+            animate={{ 
+              opacity: 1, 
+              x: 0,
+              scale: 1
+            }}
+            exit={{ 
+              opacity: 0, 
+              x: transitionDirection === 'right' ? -100 : 100,
+              scale: 0.9
+            }}
+            transition={{ 
+              type: "spring", 
+              stiffness: 300, 
+              damping: 30,
+              duration: 0.3
+            }}
+          >
             <FlashcardComponent
               flashcard={currentCard}
               onAnswer={(status) => {
@@ -427,7 +498,7 @@ export default function StudyPage() {
               onDeepen={() => handleDeepening(currentCard?.deepening || '')}
               showDeepen={!!(currentCard?.deepening && currentCard.deepening.trim())}
             />
-          </div>
+          </motion.div>
         ) : (
           <div className="mb-8 text-center">
             <div className="bg-white rounded-lg shadow-lg p-8">
@@ -466,20 +537,26 @@ export default function StudyPage() {
             </button>
 
             <div className="flex space-x-4">
-              <button
+              <motion.button
                 onClick={() => handleCardResponse(false)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 className="flex items-center space-x-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
+                disabled={isTransitioning}
               >
                 <XCircleIcon className="w-5 h-5" />
                 <span>Errei (1)</span>
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 onClick={() => handleCardResponse(true)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+                disabled={isTransitioning}
               >
                 <CheckCircleIcon className="w-5 h-5" />
                 <span>Acertei (2)</span>
-              </button>
+              </motion.button>
             </div>
 
             <button
