@@ -83,51 +83,54 @@ export default function AdminUsersPage() {
         return
       }
 
-      // Aqui você implementaria a criação real no Firebase
-      // Por enquanto, vamos simular
-      const userData = {
-        uid: Date.now().toString(),
-        displayName: newUser.displayName,
-        email: newUser.email,
-        photoURL: '',
-        isPaid: false,
-        isActive: true,
-        isAdmin: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        studyTime: 0,
-        cardsStudied: 0,
-        cardsCorrect: 0,
-        cardsWrong: 0,
-      }
-
-      // Adicionar usuário à lista
-      setUsers(prev => [...prev, userData])
-
-      // Enviar email de boas-vindas
-      try {
-        await sendGmailDirectAdminEmail({
-          to: newUser.email,
-          subject: 'Acesso Liberado - FlashConCards!',
-          userName: newUser.displayName,
-          courseName: newUser.courseId || 'Curso Padrão',
-          userEmail: newUser.email,
-          userPassword: newUser.password
+      // Chamar API para adicionar usuário e enviar email
+      const response = await fetch('/api/admin/add-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          displayName: newUser.displayName,
+          email: newUser.email,
+          courseName: newUser.courseId,
+          password: newUser.password
         })
-        toast.success('Usuário adicionado e email enviado com sucesso!')
-      } catch (emailError) {
-        console.error('Erro ao enviar email:', emailError)
-        toast.error('Usuário adicionado, mas erro ao enviar email')
-      }
-
-      // Limpar formulário
-      setNewUser({
-        displayName: '',
-        email: '',
-        password: '123456',
-        courseId: ''
       })
-      setShowAddUserModal(false)
+
+      const result = await response.json()
+
+      if (response.ok) {
+        // Adicionar usuário à lista local
+        const userData = {
+          uid: Date.now().toString(),
+          displayName: newUser.displayName,
+          email: newUser.email,
+          photoURL: '',
+          isPaid: false,
+          isActive: true,
+          isAdmin: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          studyTime: 0,
+          cardsStudied: 0,
+          cardsCorrect: 0,
+          cardsWrong: 0,
+        }
+
+        setUsers(prev => [...prev, userData])
+        toast.success(result.message)
+
+        // Limpar formulário
+        setNewUser({
+          displayName: '',
+          email: '',
+          password: '123456',
+          courseId: ''
+        })
+        setShowAddUserModal(false)
+      } else {
+        toast.error(result.error || 'Erro ao adicionar usuário')
+      }
 
     } catch (error) {
       console.error('Erro ao adicionar usuário:', error)
