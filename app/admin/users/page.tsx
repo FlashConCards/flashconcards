@@ -17,7 +17,6 @@ import {
   PlusIcon
 } from '@heroicons/react/24/outline'
 import { User } from '@/types'
-import { sendGmailDirectAdminEmail } from '@/lib/email-gmail-direct'
 import toast from 'react-hot-toast'
 
 export default function AdminUsersPage() {

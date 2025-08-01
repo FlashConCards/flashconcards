@@ -28,7 +28,6 @@ import {
 } from 'firebase/firestore'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { Course } from '@/types'
-import { sendGmailDirectEmail, sendGmailDirectAdminEmail } from './email-gmail-direct'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -291,12 +290,25 @@ export const createUserByAdmin = async (userData: any) => {
       try {
         const course = await getCourseById(userData.selectedCourse)
         if (course) {
-          await sendGmailDirectAdminEmail({
-            userName: userData.displayName,
-            userEmail: userData.email,
-            courseName: course.name
+          // Chamar API para enviar email
+          const response = await fetch('/api/admin/send-welcome-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userName: userData.displayName,
+              userEmail: userData.email,
+              courseName: course.name,
+              userPassword: userData.password || '123456'
+            })
           })
-          console.log('Welcome email sent to:', userData.email)
+
+          if (response.ok) {
+            console.log('Welcome email sent to:', userData.email)
+          } else {
+            console.error('Failed to send welcome email')
+          }
         }
       } catch (emailError) {
         console.error('Error sending welcome email:', emailError)
@@ -959,12 +971,29 @@ export const updatePaymentStatus = async (paymentId: string, status: 'pending' |
           const course = await getCourseById(paymentData.courseId);
           
           if (userData && course) {
-                          await sendGmailDirectEmail({
-                              userName: userData.displayName,
-                userEmail: userData.email,
-                courseName: course.name
-            });
-            console.log('Welcome email sent for approved payment to:', userData.email);
+            // Chamar API para enviar email
+            try {
+              const response = await fetch('/api/admin/send-welcome-email', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  userName: userData.displayName,
+                  userEmail: userData.email,
+                  courseName: course.name,
+                  userPassword: '123456'
+                })
+              })
+
+              if (response.ok) {
+                console.log('Welcome email sent for approved payment to:', userData.email);
+              } else {
+                console.error('Failed to send welcome email for payment');
+              }
+            } catch (emailError) {
+              console.error('Error calling email API:', emailError);
+            }
           }
         }
       } catch (emailError) {
