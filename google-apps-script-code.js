@@ -198,9 +198,12 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl, userEm
           padding-left: 25px;
         }
         .tips-list li:before {
-          content: "💡";
+          content: "•";
           position: absolute;
           left: 0;
+          color: #4299e1;
+          font-weight: bold;
+          font-size: 18px;
         }
         .cta-button { 
           display: inline-block; 
@@ -256,46 +259,46 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl, userEm
     <body>
       <div class="email-container">
         <div class="header">
-          <h1>🎓 FlashConCards</h1>
+          <h1>FlashConCards</h1>
           <h2>Parabéns pela sua escolha!</h2>
         </div>
         
         <div class="content">
           <div class="welcome-message">
-            <p>Olá <strong>${userName}</strong>! 👋</p>
+            <p>Olá <strong>${userName}</strong>!</p>
             <p>Estamos muito felizes em ter você conosco! Você acaba de dar um passo importante para alavancar seus estudos e alcançar seus objetivos.</p>
           </div>
           
           <div class="course-highlight">
-            <h3>🎯 ${courseName}</h3>
-            <p><strong>✨ ${expiryText}</strong></p>
+            <h3>${courseName}</h3>
+            <p><strong>${expiryText}</strong></p>
           </div>
           
           <div class="login-info">
-            <h3>🔐 Suas Credenciais de Acesso:</h3>
+            <h3>Suas Credenciais de Acesso:</h3>
             <div class="credentials">
-              <p><strong>📧 Email:</strong> ${userEmail || 'Seu email'}</p>
-              <p><strong>🔑 Senha:</strong> ${userPassword || '123456'}</p>
-              <p><strong>🌐 Acesse:</strong> <a href="${appUrl}/login" style="color: #28a745;">${appUrl}/login</a></p>
+              <p><strong>Email:</strong> ${userEmail || 'Seu email'}</p>
+              <p><strong>Senha:</strong> ${userPassword || '123456'}</p>
+              <p><strong>Acesse:</strong> <a href="${appUrl}/login" style="color: #28a745;">${appUrl}/login</a></p>
             </div>
           </div>
           
           <div class="features-section">
-            <h3>🚀 O que você tem acesso agora:</h3>
+            <h3>O que você tem acesso agora:</h3>
             <ul class="features-list">
-              <li>📚 Flashcards interativos e personalizados</li>
-              <li>📊 Estatísticas detalhadas do seu progresso</li>
-              <li>🎯 Conteúdo de aprofundamento</li>
-              <li>⏰ Estudo flexível no seu ritmo</li>
-              <li>📱 Acesso em qualquer dispositivo</li>
-              <li>🎨 Interface moderna e intuitiva</li>
-              <li>📈 Relatórios de desempenho</li>
-              <li>🎮 Animações interativas</li>
+              <li>Flashcards interativos e personalizados</li>
+              <li>Estatísticas detalhadas do seu progresso</li>
+              <li>Conteúdo de aprofundamento</li>
+              <li>Estudo flexível no seu ritmo</li>
+              <li>Acesso em qualquer dispositivo</li>
+              <li>Interface moderna e intuitiva</li>
+              <li>Relatórios de desempenho</li>
+              <li>Animações interativas</li>
             </ul>
           </div>
           
           <div class="tips-section">
-            <h3>💡 Como começar a estudar:</h3>
+            <h3>Como começar a estudar:</h3>
             <ul class="tips-list">
               <li>Faça login com suas credenciais acima</li>
               <li>Explore a área de estudos</li>
@@ -309,20 +312,20 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl, userEm
           
           <div style="text-align: center;">
             <a href="${appUrl}/login" class="cta-button">
-              🚀 Acessar Minha Área de Estudos
+              Acessar Minha Área de Estudos
             </a>
           </div>
           
           <div class="bonus-section">
-            <h4>🎁 Bônus Especial:</h4>
+            <h4>Bônus Especial:</h4>
             <p>Como você é um dos nossos primeiros alunos, você tem acesso completo a todas as funcionalidades premium, incluindo animações interativas e conteúdo exclusivo!</p>
           </div>
         </div>
         
         <div class="footer">
           <p>Se você tiver alguma dúvida, não hesite em nos contatar!</p>
-          <p class="contact">📧 suporte@flashconcards.com</p>
-          <p>💬 Estamos aqui para ajudar você a alcançar seus objetivos!</p>
+          <p class="contact">suporte@flashconcards.com</p>
+          <p>Estamos aqui para ajudar você a alcançar seus objetivos!</p>
           <br>
           <p><small>Este email foi enviado automaticamente. Não responda a este email.</small></p>
         </div>
@@ -536,46 +539,46 @@ function createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassw
     <body>
       <div class="email-container">
         <div class="header">
-          <h1>🎓 FlashConCards</h1>
+          <h1>FlashConCards</h1>
           <h2>Acesso Liberado com Sucesso!</h2>
         </div>
         
         <div class="content">
           <div class="welcome-message">
-            <p>Olá <strong>${userName}</strong>! 👋</p>
+            <p>Olá <strong>${userName}</strong>!</p>
             <p>Ótimas notícias! Seu acesso ao curso foi liberado pelo administrador e você já pode começar a estudar!</p>
           </div>
           
           <div class="course-highlight">
-            <h3>🎯 ${courseName}</h3>
-            <p><strong>✅ Seu acesso está ativo e pronto para uso!</strong></p>
+            <h3>${courseName}</h3>
+            <p><strong>Seu acesso está ativo e pronto para uso!</strong></p>
           </div>
           
           <div class="login-info">
-            <h3>🔐 Suas Credenciais de Acesso:</h3>
+            <h3>Suas Credenciais de Acesso:</h3>
             <div class="credentials">
-              <p><strong>📧 Email:</strong> ${userEmail || 'Seu email'}</p>
-              <p><strong>🔑 Senha:</strong> ${userPassword || '123456'}</p>
-              <p><strong>🌐 Acesse:</strong> <a href="${appUrl}/login" style="color: #28a745;">${appUrl}/login</a></p>
+              <p><strong>Email:</strong> ${userEmail || 'Seu email'}</p>
+              <p><strong>Senha:</strong> ${userPassword || '123456'}</p>
+              <p><strong>Acesse:</strong> <a href="${appUrl}/login" style="color: #28a745;">${appUrl}/login</a></p>
             </div>
           </div>
           
           <div class="features-section">
-            <h3>🚀 O que você tem acesso agora:</h3>
+            <h3>O que você tem acesso agora:</h3>
             <ul class="features-list">
-              <li>📚 Flashcards interativos e personalizados</li>
-              <li>📊 Estatísticas detalhadas do seu progresso</li>
-              <li>🎯 Conteúdo de aprofundamento</li>
-              <li>⏰ Estudo flexível no seu ritmo</li>
-              <li>📱 Acesso em qualquer dispositivo</li>
-              <li>🎨 Interface moderna e intuitiva</li>
-              <li>📈 Relatórios de desempenho</li>
-              <li>🎮 Animações interativas</li>
+              <li>Flashcards interativos e personalizados</li>
+              <li>Estatísticas detalhadas do seu progresso</li>
+              <li>Conteúdo de aprofundamento</li>
+              <li>Estudo flexível no seu ritmo</li>
+              <li>Acesso em qualquer dispositivo</li>
+              <li>Interface moderna e intuitiva</li>
+              <li>Relatórios de desempenho</li>
+              <li>Animações interativas</li>
             </ul>
           </div>
           
           <div class="steps-section">
-            <h3>💡 Como começar:</h3>
+            <h3>Como começar:</h3>
             <ul class="steps-list">
               <li>Faça login com suas credenciais acima</li>
               <li>Explore a área de estudos</li>
@@ -588,20 +591,20 @@ function createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassw
           
           <div style="text-align: center;">
             <a href="${appUrl}/login" class="cta-button">
-              🚀 Acessar Minha Área de Estudos
+              Acessar Minha Área de Estudos
             </a>
           </div>
           
           <div class="bonus-section">
-            <h4>🎁 Bônus:</h4>
+            <h4>Bônus:</h4>
             <p>Como você foi adicionado pelo administrador, você tem acesso completo a todas as funcionalidades, incluindo animações interativas e conteúdo exclusivo!</p>
           </div>
         </div>
         
         <div class="footer">
           <p>Se você tiver alguma dúvida, não hesite em nos contatar!</p>
-          <p class="contact">📧 suporte@flashconcards.com</p>
-          <p>💬 Estamos aqui para ajudar você a alcançar seus objetivos!</p>
+          <p class="contact">suporte@flashconcards.com</p>
+          <p>Estamos aqui para ajudar você a alcançar seus objetivos!</p>
           <br>
           <p><small>Este email foi enviado automaticamente. Não responda a este email.</small></p>
         </div>
