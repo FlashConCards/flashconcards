@@ -1,51 +1,40 @@
+import { sendGmailDirectEmail, sendGmailDirectAdminEmail } from '@/lib/email-gmail-direct';
 import { NextRequest, NextResponse } from 'next/server';
-import { sendGmailWelcomeEmail, sendGmailAdminEmail } from '@/lib/email-gmail';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { type, userEmail, userName, courseName } = body;
-
-    if (!userEmail || !userName || !courseName) {
-      return NextResponse.json(
-        { error: 'Dados obrigatórios: userEmail, userName, courseName' },
-        { status: 400 }
-      );
-    }
-
-    if (!process.env.GOOGLE_APPS_SCRIPT_URL) {
-      return NextResponse.json(
-        { error: 'GOOGLE_APPS_SCRIPT_URL não configurada. Siga o tutorial para configurar.' },
-        { status: 500 }
-      );
-    }
+    const { type, userEmail, userName, courseName } = await request.json();
 
     let result;
     
     if (type === 'admin') {
-      result = await sendGmailAdminEmail({
-        userName,
-        userEmail,
-        courseName
+      result = await sendGmailDirectAdminEmail({
+        userName: userName || 'Usuário Teste',
+        userEmail: userEmail || 'teste@email.com',
+        courseName: courseName || 'Curso Teste'
       });
     } else {
-      result = await sendGmailWelcomeEmail({
-        userName,
-        userEmail,
-        courseName,
+      result = await sendGmailDirectEmail({
+        userName: userName || 'Usuário Teste',
+        userEmail: userEmail || 'teste@email.com',
+        courseName: courseName || 'Curso Teste',
         accessExpiryDate: '31/12/2024'
       });
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Email enviado com sucesso via Gmail!',
+      message: 'Email enviado com sucesso!',
       result
     });
   } catch (error: any) {
-    console.error('Error sending Gmail test email:', error);
+    console.error('❌ Erro ao enviar email de teste:', error);
     return NextResponse.json(
-      { error: 'Erro ao enviar email via Gmail', details: error.message },
+      { 
+        success: false, 
+        error: error.message || 'Erro desconhecido',
+        details: 'Verifique se GOOGLE_APPS_SCRIPT_URL está configurada no Vercel'
+      },
       { status: 500 }
     );
   }

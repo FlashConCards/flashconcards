@@ -72,65 +72,221 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl) {
     <html>
     <head>
       <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Bem-vindo ao FlashConCards!</title>
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; }
-        .content { padding: 20px; background: #f9f9f9; border-radius: 10px; margin: 20px 0; }
-        .highlight { background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin: 15px 0; }
-        .button { display: inline-block; background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 15px 0; }
-        .footer { text-align: center; color: #666; font-size: 14px; margin-top: 30px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+          line-height: 1.6; 
+          color: #333; 
+          background-color: #f8f9fa;
+        }
+        .email-container { 
+          max-width: 600px; 
+          margin: 0 auto; 
+          background-color: #ffffff;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header { 
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+          color: white; 
+          padding: 40px 30px; 
+          text-align: center;
+        }
+        .header h1 { 
+          font-size: 28px; 
+          margin-bottom: 10px; 
+          font-weight: 700;
+        }
+        .header h2 { 
+          font-size: 18px; 
+          opacity: 0.9; 
+          font-weight: 400;
+        }
+        .content { 
+          padding: 40px 30px; 
+          background: #ffffff;
+        }
+        .welcome-message {
+          font-size: 18px;
+          margin-bottom: 30px;
+          color: #2d3748;
+        }
+        .course-highlight { 
+          background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+          padding: 25px; 
+          border-radius: 12px; 
+          border-left: 5px solid #f39c12; 
+          margin: 25px 0; 
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .course-highlight h3 { 
+          color: #d68910; 
+          margin-bottom: 10px; 
+          font-size: 20px;
+        }
+        .features-section {
+          margin: 30px 0;
+        }
+        .features-section h3 {
+          color: #2d3748;
+          margin-bottom: 15px;
+          font-size: 18px;
+        }
+        .features-list {
+          list-style: none;
+          padding: 0;
+        }
+        .features-list li {
+          padding: 8px 0;
+          color: #4a5568;
+          position: relative;
+          padding-left: 25px;
+        }
+        .features-list li:before {
+          content: "✓";
+          position: absolute;
+          left: 0;
+          color: #38a169;
+          font-weight: bold;
+        }
+        .tips-section {
+          background: #f7fafc;
+          padding: 25px;
+          border-radius: 12px;
+          margin: 25px 0;
+          border-left: 5px solid #4299e1;
+        }
+        .tips-section h3 {
+          color: #2b6cb0;
+          margin-bottom: 15px;
+          font-size: 18px;
+        }
+        .tips-list {
+          list-style: none;
+          padding: 0;
+        }
+        .tips-list li {
+          padding: 6px 0;
+          color: #4a5568;
+          position: relative;
+          padding-left: 25px;
+        }
+        .tips-list li:before {
+          content: "💡";
+          position: absolute;
+          left: 0;
+        }
+        .cta-button { 
+          display: inline-block; 
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+          color: white; 
+          padding: 16px 32px; 
+          text-decoration: none; 
+          border-radius: 8px; 
+          margin: 25px 0; 
+          font-weight: 600;
+          font-size: 16px;
+          text-align: center;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          transition: all 0.3s ease;
+        }
+        .cta-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        .bonus-section {
+          background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+          padding: 25px;
+          border-radius: 12px;
+          margin: 25px 0;
+          border-left: 5px solid #e53e3e;
+        }
+        .bonus-section h4 {
+          color: #c53030;
+          margin-bottom: 10px;
+          font-size: 16px;
+        }
+        .footer { 
+          background: #2d3748; 
+          color: #a0aec0; 
+          padding: 30px; 
+          text-align: center; 
+          font-size: 14px;
+        }
+        .footer p {
+          margin: 8px 0;
+        }
+        .footer .contact {
+          color: #4299e1;
+          font-weight: 600;
+        }
+        @media (max-width: 600px) {
+          .email-container { margin: 10px; }
+          .header, .content, .footer { padding: 20px; }
+          .header h1 { font-size: 24px; }
+        }
       </style>
     </head>
     <body>
-      <div class="container">
+      <div class="email-container">
         <div class="header">
           <h1>🎓 FlashConCards</h1>
           <h2>Parabéns pela sua escolha!</h2>
         </div>
         
         <div class="content">
-          <p>Olá <strong>${userName}</strong>! 👋</p>
+          <div class="welcome-message">
+            <p>Olá <strong>${userName}</strong>! 👋</p>
+            <p>Estamos muito felizes em ter você conosco! Você acaba de dar um passo importante para alavancar seus estudos e alcançar seus objetivos.</p>
+          </div>
           
-          <p>Estamos muito felizes em ter você conosco! Você acaba de dar um passo importante para alavancar seus estudos e alcançar seus objetivos.</p>
-          
-          <div class="highlight">
+          <div class="course-highlight">
             <h3>🎯 ${courseName}</h3>
             <p><strong>✨ ${expiryText}</strong></p>
           </div>
           
-          <h3>🚀 O que você tem acesso agora:</h3>
-          <ul>
-            <li>📚 Flashcards interativos e personalizados</li>
-            <li>📊 Estatísticas detalhadas do seu progresso</li>
-            <li>🎯 Conteúdo de aprofundamento</li>
-            <li>⏰ Estudo flexível no seu ritmo</li>
-          </ul>
+          <div class="features-section">
+            <h3>🚀 O que você tem acesso agora:</h3>
+            <ul class="features-list">
+              <li>📚 Flashcards interativos e personalizados</li>
+              <li>📊 Estatísticas detalhadas do seu progresso</li>
+              <li>🎯 Conteúdo de aprofundamento</li>
+              <li>⏰ Estudo flexível no seu ritmo</li>
+              <li>📱 Acesso em qualquer dispositivo</li>
+              <li>🎨 Interface moderna e intuitiva</li>
+            </ul>
+          </div>
           
-          <h3>💡 Dicas para começar:</h3>
-          <ul>
-            <li>Comece pelos subtópicos que você tem mais dificuldade</li>
-            <li>Use o sistema de aprofundamento para consolidar o conhecimento</li>
-            <li>Acompanhe suas estatísticas para identificar pontos de melhoria</li>
-            <li>Estude regularmente para manter o conteúdo fresco na memória</li>
-          </ul>
+          <div class="tips-section">
+            <h3>💡 Dicas para começar:</h3>
+            <ul class="tips-list">
+              <li>Comece pelos subtópicos que você tem mais dificuldade</li>
+              <li>Use o sistema de aprofundamento para consolidar o conhecimento</li>
+              <li>Acompanhe suas estatísticas para identificar pontos de melhoria</li>
+              <li>Estude regularmente para manter o conteúdo fresco na memória</li>
+              <li>Configure lembretes para manter a consistência</li>
+            </ul>
+          </div>
           
           <div style="text-align: center;">
-            <a href="${appUrl}/dashboard" class="button">
+            <a href="${appUrl}/dashboard" class="cta-button">
               🚀 Começar a Estudar Agora!
             </a>
           </div>
           
-          <div class="highlight">
-            <strong>🎁 Bônus Especial:</strong><br>
-            Como você é um dos nossos primeiros alunos, você tem acesso completo a todas as funcionalidades premium!
+          <div class="bonus-section">
+            <h4>🎁 Bônus Especial:</h4>
+            <p>Como você é um dos nossos primeiros alunos, você tem acesso completo a todas as funcionalidades premium!</p>
           </div>
         </div>
         
         <div class="footer">
           <p>Se você tiver alguma dúvida, não hesite em nos contatar!</p>
-          <p>📧 suporte@flashconcards.com</p>
+          <p class="contact">📧 suporte@flashconcards.com</p>
           <p>💬 Estamos aqui para ajudar você a alcançar seus objetivos!</p>
           <br>
           <p><small>Este email foi enviado automaticamente. Não responda a este email.</small></p>
@@ -147,67 +303,236 @@ function createAdminEmailHTML(userName, courseName, appUrl) {
     <html>
     <head>
       <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Acesso Liberado - FlashConCards!</title>
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { text-align: center; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 30px; border-radius: 10px; }
-        .content { padding: 20px; background: #f9f9f9; border-radius: 10px; margin: 20px 0; }
-        .highlight { background: #d4edda; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745; margin: 15px 0; }
-        .button { display: inline-block; background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 15px 0; }
-        .footer { text-align: center; color: #666; font-size: 14px; margin-top: 30px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+          line-height: 1.6; 
+          color: #333; 
+          background-color: #f8f9fa;
+        }
+        .email-container { 
+          max-width: 600px; 
+          margin: 0 auto; 
+          background-color: #ffffff;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header { 
+          background: linear-gradient(135deg, #28a745 0%, #20c997 100%); 
+          color: white; 
+          padding: 40px 30px; 
+          text-align: center;
+        }
+        .header h1 { 
+          font-size: 28px; 
+          margin-bottom: 10px; 
+          font-weight: 700;
+        }
+        .header h2 { 
+          font-size: 18px; 
+          opacity: 0.9; 
+          font-weight: 400;
+        }
+        .content { 
+          padding: 40px 30px; 
+          background: #ffffff;
+        }
+        .welcome-message {
+          font-size: 18px;
+          margin-bottom: 30px;
+          color: #2d3748;
+        }
+        .course-highlight { 
+          background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+          padding: 25px; 
+          border-radius: 12px; 
+          border-left: 5px solid #28a745; 
+          margin: 25px 0; 
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .course-highlight h3 { 
+          color: #155724; 
+          margin-bottom: 10px; 
+          font-size: 20px;
+        }
+        .features-section {
+          margin: 30px 0;
+        }
+        .features-section h3 {
+          color: #2d3748;
+          margin-bottom: 15px;
+          font-size: 18px;
+        }
+        .features-list {
+          list-style: none;
+          padding: 0;
+        }
+        .features-list li {
+          padding: 8px 0;
+          color: #4a5568;
+          position: relative;
+          padding-left: 25px;
+        }
+        .features-list li:before {
+          content: "✓";
+          position: absolute;
+          left: 0;
+          color: #28a745;
+          font-weight: bold;
+        }
+        .steps-section {
+          background: #f7fafc;
+          padding: 25px;
+          border-radius: 12px;
+          margin: 25px 0;
+          border-left: 5px solid #4299e1;
+        }
+        .steps-section h3 {
+          color: #2b6cb0;
+          margin-bottom: 15px;
+          font-size: 18px;
+        }
+        .steps-list {
+          list-style: none;
+          padding: 0;
+        }
+        .steps-list li {
+          padding: 8px 0;
+          color: #4a5568;
+          position: relative;
+          padding-left: 30px;
+        }
+        .steps-list li:before {
+          content: counter(step-counter);
+          counter-increment: step-counter;
+          position: absolute;
+          left: 0;
+          background: #4299e1;
+          color: white;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          font-weight: bold;
+        }
+        .steps-list {
+          counter-reset: step-counter;
+        }
+        .cta-button { 
+          display: inline-block; 
+          background: linear-gradient(135deg, #28a745 0%, #20c997 100%); 
+          color: white; 
+          padding: 16px 32px; 
+          text-decoration: none; 
+          border-radius: 8px; 
+          margin: 25px 0; 
+          font-weight: 600;
+          font-size: 16px;
+          text-align: center;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          transition: all 0.3s ease;
+        }
+        .cta-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        .bonus-section {
+          background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+          padding: 25px;
+          border-radius: 12px;
+          margin: 25px 0;
+          border-left: 5px solid #28a745;
+        }
+        .bonus-section h4 {
+          color: #155724;
+          margin-bottom: 10px;
+          font-size: 16px;
+        }
+        .footer { 
+          background: #2d3748; 
+          color: #a0aec0; 
+          padding: 30px; 
+          text-align: center; 
+          font-size: 14px;
+        }
+        .footer p {
+          margin: 8px 0;
+        }
+        .footer .contact {
+          color: #4299e1;
+          font-weight: 600;
+        }
+        @media (max-width: 600px) {
+          .email-container { margin: 10px; }
+          .header, .content, .footer { padding: 20px; }
+          .header h1 { font-size: 24px; }
+        }
       </style>
     </head>
     <body>
-      <div class="container">
+      <div class="email-container">
         <div class="header">
           <h1>🎓 FlashConCards</h1>
           <h2>Acesso Liberado com Sucesso!</h2>
         </div>
         
         <div class="content">
-          <p>Olá <strong>${userName}</strong>! 👋</p>
+          <div class="welcome-message">
+            <p>Olá <strong>${userName}</strong>! 👋</p>
+            <p>Ótimas notícias! Seu acesso ao curso foi liberado pelo administrador e você já pode começar a estudar!</p>
+          </div>
           
-          <p>Ótimas notícias! Seu acesso ao curso foi liberado pelo administrador e você já pode começar a estudar!</p>
-          
-          <div class="highlight">
+          <div class="course-highlight">
             <h3>🎯 ${courseName}</h3>
             <p><strong>✅ Seu acesso está ativo e pronto para uso!</strong></p>
           </div>
           
-          <h3>🚀 O que você tem acesso agora:</h3>
-          <ul>
-            <li>📚 Flashcards interativos e personalizados</li>
-            <li>📊 Estatísticas detalhadas do seu progresso</li>
-            <li>🎯 Conteúdo de aprofundamento</li>
-            <li>⏰ Estudo flexível no seu ritmo</li>
-            <li>📱 Acesso em qualquer dispositivo</li>
-          </ul>
+          <div class="features-section">
+            <h3>🚀 O que você tem acesso agora:</h3>
+            <ul class="features-list">
+              <li>📚 Flashcards interativos e personalizados</li>
+              <li>📊 Estatísticas detalhadas do seu progresso</li>
+              <li>🎯 Conteúdo de aprofundamento</li>
+              <li>⏰ Estudo flexível no seu ritmo</li>
+              <li>📱 Acesso em qualquer dispositivo</li>
+              <li>🎨 Interface moderna e intuitiva</li>
+              <li>📈 Relatórios de desempenho</li>
+            </ul>
+          </div>
           
-          <h3>💡 Como começar:</h3>
-          <ol>
-            <li>Acesse sua área de estudos</li>
-            <li>Escolha a matéria que deseja estudar</li>
-            <li>Navegue pelos tópicos e subtópicos</li>
-            <li>Comece com os flashcards</li>
-            <li>Use o aprofundamento para consolidar o conhecimento</li>
-          </ol>
+          <div class="steps-section">
+            <h3>💡 Como começar:</h3>
+            <ul class="steps-list">
+              <li>Acesse sua área de estudos</li>
+              <li>Escolha a matéria que deseja estudar</li>
+              <li>Navegue pelos tópicos e subtópicos</li>
+              <li>Comece com os flashcards</li>
+              <li>Use o aprofundamento para consolidar o conhecimento</li>
+            </ul>
+          </div>
           
           <div style="text-align: center;">
-            <a href="${appUrl}/dashboard" class="button">
+            <a href="${appUrl}/dashboard" class="cta-button">
               🚀 Acessar Minha Área de Estudos
             </a>
           </div>
           
-          <div class="highlight">
-            <strong>🎁 Bônus:</strong><br>
-            Como você foi adicionado pelo administrador, você tem acesso completo a todas as funcionalidades!
+          <div class="bonus-section">
+            <h4>🎁 Bônus:</h4>
+            <p>Como você foi adicionado pelo administrador, você tem acesso completo a todas as funcionalidades!</p>
           </div>
         </div>
         
         <div class="footer">
           <p>Se você tiver alguma dúvida, não hesite em nos contatar!</p>
-          <p>📧 suporte@flashconcards.com</p>
+          <p class="contact">📧 suporte@flashconcards.com</p>
           <p>💬 Estamos aqui para ajudar você a alcançar seus objetivos!</p>
           <br>
           <p><small>Este email foi enviado automaticamente. Não responda a este email.</small></p>
