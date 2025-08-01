@@ -26,31 +26,47 @@ export default function PaymentPage() {
       return;
     }
 
-    // Redirecionar para o Mercado Pago
-    const redirectToMercadoPago = async () => {
+    // Processar pagamento baseado no método
+    const processPayment = async () => {
       try {
         setLoading(true);
         
-        // Buscar informações do pagamento
-        const response = await fetch(`/api/payment/get-preference/${paymentId}`);
-        const data = await response.json();
-
-        if (response.ok && data.initPoint) {
-          // Redirecionar para o Mercado Pago
-          window.location.href = data.initPoint;
+        if (method === 'pix') {
+          // Para PIX, o paymentId é um ID de pagamento direto
+          // Não precisamos buscar preferência, apenas mostrar status
+          console.log('🔄 Processando pagamento PIX:', paymentId);
+          
+          // Aqui você pode implementar verificação de status do PIX
+          // Por enquanto, vamos redirecionar para a página de sucesso
+          setTimeout(() => {
+            router.push('/payment/success');
+          }, 2000);
+          
         } else {
-          setError('Erro ao obter link de pagamento');
-          setLoading(false);
+          // Para cartão, buscar preferência
+          console.log('🔄 Buscando preferência de pagamento:', paymentId);
+          
+          const response = await fetch(`/api/payment/get-preference/${paymentId}`);
+          const data = await response.json();
+
+          if (response.ok && data.initPoint) {
+            // Redirecionar para o Mercado Pago
+            window.location.href = data.initPoint;
+          } else {
+            console.error('❌ Erro na resposta:', data);
+            setError(data.error || 'Erro ao obter link de pagamento');
+            setLoading(false);
+          }
         }
       } catch (error) {
-        console.error('Erro ao processar pagamento:', error);
+        console.error('❌ Erro ao processar pagamento:', error);
         setError('Erro ao processar pagamento');
         setLoading(false);
       }
     };
 
-    redirectToMercadoPago();
-  }, [paymentId]);
+    processPayment();
+  }, [paymentId, method, router]);
 
   if (loading) {
     return (
@@ -58,7 +74,7 @@ export default function PaymentPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">
-            {method === 'pix' ? 'Preparando PIX...' : 'Preparando cartão de crédito...'}
+            {method === 'pix' ? 'Processando PIX...' : 'Preparando cartão de crédito...'}
           </p>
         </div>
       </div>
