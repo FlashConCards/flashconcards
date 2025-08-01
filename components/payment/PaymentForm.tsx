@@ -9,9 +9,11 @@ import { Course } from '@/types'
 interface PaymentFormProps {
   course: Course
   userId: string
+  userEmail: string
+  userName: string
 }
 
-export default function PaymentForm({ course, userId }: PaymentFormProps) {
+export default function PaymentForm({ course, userId, userEmail, userName }: PaymentFormProps) {
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card'>('pix')
   const [loading, setLoading] = useState(false)
   const [pixQrCode, setPixQrCode] = useState<string>('')
@@ -22,6 +24,16 @@ export default function PaymentForm({ course, userId }: PaymentFormProps) {
     setLoading(true)
 
     try {
+      console.log('🔄 Iniciando pagamento:', {
+        courseId: course.id,
+        courseName: course.name,
+        amount: course.price,
+        paymentMethod,
+        userId,
+        userEmail,
+        userName
+      })
+
       const response = await fetch('/api/payment/create', {
         method: 'POST',
         headers: {
@@ -29,28 +41,42 @@ export default function PaymentForm({ course, userId }: PaymentFormProps) {
         },
         body: JSON.stringify({
           courseId: course.id,
-          userId,
+          courseName: course.name,
           amount: course.price,
           paymentMethod,
+          userId,
+          userEmail,
+          userName
         }),
       })
 
       const data = await response.json()
 
+      console.log('📦 Resposta do pagamento:', data)
+
       if (data.success) {
         if (paymentMethod === 'pix') {
-          setPixQrCode(data.pixQrCode)
-          setPixQrCodeBase64(data.pixQrCodeBase64)
-          toast.success('QR Code PIX gerado! Escaneie para pagar.')
+          if (data.pixQrCode && data.pixQrCodeBase64) {
+            setPixQrCode(data.pixQrCode)
+            setPixQrCodeBase64(data.pixQrCodeBase64)
+            toast.success('QR Code PIX gerado! Escaneie para pagar.')
+          } else {
+            toast.error('Erro ao gerar QR Code PIX.')
+          }
         } else {
           // Redirecionar para página de pagamento com cartão
-          window.location.href = data.paymentUrl
+          if (data.paymentUrl) {
+            window.location.href = data.paymentUrl
+          } else {
+            toast.error('Erro ao gerar link de pagamento.')
+          }
         }
       } else {
-        toast.error('Erro ao processar pagamento.')
+        console.error('❌ Erro no pagamento:', data.error)
+        toast.error(data.error || 'Erro ao processar pagamento.')
       }
     } catch (error) {
-      console.error('Erro no pagamento:', error)
+      console.error('❌ Erro no pagamento:', error)
       toast.error('Erro ao processar pagamento.')
     } finally {
       setLoading(false)
@@ -111,6 +137,7 @@ export default function PaymentForm({ course, userId }: PaymentFormProps) {
               <div className="ml-3 flex items-center">
                 <QrCodeIcon className="w-5 h-5 text-green-600 mr-2" />
                 <span className="font-medium">PIX</span>
+                <span className="text-sm text-gray-500 ml-2">(Pagamento instantâneo)</span>
               </div>
             </label>
 
@@ -126,6 +153,7 @@ export default function PaymentForm({ course, userId }: PaymentFormProps) {
               <div className="ml-3 flex items-center">
                 <CreditCardIcon className="w-5 h-5 text-blue-600 mr-2" />
                 <span className="font-medium">Cartão de Crédito/Débito</span>
+                <span className="text-sm text-gray-500 ml-2">(Até 10x)</span>
               </div>
             </label>
           </div>
@@ -152,6 +180,9 @@ export default function PaymentForm({ course, userId }: PaymentFormProps) {
             <p className="text-sm text-gray-600 mt-3">
               Escaneie o QR Code ou copie o código PIX para pagar
             </p>
+            <p className="text-xs text-gray-500 mt-2">
+              Após o pagamento, você receberá um email de confirmação
+            </p>
           </div>
         )}
 
@@ -172,7 +203,7 @@ export default function PaymentForm({ course, userId }: PaymentFormProps) {
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
             </svg>
-            <span>Pagamento 100% seguro</span>
+            <span>Pagamento 100% seguro via Mercado Pago</span>
           </div>
         </div>
       </div>

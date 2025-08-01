@@ -4,7 +4,18 @@ import { MercadoPagoConfig, Preference } from 'mercadopago';
 export async function GET() {
   try {
     const client = new MercadoPagoConfig({ 
-      accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '' 
+      accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
+      options: {
+        clientId: process.env.MERCADOPAGO_CLIENT_ID,
+        clientSecret: process.env.MERCADOPAGO_CLIENT_SECRET
+      }
+    });
+
+    console.log('Testando credenciais:', {
+      accessTokenConfigured: !!process.env.MERCADOPAGO_ACCESS_TOKEN,
+      clientIdConfigured: !!process.env.MERCADOPAGO_CLIENT_ID,
+      clientSecretConfigured: !!process.env.MERCADOPAGO_CLIENT_SECRET,
+      publicKeyConfigured: !!process.env.MERCADOPAGO_PUBLIC_KEY
     });
 
     const preference = new Preference(client);
@@ -31,7 +42,13 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       message: 'Token do Mercado Pago está funcionando!',
-      preferenceId: result.id
+      preferenceId: result.id,
+      credentials: {
+        accessTokenConfigured: !!process.env.MERCADOPAGO_ACCESS_TOKEN,
+        clientIdConfigured: !!process.env.MERCADOPAGO_CLIENT_ID,
+        clientSecretConfigured: !!process.env.MERCADOPAGO_CLIENT_SECRET,
+        publicKeyConfigured: !!process.env.MERCADOPAGO_PUBLIC_KEY
+      }
     });
 
   } catch (error: any) {
@@ -39,7 +56,13 @@ export async function GET() {
       success: false,
       error: error.message,
       code: error.code,
-      details: 'Token pode estar inválido ou expirado'
+      details: 'Token pode estar inválido ou expirado',
+      credentials: {
+        accessTokenConfigured: !!process.env.MERCADOPAGO_ACCESS_TOKEN,
+        clientIdConfigured: !!process.env.MERCADOPAGO_CLIENT_ID,
+        clientSecretConfigured: !!process.env.MERCADOPAGO_CLIENT_SECRET,
+        publicKeyConfigured: !!process.env.MERCADOPAGO_PUBLIC_KEY
+      }
     }, { status: 500 });
   }
 } 
