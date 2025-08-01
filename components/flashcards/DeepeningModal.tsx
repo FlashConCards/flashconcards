@@ -68,7 +68,7 @@ export default function DeepeningModal({ isOpen, onClose, deepening }: Deepening
                       </div>
 
                       {/* Imagens */}
-                      {deepening.images.length > 0 && (
+                      {deepening.images && deepening.images.length > 0 && (
                         <div>
                           <h4 className="text-lg font-semibold text-gray-900 mb-3">Imagens</h4>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -86,7 +86,7 @@ export default function DeepeningModal({ isOpen, onClose, deepening }: Deepening
                       )}
 
                       {/* Vídeos */}
-                      {deepening.videos.length > 0 && (
+                      {deepening.videos && deepening.videos.length > 0 && (
                         <div>
                           <h4 className="text-lg font-semibold text-gray-900 mb-3">Vídeos</h4>
                           <div className="space-y-4">
@@ -119,7 +119,7 @@ export default function DeepeningModal({ isOpen, onClose, deepening }: Deepening
                       )}
 
                       {/* PDFs */}
-                      {deepening.pdfs.length > 0 && (
+                      {deepening.pdfs && deepening.pdfs.length > 0 && (
                         <div>
                           <h4 className="text-lg font-semibold text-gray-900 mb-3">Documentos</h4>
                           <div className="space-y-2">
@@ -140,7 +140,7 @@ export default function DeepeningModal({ isOpen, onClose, deepening }: Deepening
                       )}
 
                       {/* Links Externos */}
-                      {deepening.externalLinks.length > 0 && (
+                      {deepening.externalLinks && deepening.externalLinks.length > 0 && (
                         <div>
                           <h4 className="text-lg font-semibold text-gray-900 mb-3">Links Úteis</h4>
                           <div className="space-y-2">

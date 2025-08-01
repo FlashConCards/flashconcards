@@ -53,12 +53,25 @@ function SubTopicCard({ subTopic, onStartStudy, getProgressForSubTopic, formatLa
 
   useEffect(() => {
     const loadData = async () => {
-      const [realProgress, deepenings] = await Promise.all([
-        getProgressForSubTopic(subTopic.id),
-        getDeepeningsBySubTopic(subTopic.id)
-      ]);
-      setProgress(realProgress);
-      setDeepening(deepenings.length > 0 ? deepenings[0] : null);
+      try {
+        const [realProgress, deepenings] = await Promise.all([
+          getProgressForSubTopic(subTopic.id),
+          getDeepeningsBySubTopic(subTopic.id)
+        ]);
+        setProgress(realProgress);
+        setDeepening(deepenings && deepenings.length > 0 ? deepenings[0] : null);
+      } catch (error) {
+        console.error('Error loading sub-topic data:', error);
+        setProgress({
+          totalCards: 0,
+          studiedCards: 0,
+          correctCards: 0,
+          wrongCards: 0,
+          accuracy: 0,
+          lastStudied: undefined
+        });
+        setDeepening(null);
+      }
     };
     loadData();
   }, [subTopic.id, getProgressForSubTopic]);
