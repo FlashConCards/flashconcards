@@ -158,15 +158,25 @@ export default function StudyPage() {
 
     const currentCard = studyQueue[currentIndex];
     
+    console.log(`Card response: ${isCorrect ? 'CORRECT' : 'WRONG'} - Card: ${currentCard.front}`);
+    
     if (isCorrect) {
       setCompletedCards(prev => [...prev, currentCard]);
-      setSessionStats(prev => ({ ...prev, correctCards: prev.correctCards + 1 }));
+      setSessionStats(prev => {
+        const newStats = { ...prev, correctCards: prev.correctCards + 1 };
+        console.log('Updated session stats (correct):', newStats);
+        return newStats;
+      });
       
       // Remove o card correto da fila
       setStudyQueue(prev => prev.filter((_, index) => index !== currentIndex));
     } else {
       setWrongCards(prev => [...prev, currentCard]);
-      setSessionStats(prev => ({ ...prev, wrongCards: prev.wrongCards + 1 }));
+      setSessionStats(prev => {
+        const newStats = { ...prev, wrongCards: prev.wrongCards + 1 };
+        console.log('Updated session stats (wrong):', newStats);
+        return newStats;
+      });
       
       // Move o card errado para o final da fila para revisão
       setStudyQueue(prev => {
@@ -236,13 +246,14 @@ export default function StudyPage() {
       studyTime: studyTime
     };
 
+    console.log('Session completed with stats:', finalStats);
     setSessionStats(finalStats);
     setSessionCompleted(true);
 
     // Save session data with correct statistics
     try {
       if (courseId && subjectId && topicId && subTopicId) {
-        await createStudySession({
+        const sessionData = {
           uid: user.uid,
           courseId,
           subjectId,
@@ -254,7 +265,22 @@ export default function StudyPage() {
           studyTime: studyTime,
           startTime: sessionStartTime,
           endTime: new Date()
-        })
+        };
+        
+        console.log('Saving study session:', sessionData);
+        const sessionId = await createStudySession(sessionData);
+        console.log('Study session saved with ID:', sessionId);
+        
+        // Also update user progress
+        const currentProgress = await getUserProgress(user.uid);
+        await updateUserProgress(user.uid, {
+          lastStudiedAt: new Date(),
+          studyTime: (currentProgress?.studyTime || 0) + studyTime,
+          cardsStudied: (currentProgress?.cardsStudied || 0) + sessionStats.totalCards,
+          cardsCorrect: (currentProgress?.cardsCorrect || 0) + sessionStats.correctCards,
+          cardsWrong: (currentProgress?.cardsWrong || 0) + sessionStats.wrongCards
+        });
+        console.log('User progress updated');
       }
     } catch (error) {
       console.error('Error creating study session:', error)
