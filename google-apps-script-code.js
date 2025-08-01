@@ -27,7 +27,7 @@ function doPost(e) {
 
     // Parsear dados recebidos
     const data = JSON.parse(e.postData.contents);
-    const { type, to, subject, userName, courseName, expiryText, appUrl } = data;
+    const { type, to, subject, userName, courseName, expiryText, appUrl, userEmail, userPassword } = data;
 
     // Validar dados obrigatórios
     if (!to || !subject || !userName || !courseName) {
@@ -39,9 +39,9 @@ function doPost(e) {
     // Criar conteúdo do email baseado no tipo
     let htmlContent;
     if (type === 'admin') {
-      htmlContent = createAdminEmailHTML(userName, courseName, appUrl);
+      htmlContent = createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassword);
     } else {
-      htmlContent = createWelcomeEmailHTML(userName, courseName, expiryText, appUrl);
+      htmlContent = createWelcomeEmailHTML(userName, courseName, expiryText, appUrl, userEmail, userPassword);
     }
 
     // Enviar email
@@ -66,7 +66,7 @@ function doPost(e) {
   }
 }
 
-function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl) {
+function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl, userEmail, userPassword) {
   return `
     <!DOCTYPE html>
     <html>
@@ -127,6 +127,28 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl) {
           color: #d68910; 
           margin-bottom: 10px; 
           font-size: 20px;
+        }
+        .login-info {
+          background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+          padding: 25px;
+          border-radius: 12px;
+          margin: 25px 0;
+          border-left: 5px solid #28a745;
+        }
+        .login-info h3 {
+          color: #155724;
+          margin-bottom: 15px;
+          font-size: 18px;
+        }
+        .credentials {
+          background: #f8f9fa;
+          padding: 15px;
+          border-radius: 8px;
+          margin: 15px 0;
+          border: 2px dashed #28a745;
+        }
+        .credentials strong {
+          color: #155724;
         }
         .features-section {
           margin: 30px 0;
@@ -249,6 +271,15 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl) {
             <p><strong>✨ ${expiryText}</strong></p>
           </div>
           
+          <div class="login-info">
+            <h3>🔐 Suas Credenciais de Acesso:</h3>
+            <div class="credentials">
+              <p><strong>📧 Email:</strong> ${userEmail || 'Seu email'}</p>
+              <p><strong>🔑 Senha:</strong> ${userPassword || '123456'}</p>
+              <p><strong>🌐 Acesse:</strong> <a href="${appUrl}/login" style="color: #28a745;">${appUrl}/login</a></p>
+            </div>
+          </div>
+          
           <div class="features-section">
             <h3>🚀 O que você tem acesso agora:</h3>
             <ul class="features-list">
@@ -258,12 +289,16 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl) {
               <li>⏰ Estudo flexível no seu ritmo</li>
               <li>📱 Acesso em qualquer dispositivo</li>
               <li>🎨 Interface moderna e intuitiva</li>
+              <li>📈 Relatórios de desempenho</li>
+              <li>🎮 Animações interativas</li>
             </ul>
           </div>
           
           <div class="tips-section">
-            <h3>💡 Dicas para começar:</h3>
+            <h3>💡 Como começar a estudar:</h3>
             <ul class="tips-list">
+              <li>Faça login com suas credenciais acima</li>
+              <li>Explore a área de estudos</li>
               <li>Comece pelos subtópicos que você tem mais dificuldade</li>
               <li>Use o sistema de aprofundamento para consolidar o conhecimento</li>
               <li>Acompanhe suas estatísticas para identificar pontos de melhoria</li>
@@ -273,14 +308,14 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl) {
           </div>
           
           <div style="text-align: center;">
-            <a href="${appUrl}/dashboard" class="cta-button">
-              🚀 Começar a Estudar Agora!
+            <a href="${appUrl}/login" class="cta-button">
+              🚀 Acessar Minha Área de Estudos
             </a>
           </div>
           
           <div class="bonus-section">
             <h4>🎁 Bônus Especial:</h4>
-            <p>Como você é um dos nossos primeiros alunos, você tem acesso completo a todas as funcionalidades premium!</p>
+            <p>Como você é um dos nossos primeiros alunos, você tem acesso completo a todas as funcionalidades premium, incluindo animações interativas e conteúdo exclusivo!</p>
           </div>
         </div>
         
@@ -297,7 +332,7 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl) {
   `;
 }
 
-function createAdminEmailHTML(userName, courseName, appUrl) {
+function createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassword) {
   return `
     <!DOCTYPE html>
     <html>
@@ -358,6 +393,28 @@ function createAdminEmailHTML(userName, courseName, appUrl) {
           color: #155724; 
           margin-bottom: 10px; 
           font-size: 20px;
+        }
+        .login-info {
+          background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+          padding: 25px;
+          border-radius: 12px;
+          margin: 25px 0;
+          border-left: 5px solid #28a745;
+        }
+        .login-info h3 {
+          color: #155724;
+          margin-bottom: 15px;
+          font-size: 18px;
+        }
+        .credentials {
+          background: #f8f9fa;
+          padding: 15px;
+          border-radius: 8px;
+          margin: 15px 0;
+          border: 2px dashed #28a745;
+        }
+        .credentials strong {
+          color: #155724;
         }
         .features-section {
           margin: 30px 0;
@@ -494,6 +551,15 @@ function createAdminEmailHTML(userName, courseName, appUrl) {
             <p><strong>✅ Seu acesso está ativo e pronto para uso!</strong></p>
           </div>
           
+          <div class="login-info">
+            <h3>🔐 Suas Credenciais de Acesso:</h3>
+            <div class="credentials">
+              <p><strong>📧 Email:</strong> ${userEmail || 'Seu email'}</p>
+              <p><strong>🔑 Senha:</strong> ${userPassword || '123456'}</p>
+              <p><strong>🌐 Acesse:</strong> <a href="${appUrl}/login" style="color: #28a745;">${appUrl}/login</a></p>
+            </div>
+          </div>
+          
           <div class="features-section">
             <h3>🚀 O que você tem acesso agora:</h3>
             <ul class="features-list">
@@ -504,13 +570,15 @@ function createAdminEmailHTML(userName, courseName, appUrl) {
               <li>📱 Acesso em qualquer dispositivo</li>
               <li>🎨 Interface moderna e intuitiva</li>
               <li>📈 Relatórios de desempenho</li>
+              <li>🎮 Animações interativas</li>
             </ul>
           </div>
           
           <div class="steps-section">
             <h3>💡 Como começar:</h3>
             <ul class="steps-list">
-              <li>Acesse sua área de estudos</li>
+              <li>Faça login com suas credenciais acima</li>
+              <li>Explore a área de estudos</li>
               <li>Escolha a matéria que deseja estudar</li>
               <li>Navegue pelos tópicos e subtópicos</li>
               <li>Comece com os flashcards</li>
@@ -519,14 +587,14 @@ function createAdminEmailHTML(userName, courseName, appUrl) {
           </div>
           
           <div style="text-align: center;">
-            <a href="${appUrl}/dashboard" class="cta-button">
+            <a href="${appUrl}/login" class="cta-button">
               🚀 Acessar Minha Área de Estudos
             </a>
           </div>
           
           <div class="bonus-section">
             <h4>🎁 Bônus:</h4>
-            <p>Como você foi adicionado pelo administrador, você tem acesso completo a todas as funcionalidades!</p>
+            <p>Como você foi adicionado pelo administrador, você tem acesso completo a todas as funcionalidades, incluindo animações interativas e conteúdo exclusivo!</p>
           </div>
         </div>
         

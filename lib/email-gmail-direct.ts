@@ -3,6 +3,7 @@ export interface GmailDirectData {
   userEmail: string;
   courseName: string;
   accessExpiryDate?: string;
+  userPassword?: string;
 }
 
 // URL do Google Apps Script (configurada no Vercel)
@@ -11,7 +12,7 @@ const GOOGLE_APPS_SCRIPT_URL = process.env.GOOGLE_APPS_SCRIPT_URL || '';
 // Função para enviar email automático via Google Apps Script
 export const sendGmailDirectEmail = async (data: GmailDirectData) => {
   try {
-    const { userName, userEmail, courseName, accessExpiryDate } = data;
+    const { userName, userEmail, courseName, accessExpiryDate, userPassword } = data;
     
     const expiryText = accessExpiryDate 
       ? `Seu acesso estará disponível até ${accessExpiryDate}.`
@@ -24,6 +25,8 @@ export const sendGmailDirectEmail = async (data: GmailDirectData) => {
       userName,
       courseName,
       expiryText,
+      userEmail,
+      userPassword: userPassword || '123456',
       appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://flashconcards.vercel.app'
     };
 
@@ -57,7 +60,7 @@ export const sendGmailDirectEmail = async (data: GmailDirectData) => {
 // Função para admin - email automático
 export const sendGmailDirectAdminEmail = async (data: GmailDirectData) => {
   try {
-    const { userName, userEmail, courseName } = data;
+    const { userName, userEmail, courseName, userPassword } = data;
     
     const emailData = {
       type: 'admin',
@@ -65,6 +68,8 @@ export const sendGmailDirectAdminEmail = async (data: GmailDirectData) => {
       subject: `🎉 Acesso Liberado! Bem-vindo ao ${courseName}!`,
       userName,
       courseName,
+      userEmail,
+      userPassword: userPassword || '123456',
       appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://flashconcards.vercel.app'
     };
 
