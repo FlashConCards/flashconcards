@@ -271,10 +271,10 @@ export default function StudyPage() {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  // Calcular progresso baseado nos cards estudados vs total original
+  // Calcular progresso baseado apenas nos cards ACERTADOS vs total original
   const totalOriginalCards = flashcards.length;
-  const cardsStudied = completedCards.length + wrongCards.length;
-  const progressPercentage = totalOriginalCards > 0 ? (cardsStudied / totalOriginalCards) * 100 : 0;
+  const cardsAcertados = completedCards.length;
+  const progressPercentage = totalOriginalCards > 0 ? (cardsAcertados / totalOriginalCards) * 100 : 0;
   const remainingCards = Math.max(0, studyQueue.length - 1);
 
   if (loading) {
