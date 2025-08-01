@@ -56,6 +56,29 @@ export default function StudyPage() {
   
   console.log('Study page params:', { courseId, subjectId, topicId, subTopicId });
 
+  // Verificar acesso do usuário
+  useEffect(() => {
+    if (!user) {
+      toast.error('Você precisa estar logado para acessar esta página');
+      router.push('/login');
+      return;
+    }
+
+    // Verificar se o usuário tem acesso pago ou é admin
+    if (!user.isPaid && !user.isAdmin) {
+      toast.error('Você precisa ter acesso pago para estudar. Entre em contato conosco.');
+      router.push('/contact');
+      return;
+    }
+
+    // Verificar se o usuário tem curso selecionado (se não for admin)
+    if (!user.isAdmin && !user.selectedCourse) {
+      toast.error('Você precisa ter um curso selecionado para estudar.');
+      router.push('/courses');
+      return;
+    }
+  }, [user, router]);
+
   // Timer effect
   useEffect(() => {
     if (!sessionStartTime) return;

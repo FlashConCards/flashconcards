@@ -79,14 +79,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               displayName: firebaseUser.displayName || '',
               photoURL: firebaseUser.photoURL || '',
               isAdmin: isAdmin, // Verificar se é admin pelo email
-              isPaid: true, // Dar acesso como se fosse pago
+              isPaid: false, // NÃO dar acesso automático - usuário precisa pagar
               isActive: true,
               studyTime: 0,
               cardsStudied: 0,
               cardsCorrect: 0,
               cardsWrong: 0,
-              createdByAdmin: true, // Marcar como criado pelo admin
-              selectedCourse: 'default',
+              createdByAdmin: false, // Marcar como criado pelo próprio usuário
+              selectedCourse: '',
               lastLoginAt: new Date(),
               createdAt: new Date(),
               updatedAt: new Date()
@@ -106,14 +106,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             displayName: firebaseUser.displayName || '',
             photoURL: firebaseUser.photoURL || '',
             isAdmin: isAdmin, // Verificar se é admin pelo email
-            isPaid: true, // Dar acesso como se fosse pago
+            isPaid: false, // NÃO dar acesso automático - usuário precisa pagar
             isActive: true,
             studyTime: 0,
             cardsStudied: 0,
             cardsCorrect: 0,
             cardsWrong: 0,
-            createdByAdmin: true, // Marcar como criado pelo admin
-            selectedCourse: 'default',
+            createdByAdmin: false, // Marcar como criado pelo próprio usuário
+            selectedCourse: '',
             lastLoginAt: null,
             createdAt: null,
             updatedAt: null

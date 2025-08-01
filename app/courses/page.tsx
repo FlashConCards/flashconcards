@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { getCoursesWithAccess, getSubjects, getTopics, getSubTopics } from '@/lib/firebase'
 import { Course, Subject, Topic, SubTopic } from '@/types'
+import toast from 'react-hot-toast'
 
 export default function CoursesPage() {
   const { user } = useAuth()
@@ -108,10 +109,26 @@ export default function CoursesPage() {
   const hasCourseAccess = (courseId: string) => {
     if (!user) return false
     if (user.isAdmin) return true
+    if (!user.isPaid) return false // Usuários não pagos não têm acesso
     
     // Verificar se o curso está na lista de cursos acessíveis
     return courses.some(course => course.id === courseId)
   }
+
+  // Verificar acesso do usuário
+  useEffect(() => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    // Verificar se o usuário tem acesso pago ou é admin
+    if (!user.isPaid && !user.isAdmin) {
+      toast.error('Você precisa ter acesso pago para ver os cursos. Entre em contato conosco.');
+      router.push('/contact');
+      return;
+    }
+  }, [user, router]);
 
   if (!user) {
     return (
@@ -124,6 +141,24 @@ export default function CoursesPage() {
             className="btn-primary"
           >
             Fazer Login
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Verificar se usuário tem acesso pago
+  if (!user.isPaid && !user.isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Acesso Restrito</h2>
+          <p className="text-gray-600 mb-4">Você precisa ter acesso pago para ver os cursos.</p>
+          <button
+            onClick={() => router.push('/contact')}
+            className="btn-primary"
+          >
+            Entrar em Contato
           </button>
         </div>
       </div>
