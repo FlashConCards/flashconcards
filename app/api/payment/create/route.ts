@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
     const preferenceData = {
       items: [
         {
+          id: courseId,
           title: courseName,
           unit_price: amount,
           quantity: 1,
