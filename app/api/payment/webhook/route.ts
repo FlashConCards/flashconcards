@@ -24,28 +24,31 @@ export async function POST(request: NextRequest) {
         
         // Extrair informações do pagamento
         const externalReference = paymentInfo.external_reference
-        const [userId, courseId] = externalReference.split('_')
         
-        if (userId && courseId) {
-          try {
-            // Buscar informações do usuário e curso
-            const user = await getUserById(userId)
-            const course = await getCourseById(courseId)
-            
-            if (user && course) {
-              // Enviar email de boas-vindas automaticamente
-              await sendGmailDirectEmail({
-                userName: user.displayName,
-                userEmail: user.email,
-                courseName: course.name,
-                accessExpiryDate: user.accessExpiryDate
-              })
+        if (externalReference) {
+          const [userId, courseId] = externalReference.split('_')
+          
+          if (userId && courseId) {
+            try {
+              // Buscar informações do usuário e curso
+              const user = await getUserById(userId)
+              const course = await getCourseById(courseId)
               
-              console.log(`📧 Email de boas-vindas enviado para: ${user.email}`)
+              if (user && course) {
+                // Enviar email de boas-vindas automaticamente
+                await sendGmailDirectEmail({
+                  userName: user.displayName,
+                  userEmail: user.email,
+                  courseName: course.name,
+                  accessExpiryDate: user.accessExpiryDate
+                })
+                
+                console.log(`📧 Email de boas-vindas enviado para: ${user.email}`)
+              }
+            } catch (emailError) {
+              console.error('❌ Erro ao enviar email de boas-vindas:', emailError)
+              // Não falhar o webhook se o email falhar
             }
-          } catch (emailError) {
-            console.error('❌ Erro ao enviar email de boas-vindas:', emailError)
-            // Não falhar o webhook se o email falhar
           }
         }
       }
