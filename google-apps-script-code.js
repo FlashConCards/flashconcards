@@ -80,188 +80,122 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl, userEm
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
           line-height: 1.6; 
           color: #2d3748; 
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          min-height: 100vh;
+          background-color: #f7fafc;
           padding: 20px;
         }
         .email-container { 
           max-width: 600px; 
           margin: 0 auto; 
           background: #ffffff;
-          border-radius: 20px;
+          border-radius: 12px;
           overflow: hidden;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-          position: relative;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .header { 
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
           color: white; 
-          padding: 50px 30px; 
+          padding: 40px 30px; 
           text-align: center;
-          position: relative;
-          overflow: hidden;
-        }
-        .header::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-          animation: float 6s ease-in-out infinite;
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(180deg); }
         }
         .header h1 { 
           font-size: 32px; 
-          margin-bottom: 15px; 
-          font-weight: 800;
-          position: relative;
-          z-index: 1;
+          margin-bottom: 10px; 
+          font-weight: 700;
         }
         .header h2 { 
           font-size: 18px; 
           opacity: 0.9; 
           font-weight: 400;
-          position: relative;
-          z-index: 1;
         }
         .content { 
-          padding: 50px 30px; 
+          padding: 40px 30px; 
           background: #ffffff;
         }
         .welcome-message {
-          font-size: 20px;
-          margin-bottom: 40px;
+          font-size: 18px;
+          margin-bottom: 30px;
           color: #2d3748;
           text-align: center;
         }
         .course-highlight { 
-          background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-          padding: 30px; 
-          border-radius: 15px; 
-          margin: 30px 0; 
-          border: none;
-          box-shadow: 0 10px 30px rgba(252, 182, 159, 0.3);
-          position: relative;
-          overflow: hidden;
-        }
-        .course-highlight::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-          animation: shine 3s infinite;
-        }
-        @keyframes shine {
-          0% { left: -100%; }
-          100% { left: 100%; }
+          background-color: #fff3cd;
+          padding: 25px; 
+          border-radius: 8px; 
+          margin: 25px 0; 
+          border-left: 4px solid #ffc107;
         }
         .course-highlight h3 { 
-          color: #d97706; 
-          margin-bottom: 15px; 
-          font-size: 24px;
-          font-weight: 700;
-          position: relative;
-          z-index: 1;
-        }
-        .login-info {
-          background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-          padding: 30px;
-          border-radius: 15px;
-          margin: 30px 0;
-          border: none;
-          box-shadow: 0 10px 30px rgba(168, 237, 234, 0.3);
-          position: relative;
-        }
-        .login-info h3 {
-          color: #065f46;
-          margin-bottom: 20px;
+          color: #856404; 
+          margin-bottom: 10px; 
           font-size: 20px;
           font-weight: 700;
         }
+        .login-info {
+          background-color: #d4edda;
+          padding: 25px;
+          border-radius: 8px;
+          margin: 25px 0;
+          border-left: 4px solid #28a745;
+        }
+        .login-info h3 {
+          color: #155724;
+          margin-bottom: 15px;
+          font-size: 18px;
+          font-weight: 700;
+        }
         .credentials {
-          background: rgba(255, 255, 255, 0.9);
-          padding: 20px;
-          border-radius: 12px;
-          margin: 20px 0;
-          border: 2px solid #10b981;
-          position: relative;
-        }
-        .credentials::before {
-          content: '';
-          position: absolute;
-          top: -2px;
-          left: -2px;
-          right: -2px;
-          bottom: -2px;
-          background: linear-gradient(45deg, #10b981, #059669, #047857);
-          border-radius: 12px;
-          z-index: -1;
-          animation: borderGlow 2s ease-in-out infinite alternate;
-        }
-        @keyframes borderGlow {
-          0% { opacity: 0.5; }
-          100% { opacity: 1; }
+          background-color: #f8f9fa;
+          padding: 15px;
+          border-radius: 6px;
+          margin: 15px 0;
+          border: 2px solid #28a745;
         }
         .credentials strong {
-          color: #065f46;
+          color: #155724;
           font-weight: 700;
         }
         .features-section {
-          margin: 40px 0;
+          margin: 30px 0;
         }
         .features-section h3 {
-          color: #1e293b;
-          margin-bottom: 20px;
-          font-size: 22px;
+          color: #2d3748;
+          margin-bottom: 15px;
+          font-size: 18px;
           font-weight: 700;
           text-align: center;
         }
         .features-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 20px;
+          gap: 15px;
           margin-top: 20px;
         }
         .feature-card {
-          background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+          background-color: #f8f9fa;
           padding: 20px;
-          border-radius: 12px;
-          border: 1px solid #bae6fd;
-          transition: all 0.3s ease;
-        }
-        .feature-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 10px 25px rgba(186, 230, 253, 0.4);
+          border-radius: 8px;
+          border: 1px solid #e9ecef;
         }
         .feature-card h4 {
-          color: #0369a1;
+          color: #495057;
           margin-bottom: 10px;
           font-weight: 600;
         }
         .feature-card p {
-          color: #475569;
+          color: #6c757d;
           font-size: 14px;
         }
         .tips-section {
-          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-          padding: 30px;
-          border-radius: 15px;
-          margin: 30px 0;
-          border: none;
-          box-shadow: 0 10px 30px rgba(254, 243, 199, 0.3);
+          background-color: #fff3cd;
+          padding: 25px;
+          border-radius: 8px;
+          margin: 25px 0;
+          border-left: 4px solid #ffc107;
         }
         .tips-section h3 {
-          color: #92400e;
-          margin-bottom: 20px;
-          font-size: 20px;
+          color: #856404;
+          margin-bottom: 15px;
+          font-size: 18px;
           font-weight: 700;
         }
         .tips-list {
@@ -269,10 +203,10 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl, userEm
           padding: 0;
         }
         .tips-list li {
-          padding: 12px 0;
-          color: #78350f;
+          padding: 8px 0;
+          color: #856404;
           position: relative;
-          padding-left: 30px;
+          padding-left: 25px;
           font-weight: 500;
         }
         .tips-list li:before {
@@ -283,92 +217,57 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl, userEm
           transform: translateY(-50%);
           width: 8px;
           height: 8px;
-          background: #f59e0b;
+          background-color: #ffc107;
           border-radius: 50%;
-          box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
         }
         .cta-button { 
           display: inline-block; 
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
           color: white; 
-          padding: 20px 40px; 
+          padding: 16px 32px; 
           text-decoration: none; 
-          border-radius: 50px; 
-          margin: 30px 0; 
-          font-weight: 700;
-          font-size: 18px;
+          border-radius: 8px; 
+          margin: 25px 0; 
+          font-weight: 600;
+          font-size: 16px;
           text-align: center;
-          box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-          transition: all 0.3s ease;
-          position: relative;
-          overflow: hidden;
-        }
-        .cta-button::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-          transition: left 0.5s;
-        }
-        .cta-button:hover::before {
-          left: 100%;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .cta-button:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 15px 35px rgba(102, 126, 234, 0.6);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
         .bonus-section {
-          background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
-          padding: 30px;
-          border-radius: 15px;
-          margin: 30px 0;
-          border: none;
-          box-shadow: 0 10px 30px rgba(254, 202, 202, 0.3);
-          position: relative;
-        }
-        .bonus-section::after {
-          content: '★';
-          position: absolute;
-          top: -10px;
-          right: 20px;
-          font-size: 30px;
-          color: #dc2626;
-          animation: starTwinkle 2s ease-in-out infinite;
-        }
-        @keyframes starTwinkle {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(1.2); }
+          background-color: #f8d7da;
+          padding: 25px;
+          border-radius: 8px;
+          margin: 25px 0;
+          border-left: 4px solid #dc3545;
         }
         .bonus-section h4 {
-          color: #991b1b;
-          margin-bottom: 15px;
-          font-size: 18px;
+          color: #721c24;
+          margin-bottom: 10px;
+          font-size: 16px;
           font-weight: 700;
         }
         .footer { 
-          background: linear-gradient(135deg, #1e293b 0%, #334155 100%); 
-          color: #cbd5e1; 
-          padding: 40px 30px; 
+          background-color: #343a40; 
+          color: #ffffff; 
+          padding: 30px; 
           text-align: center; 
           font-size: 14px;
         }
         .footer p {
-          margin: 10px 0;
+          margin: 8px 0;
         }
         .footer .contact {
-          color: #60a5fa;
+          color: #17a2b8;
           font-weight: 600;
-        }
-        .footer .contact:hover {
-          color: #93c5fd;
         }
         @media (max-width: 600px) {
           .email-container { margin: 10px; }
-          .header, .content, .footer { padding: 30px 20px; }
-          .header h1 { font-size: 28px; }
+          .header, .content, .footer { padding: 20px; }
+          .header h1 { font-size: 24px; }
           .features-grid { grid-template-columns: 1fr; }
         }
       </style>
@@ -377,13 +276,13 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl, userEm
       <div class="email-container">
         <div class="header">
           <h1>FlashConCards</h1>
-          <h2>Parabéns pela sua escolha!</h2>
+          <h2>Parabens pela sua escolha!</h2>
         </div>
         
         <div class="content">
           <div class="welcome-message">
-            <p>Olá <strong>${userName}</strong>!</p>
-            <p>Estamos muito felizes em ter você conosco! Você acaba de dar um passo importante para alavancar seus estudos e alcançar seus objetivos.</p>
+            <p>Ola <strong>${userName}</strong>!</p>
+            <p>Estamos muito felizes em ter voce conosco! Voce acaba de dar um passo importante para alavancar seus estudos e alcancar seus objetivos.</p>
           </div>
           
           <div class="course-highlight">
@@ -396,32 +295,32 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl, userEm
             <div class="credentials">
               <p><strong>Email:</strong> ${userEmail || 'Seu email'}</p>
               <p><strong>Senha:</strong> ${userPassword || '123456'}</p>
-              <p><strong>Acesse:</strong> <a href="${appUrl}/login" style="color: #059669; text-decoration: none; font-weight: 600;">${appUrl}/login</a></p>
+              <p><strong>Acesse:</strong> <a href="${appUrl}/login" style="color: #28a745; text-decoration: none; font-weight: 600;">${appUrl}/login</a></p>
             </div>
           </div>
           
           <div class="features-section">
-            <h3>O que você tem acesso agora:</h3>
+            <h3>O que voce tem acesso agora:</h3>
             <div class="features-grid">
               <div class="feature-card">
                 <h4>Flashcards Interativos</h4>
                 <p>Estude com flashcards personalizados e inteligentes que se adaptam ao seu progresso.</p>
               </div>
               <div class="feature-card">
-                <h4>Estatísticas Detalhadas</h4>
-                <p>Acompanhe seu progresso com gráficos e relatórios em tempo real.</p>
+                <h4>Estatisticas Detalhadas</h4>
+                <p>Acompanhe seu progresso com graficos e relatorios em tempo real.</p>
               </div>
               <div class="feature-card">
-                <h4>Conteúdo de Aprofundamento</h4>
+                <h4>Conteudo de Aprofundamento</h4>
                 <p>Acesse material complementar para consolidar seu conhecimento.</p>
               </div>
               <div class="feature-card">
-                <h4>Estudo Flexível</h4>
+                <h4>Estudo Flexivel</h4>
                 <p>Estude no seu ritmo, quando e onde quiser, em qualquer dispositivo.</p>
               </div>
               <div class="feature-card">
                 <h4>Interface Moderna</h4>
-                <p>Desfrute de uma interface intuitiva e responsiva para uma experiência incrível.</p>
+                <p>Desfrute de uma interface intuitiva e responsiva para uma experiencia incrivel.</p>
               </div>
               <div class="feature-card">
                 <h4>Animações Interativas</h4>
@@ -431,36 +330,36 @@ function createWelcomeEmailHTML(userName, courseName, expiryText, appUrl, userEm
           </div>
           
           <div class="tips-section">
-            <h3>Como começar a estudar:</h3>
+            <h3>Como comecar a estudar:</h3>
             <ul class="tips-list">
-              <li>Faça login com suas credenciais acima</li>
-              <li>Explore a área de estudos e familiarize-se com a interface</li>
-              <li>Comece pelos subtópicos que você tem mais dificuldade</li>
+              <li>Faca login com suas credenciais acima</li>
+              <li>Explore a area de estudos e familiarize-se com a interface</li>
+              <li>Comece pelos subtopicos que voce tem mais dificuldade</li>
               <li>Use o sistema de aprofundamento para consolidar o conhecimento</li>
-              <li>Acompanhe suas estatísticas para identificar pontos de melhoria</li>
-              <li>Estude regularmente para manter o conteúdo fresco na memória</li>
-              <li>Configure lembretes para manter a consistência nos estudos</li>
+              <li>Acompanhe suas estatisticas para identificar pontos de melhoria</li>
+              <li>Estude regularmente para manter o conteudo fresco na memoria</li>
+              <li>Configure lembretes para manter a consistencia nos estudos</li>
             </ul>
           </div>
           
           <div style="text-align: center;">
             <a href="${appUrl}/login" class="cta-button">
-              Acessar Minha Área de Estudos
+              Acessar Minha Area de Estudos
             </a>
           </div>
           
           <div class="bonus-section">
-            <h4>Bônus Especial:</h4>
-            <p>Como você é um dos nossos primeiros alunos, você tem acesso completo a todas as funcionalidades premium, incluindo animações interativas e conteúdo exclusivo!</p>
+            <h4>Bonus Especial:</h4>
+            <p>Como voce e um dos nossos primeiros alunos, voce tem acesso completo a todas as funcionalidades premium, incluindo animações interativas e conteudo exclusivo!</p>
           </div>
         </div>
         
         <div class="footer">
-          <p>Se você tiver alguma dúvida, não hesite em nos contatar!</p>
+          <p>Se voce tiver alguma duvida, nao hesite em nos contatar!</p>
           <p class="contact">suporte@flashconcards.com</p>
-          <p>Estamos aqui para ajudar você a alcançar seus objetivos!</p>
+          <p>Estamos aqui para ajudar voce a alcancar seus objetivos!</p>
           <br>
-          <p><small>Este email foi enviado automaticamente. Não responda a este email.</small></p>
+          <p><small>Este email foi enviado automaticamente. Nao responda a este email.</small></p>
         </div>
       </div>
     </body>
@@ -482,188 +381,122 @@ function createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassw
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
           line-height: 1.6; 
           color: #2d3748; 
-          background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-          min-height: 100vh;
+          background-color: #f7fafc;
           padding: 20px;
         }
         .email-container { 
           max-width: 600px; 
           margin: 0 auto; 
           background: #ffffff;
-          border-radius: 20px;
+          border-radius: 12px;
           overflow: hidden;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-          position: relative;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .header { 
           background: linear-gradient(135deg, #28a745 0%, #20c997 100%); 
           color: white; 
-          padding: 50px 30px; 
+          padding: 40px 30px; 
           text-align: center;
-          position: relative;
-          overflow: hidden;
-        }
-        .header::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-          animation: float 6s ease-in-out infinite;
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(180deg); }
         }
         .header h1 { 
           font-size: 32px; 
-          margin-bottom: 15px; 
-          font-weight: 800;
-          position: relative;
-          z-index: 1;
+          margin-bottom: 10px; 
+          font-weight: 700;
         }
         .header h2 { 
           font-size: 18px; 
           opacity: 0.9; 
           font-weight: 400;
-          position: relative;
-          z-index: 1;
         }
         .content { 
-          padding: 50px 30px; 
+          padding: 40px 30px; 
           background: #ffffff;
         }
         .welcome-message {
-          font-size: 20px;
-          margin-bottom: 40px;
+          font-size: 18px;
+          margin-bottom: 30px;
           color: #2d3748;
           text-align: center;
         }
         .course-highlight { 
-          background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-          padding: 30px; 
-          border-radius: 15px; 
-          margin: 30px 0; 
-          border: none;
-          box-shadow: 0 10px 30px rgba(212, 237, 218, 0.3);
-          position: relative;
-          overflow: hidden;
-        }
-        .course-highlight::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-          animation: shine 3s infinite;
-        }
-        @keyframes shine {
-          0% { left: -100%; }
-          100% { left: 100%; }
+          background-color: #d4edda;
+          padding: 25px; 
+          border-radius: 8px; 
+          margin: 25px 0; 
+          border-left: 4px solid #28a745;
         }
         .course-highlight h3 { 
           color: #155724; 
-          margin-bottom: 15px; 
-          font-size: 24px;
-          font-weight: 700;
-          position: relative;
-          z-index: 1;
-        }
-        .login-info {
-          background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-          padding: 30px;
-          border-radius: 15px;
-          margin: 30px 0;
-          border: none;
-          box-shadow: 0 10px 30px rgba(168, 237, 234, 0.3);
-          position: relative;
-        }
-        .login-info h3 {
-          color: #065f46;
-          margin-bottom: 20px;
+          margin-bottom: 10px; 
           font-size: 20px;
           font-weight: 700;
         }
+        .login-info {
+          background-color: #d4edda;
+          padding: 25px;
+          border-radius: 8px;
+          margin: 25px 0;
+          border-left: 4px solid #28a745;
+        }
+        .login-info h3 {
+          color: #155724;
+          margin-bottom: 15px;
+          font-size: 18px;
+          font-weight: 700;
+        }
         .credentials {
-          background: rgba(255, 255, 255, 0.9);
-          padding: 20px;
-          border-radius: 12px;
-          margin: 20px 0;
-          border: 2px solid #10b981;
-          position: relative;
-        }
-        .credentials::before {
-          content: '';
-          position: absolute;
-          top: -2px;
-          left: -2px;
-          right: -2px;
-          bottom: -2px;
-          background: linear-gradient(45deg, #10b981, #059669, #047857);
-          border-radius: 12px;
-          z-index: -1;
-          animation: borderGlow 2s ease-in-out infinite alternate;
-        }
-        @keyframes borderGlow {
-          0% { opacity: 0.5; }
-          100% { opacity: 1; }
+          background-color: #f8f9fa;
+          padding: 15px;
+          border-radius: 6px;
+          margin: 15px 0;
+          border: 2px solid #28a745;
         }
         .credentials strong {
-          color: #065f46;
+          color: #155724;
           font-weight: 700;
         }
         .features-section {
-          margin: 40px 0;
+          margin: 30px 0;
         }
         .features-section h3 {
-          color: #1e293b;
-          margin-bottom: 20px;
-          font-size: 22px;
+          color: #2d3748;
+          margin-bottom: 15px;
+          font-size: 18px;
           font-weight: 700;
           text-align: center;
         }
         .features-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 20px;
+          gap: 15px;
           margin-top: 20px;
         }
         .feature-card {
-          background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+          background-color: #f8f9fa;
           padding: 20px;
-          border-radius: 12px;
-          border: 1px solid #bae6fd;
-          transition: all 0.3s ease;
-        }
-        .feature-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 10px 25px rgba(186, 230, 253, 0.4);
+          border-radius: 8px;
+          border: 1px solid #e9ecef;
         }
         .feature-card h4 {
-          color: #0369a1;
+          color: #495057;
           margin-bottom: 10px;
           font-weight: 600;
         }
         .feature-card p {
-          color: #475569;
+          color: #6c757d;
           font-size: 14px;
         }
         .steps-section {
-          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-          padding: 30px;
-          border-radius: 15px;
-          margin: 30px 0;
-          border: none;
-          box-shadow: 0 10px 30px rgba(254, 243, 199, 0.3);
+          background-color: #fff3cd;
+          padding: 25px;
+          border-radius: 8px;
+          margin: 25px 0;
+          border-left: 4px solid #ffc107;
         }
         .steps-section h3 {
-          color: #92400e;
-          margin-bottom: 20px;
-          font-size: 20px;
+          color: #856404;
+          margin-bottom: 15px;
+          font-size: 18px;
           font-weight: 700;
         }
         .steps-list {
@@ -671,10 +504,10 @@ function createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassw
           padding: 0;
         }
         .steps-list li {
-          padding: 12px 0;
-          color: #78350f;
+          padding: 8px 0;
+          color: #856404;
           position: relative;
-          padding-left: 40px;
+          padding-left: 30px;
           font-weight: 500;
         }
         .steps-list li:before {
@@ -684,17 +517,16 @@ function createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassw
           left: 0;
           top: 50%;
           transform: translateY(-50%);
-          background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+          background-color: #007bff;
           color: white;
-          width: 25px;
-          height: 25px;
+          width: 20px;
+          height: 20px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: 12px;
           font-weight: bold;
-          box-shadow: 0 5px 15px rgba(66, 153, 225, 0.4);
         }
         .steps-list {
           counter-reset: step-counter;
@@ -703,84 +535,50 @@ function createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassw
           display: inline-block; 
           background: linear-gradient(135deg, #28a745 0%, #20c997 100%); 
           color: white; 
-          padding: 20px 40px; 
+          padding: 16px 32px; 
           text-decoration: none; 
-          border-radius: 50px; 
-          margin: 30px 0; 
-          font-weight: 700;
-          font-size: 18px;
+          border-radius: 8px; 
+          margin: 25px 0; 
+          font-weight: 600;
+          font-size: 16px;
           text-align: center;
-          box-shadow: 0 10px 30px rgba(40, 167, 69, 0.4);
-          transition: all 0.3s ease;
-          position: relative;
-          overflow: hidden;
-        }
-        .cta-button::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-          transition: left 0.5s;
-        }
-        .cta-button:hover::before {
-          left: 100%;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .cta-button:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 15px 35px rgba(40, 167, 69, 0.6);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
         .bonus-section {
-          background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-          padding: 30px;
-          border-radius: 15px;
-          margin: 30px 0;
-          border: none;
-          box-shadow: 0 10px 30px rgba(212, 237, 218, 0.3);
-          position: relative;
-        }
-        .bonus-section::after {
-          content: '★';
-          position: absolute;
-          top: -10px;
-          right: 20px;
-          font-size: 30px;
-          color: #155724;
-          animation: starTwinkle 2s ease-in-out infinite;
-        }
-        @keyframes starTwinkle {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(1.2); }
+          background-color: #d4edda;
+          padding: 25px;
+          border-radius: 8px;
+          margin: 25px 0;
+          border-left: 4px solid #28a745;
         }
         .bonus-section h4 {
           color: #155724;
-          margin-bottom: 15px;
-          font-size: 18px;
+          margin-bottom: 10px;
+          font-size: 16px;
           font-weight: 700;
         }
         .footer { 
-          background: linear-gradient(135deg, #1e293b 0%, #334155 100%); 
-          color: #cbd5e1; 
-          padding: 40px 30px; 
+          background-color: #343a40; 
+          color: #ffffff; 
+          padding: 30px; 
           text-align: center; 
           font-size: 14px;
         }
         .footer p {
-          margin: 10px 0;
+          margin: 8px 0;
         }
         .footer .contact {
-          color: #60a5fa;
+          color: #17a2b8;
           font-weight: 600;
-        }
-        .footer .contact:hover {
-          color: #93c5fd;
         }
         @media (max-width: 600px) {
           .email-container { margin: 10px; }
-          .header, .content, .footer { padding: 30px 20px; }
-          .header h1 { font-size: 28px; }
+          .header, .content, .footer { padding: 20px; }
+          .header h1 { font-size: 24px; }
           .features-grid { grid-template-columns: 1fr; }
         }
       </style>
@@ -794,13 +592,13 @@ function createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassw
         
         <div class="content">
           <div class="welcome-message">
-            <p>Olá <strong>${userName}</strong>!</p>
-            <p>Ótimas notícias! Seu acesso ao curso foi liberado pelo administrador e você já pode começar a estudar!</p>
+            <p>Ola <strong>${userName}</strong>!</p>
+            <p>Otimas noticias! Seu acesso ao curso foi liberado pelo administrador e voce ja pode comecar a estudar!</p>
           </div>
           
           <div class="course-highlight">
             <h3>${courseName}</h3>
-            <p><strong>Seu acesso está ativo e pronto para uso!</strong></p>
+            <p><strong>Seu acesso esta ativo e pronto para uso!</strong></p>
           </div>
           
           <div class="login-info">
@@ -808,32 +606,32 @@ function createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassw
             <div class="credentials">
               <p><strong>Email:</strong> ${userEmail || 'Seu email'}</p>
               <p><strong>Senha:</strong> ${userPassword || '123456'}</p>
-              <p><strong>Acesse:</strong> <a href="${appUrl}/login" style="color: #059669; text-decoration: none; font-weight: 600;">${appUrl}/login</a></p>
+              <p><strong>Acesse:</strong> <a href="${appUrl}/login" style="color: #28a745; text-decoration: none; font-weight: 600;">${appUrl}/login</a></p>
             </div>
           </div>
           
           <div class="features-section">
-            <h3>O que você tem acesso agora:</h3>
+            <h3>O que voce tem acesso agora:</h3>
             <div class="features-grid">
               <div class="feature-card">
                 <h4>Flashcards Interativos</h4>
                 <p>Estude com flashcards personalizados e inteligentes que se adaptam ao seu progresso.</p>
               </div>
               <div class="feature-card">
-                <h4>Estatísticas Detalhadas</h4>
-                <p>Acompanhe seu progresso com gráficos e relatórios em tempo real.</p>
+                <h4>Estatisticas Detalhadas</h4>
+                <p>Acompanhe seu progresso com graficos e relatorios em tempo real.</p>
               </div>
               <div class="feature-card">
-                <h4>Conteúdo de Aprofundamento</h4>
+                <h4>Conteudo de Aprofundamento</h4>
                 <p>Acesse material complementar para consolidar seu conhecimento.</p>
               </div>
               <div class="feature-card">
-                <h4>Estudo Flexível</h4>
+                <h4>Estudo Flexivel</h4>
                 <p>Estude no seu ritmo, quando e onde quiser, em qualquer dispositivo.</p>
               </div>
               <div class="feature-card">
                 <h4>Interface Moderna</h4>
-                <p>Desfrute de uma interface intuitiva e responsiva para uma experiência incrível.</p>
+                <p>Desfrute de uma interface intuitiva e responsiva para uma experiencia incrivel.</p>
               </div>
               <div class="feature-card">
                 <h4>Animações Interativas</h4>
@@ -843,12 +641,12 @@ function createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassw
           </div>
           
           <div class="steps-section">
-            <h3>Como começar:</h3>
+            <h3>Como comecar:</h3>
             <ul class="steps-list">
-              <li>Faça login com suas credenciais acima</li>
-              <li>Explore a área de estudos e familiarize-se com a interface</li>
-              <li>Escolha a matéria que deseja estudar</li>
-              <li>Navegue pelos tópicos e subtópicos</li>
+              <li>Faca login com suas credenciais acima</li>
+              <li>Explore a area de estudos e familiarize-se com a interface</li>
+              <li>Escolha a materia que deseja estudar</li>
+              <li>Navegue pelos topicos e subtopicos</li>
               <li>Comece com os flashcards</li>
               <li>Use o aprofundamento para consolidar o conhecimento</li>
             </ul>
@@ -856,22 +654,22 @@ function createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassw
           
           <div style="text-align: center;">
             <a href="${appUrl}/login" class="cta-button">
-              Acessar Minha Área de Estudos
+              Acessar Minha Area de Estudos
             </a>
           </div>
           
           <div class="bonus-section">
-            <h4>Bônus:</h4>
-            <p>Como você foi adicionado pelo administrador, você tem acesso completo a todas as funcionalidades, incluindo animações interativas e conteúdo exclusivo!</p>
+            <h4>Bonus:</h4>
+            <p>Como voce foi adicionado pelo administrador, voce tem acesso completo a todas as funcionalidades, incluindo animações interativas e conteudo exclusivo!</p>
           </div>
         </div>
         
         <div class="footer">
-          <p>Se você tiver alguma dúvida, não hesite em nos contatar!</p>
+          <p>Se voce tiver alguma duvida, nao hesite em nos contatar!</p>
           <p class="contact">suporte@flashconcards.com</p>
-          <p>Estamos aqui para ajudar você a alcançar seus objetivos!</p>
+          <p>Estamos aqui para ajudar voce a alcancar seus objetivos!</p>
           <br>
-          <p><small>Este email foi enviado automaticamente. Não responda a este email.</small></p>
+          <p><small>Este email foi enviado automaticamente. Nao responda a este email.</small></p>
         </div>
       </div>
     </body>
