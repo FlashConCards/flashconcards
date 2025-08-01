@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 
 const client = new MercadoPagoConfig({ 
-  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
-  options: {
-    clientId: process.env.MERCADOPAGO_CLIENT_ID,
-    clientSecret: process.env.MERCADOPAGO_CLIENT_SECRET
-  }
+  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || ''
 });
 
 export async function GET(
