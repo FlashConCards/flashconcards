@@ -1242,10 +1242,45 @@ export const getUserProgressBySubTopic = async (uid: string, subTopicId: string)
     console.log('Study sessions found:', sessions.length);
     console.log('Sessions data:', sessions);
     
-    const correctCards = sessions.reduce((sum, session) => sum + (session.correctCards || 0), 0)
-    const wrongCards = sessions.reduce((sum, session) => sum + (session.wrongCards || 0), 0)
-    const studyTime = sessions.reduce((sum, session) => sum + (session.studyTime || 0), 0)
-    const studiedCards = correctCards + wrongCards
+    // Calcular progresso baseado em cards únicos estudados
+    let studiedCards = 0;
+    let correctCards = 0;
+    let wrongCards = 0;
+    let studyTime = 0;
+    
+    if (sessions.length > 0) {
+      // Usar a sessão mais recente para o progresso atual
+      const latestSession = sessions[0]; // Já ordenado por createdAt desc
+      
+      // Calcular total de cards estudados nesta sessão
+      const sessionStudiedCards = (latestSession.correctCards || 0) + (latestSession.wrongCards || 0);
+      
+      // O progresso deve ser baseado no número de cards únicos estudados
+      // Se o usuário estudou todos os cards disponíveis, mostrar como completo
+      if (sessionStudiedCards >= totalCards) {
+        studiedCards = totalCards;
+        correctCards = Math.min(latestSession.correctCards || 0, totalCards);
+        wrongCards = Math.min(latestSession.wrongCards || 0, totalCards);
+      } else {
+        // Se não estudou todos, mostrar o progresso real
+        studiedCards = Math.min(sessionStudiedCards, totalCards);
+        correctCards = Math.min(latestSession.correctCards || 0, studiedCards);
+        wrongCards = Math.min(latestSession.wrongCards || 0, studiedCards);
+      }
+      
+      studyTime = latestSession.studyTime || 0;
+      
+      console.log('Progress calculation:', {
+        sessionId: latestSession.id,
+        sessionCorrectCards: latestSession.correctCards,
+        sessionWrongCards: latestSession.wrongCards,
+        sessionStudiedCards,
+        totalCards,
+        finalStudiedCards: studiedCards,
+        finalCorrectCards: correctCards,
+        finalWrongCards: wrongCards
+      });
+    }
     
     const result = {
       totalCards,
