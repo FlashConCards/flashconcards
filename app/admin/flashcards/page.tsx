@@ -130,6 +130,8 @@ export default function FlashcardsPage() {
                     if (subTopic) {
                       const flashcardsData = await getFlashcards(subTopicId);
                       console.log('Flashcards loaded:', flashcardsData);
+                      console.log('First flashcard details:', flashcardsData[0]);
+                      console.log('subTopicId being used:', subTopicId);
                       setFlashcards(flashcardsData || []);
                     }
                   }
@@ -275,20 +277,22 @@ export default function FlashcardsPage() {
                 <p className="text-gray-500 text-center py-8">Nenhum flashcard cadastrado ainda.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {flashcards.map((flashcard) => (
-                    <div key={flashcard.id} className="border border-gray-200 rounded-lg p-6 bg-white hover:shadow-md transition-shadow">
-                      <div className="mb-4">
-                        <h3 className="text-sm font-medium text-gray-500 mb-1">Pergunta:</h3>
-                        <p className="text-gray-800 font-medium min-h-[3rem]">
-                          {flashcard.front || 'Pergunta não definida'}
-                        </p>
-                      </div>
-                      <div className="mb-4">
-                        <h3 className="text-sm font-medium text-gray-500 mb-1">Resposta:</h3>
-                        <p className="text-gray-800 min-h-[3rem]">
-                          {flashcard.back || 'Resposta não definida'}
-                        </p>
-                      </div>
+                  {flashcards.map((flashcard) => {
+                    console.log('Rendering flashcard:', flashcard);
+                    return (
+                      <div key={flashcard.id} className="border border-gray-200 rounded-lg p-6 bg-white hover:shadow-md transition-shadow">
+                        <div className="mb-4">
+                          <h3 className="text-sm font-medium text-gray-500 mb-1">Pergunta:</h3>
+                          <p className="text-gray-800 font-medium min-h-[3rem]">
+                            {flashcard.front || 'Pergunta não definida'}
+                          </p>
+                        </div>
+                        <div className="mb-4">
+                          <h3 className="text-sm font-medium text-gray-500 mb-1">Resposta:</h3>
+                          <p className="text-gray-800 min-h-[3rem]">
+                            {flashcard.back || 'Resposta não definida'}
+                          </p>
+                        </div>
                       {flashcard.explanation && (
                         <div className="mb-4">
                           <h3 className="text-sm font-medium text-gray-500 mb-1">Explicação:</h3>
