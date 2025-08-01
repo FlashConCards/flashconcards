@@ -10,7 +10,8 @@ import {
   getSubTopics, 
   getFlashcards,
   getCoursesWithAccess,
-  getUserProgressBySubTopic
+  getUserProgressBySubTopic,
+  getDeepeningsBySubTopic
 } from '@/lib/firebase';
 import { Course, Subject, Topic, SubTopic, Flashcard } from '@/types';
 import { 
@@ -46,13 +47,18 @@ function SubTopicCard({ subTopic, onStartStudy, getProgressForSubTopic, formatLa
     accuracy: 0,
     lastStudied: undefined
   });
+  const [deepening, setDeepening] = useState<any>(null);
 
   useEffect(() => {
-    const loadProgress = async () => {
-      const realProgress = await getProgressForSubTopic(subTopic.id);
+    const loadData = async () => {
+      const [realProgress, deepenings] = await Promise.all([
+        getProgressForSubTopic(subTopic.id),
+        getDeepeningsBySubTopic(subTopic.id)
+      ]);
       setProgress(realProgress);
+      setDeepening(deepenings.length > 0 ? deepenings[0] : null);
     };
-    loadProgress();
+    loadData();
   }, [subTopic.id, getProgressForSubTopic]);
 
   const progressPercentage = progress.totalCards > 0 ? (progress.studiedCards / progress.totalCards) * 100 : 0;
@@ -99,6 +105,19 @@ function SubTopicCard({ subTopic, onStartStudy, getProgressForSubTopic, formatLa
           <ClockIcon className="h-4 w-4 mr-2" />
           <span>Último estudo: {formatLastStudied(progress.lastStudied)}</span>
         </div>
+        
+        {/* Aprofundamento */}
+        {deepening && (
+          <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+            <div className="flex items-center gap-2 mb-2">
+              <AcademicCapIcon className="w-5 h-5 text-blue-600" />
+              <h6 className="font-semibold text-blue-900">Aprofundamento</h6>
+            </div>
+            <p className="text-sm text-blue-800 leading-relaxed">
+              {deepening.content}
+            </p>
+          </div>
+        )}
         
         <button
           onClick={() => onStartStudy(subTopic)}

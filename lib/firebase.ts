@@ -605,10 +605,32 @@ export const getDeepenings = async (topicId?: string) => {
   }
 }
 
+export const getDeepeningsBySubTopic = async (subTopicId?: string) => {
+  try {
+    let q: Query | CollectionReference = collection(db, 'deepenings')
+    
+    if (subTopicId) {
+      q = query(q, where('subTopicId', '==', subTopicId))
+    }
+    
+    const querySnapshot = await getDocs(q)
+    const deepenings = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as any[]
+    console.log('Deepenings by subTopic loaded:', deepenings.length)
+    return deepenings
+  } catch (error: any) {
+    console.error('Error getting deepenings by subTopic:', error)
+    return []
+  }
+}
+
 export const createDeepening = async (deepeningData: any) => {
   try {
     const deepeningDoc = {
       topicId: deepeningData.topicId,
+      subTopicId: deepeningData.subTopicId,
       content: deepeningData.content,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
