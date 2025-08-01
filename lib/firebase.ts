@@ -28,7 +28,7 @@ import {
 } from 'firebase/firestore'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { Course } from '@/types'
-import { sendGmailAdminEmail, sendGmailWelcomeEmail } from './email-gmail'
+import { sendSimpleEmail, sendSimpleAdminEmail } from './email-simple-gmail'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -291,7 +291,7 @@ export const createUserByAdmin = async (userData: any) => {
       try {
         const course = await getCourseById(userData.selectedCourse)
         if (course) {
-          await sendGmailAdminEmail({
+          await sendSimpleAdminEmail({
             userName: userData.displayName,
             userEmail: userData.email,
             courseName: course.name
@@ -959,11 +959,10 @@ export const updatePaymentStatus = async (paymentId: string, status: 'pending' |
           const course = await getCourseById(paymentData.courseId);
           
           if (userData && course) {
-                          await sendGmailWelcomeEmail({
-              userName: userData.displayName,
-              userEmail: userData.email,
-              courseName: course.name,
-              accessExpiryDate: paymentData.expiryDate ? new Date(paymentData.expiryDate).toLocaleDateString('pt-BR') : undefined
+                          await sendSimpleEmail({
+                              userName: userData.displayName,
+                userEmail: userData.email,
+                courseName: course.name
             });
             console.log('Welcome email sent for approved payment to:', userData.email);
           }
