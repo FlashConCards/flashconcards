@@ -293,33 +293,34 @@ export default function FlashcardsPage() {
                             {flashcard.back || 'Resposta não definida'}
                           </p>
                         </div>
-                      {flashcard.explanation && (
-                        <div className="mb-4">
-                          <h3 className="text-sm font-medium text-gray-500 mb-1">Explicação:</h3>
-                          <p className="text-gray-600 text-sm min-h-[2rem]">
-                            {flashcard.explanation}
-                          </p>
-                        </div>
-                      )}
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-500">Ordem: {flashcard.order}</span>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => router.push(`/admin/deepening?courseId=${courseId}&subjectId=${subjectId}&topicId=${topicId}&subTopicId=${subTopicId}&flashcardId=${flashcard.id}`)}
-                            className="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded hover:bg-blue-200 transition-colors"
-                          >
-                            Aprofundamento
-                          </button>
-                          <button
-                            onClick={() => handleDeleteFlashcard(flashcard.id)}
-                            className="text-xs bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200 transition-colors"
-                          >
-                            Excluir
-                          </button>
+                        {flashcard.explanation && (
+                          <div className="mb-4">
+                            <h3 className="text-sm font-medium text-gray-500 mb-1">Explicação:</h3>
+                            <p className="text-gray-600 text-sm min-h-[2rem]">
+                              {flashcard.explanation}
+                            </p>
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-500">Ordem: {flashcard.order}</span>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => router.push(`/admin/deepening?courseId=${courseId}&subjectId=${subjectId}&topicId=${topicId}&subTopicId=${subTopicId}&flashcardId=${flashcard.id}`)}
+                              className="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded hover:bg-blue-200 transition-colors"
+                            >
+                              Aprofundamento
+                            </button>
+                            <button
+                              onClick={() => handleDeleteFlashcard(flashcard.id)}
+                              className="text-xs bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200 transition-colors"
+                            >
+                              Excluir
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
         </div>
