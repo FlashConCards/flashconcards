@@ -1,20 +1,27 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
-    const googleScriptUrl = process.env.GOOGLE_APPS_SCRIPT_URL;
+    const googleAppsScriptUrl = process.env.GOOGLE_APPS_SCRIPT_URL
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL
     
     return NextResponse.json({
       success: true,
-      googleScriptUrl: googleScriptUrl ? 'Configurada' : 'NÃO CONFIGURADA',
-      hasUrl: !!googleScriptUrl,
-      urlLength: googleScriptUrl?.length || 0
-    });
-  } catch (error: any) {
+      debug: {
+        googleAppsScriptUrl: googleAppsScriptUrl ? '✅ Configurada' : '❌ Não configurada',
+        appUrl: appUrl || 'https://flashconcards.vercel.app',
+        hasGoogleUrl: !!googleAppsScriptUrl,
+        urlLength: googleAppsScriptUrl?.length || 0
+      }
+    })
+  } catch (error) {
     return NextResponse.json(
-      { error: 'Erro ao verificar configuração', details: error.message },
+      { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Erro desconhecido'
+      },
       { status: 500 }
-    );
+    )
   }
 }
 
