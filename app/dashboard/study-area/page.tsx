@@ -98,7 +98,7 @@ function SubTopicCard({ subTopic, onStartStudy, getProgressForSubTopic, formatLa
           </div>
           <div className="text-center">
             <div className="text-lg font-bold text-blue-600">{progress.accuracy.toFixed(0)}%</div>
-            <div className="text-xs text-gray-500">Taxa</div>
+            <div className="text-xs text-gray-500">Assertividade</div>
           </div>
         </div>
         
