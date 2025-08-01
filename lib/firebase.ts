@@ -28,6 +28,7 @@ import {
 } from 'firebase/firestore'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { Course } from '@/types'
+import { sendAdminWelcomeEmail, sendWelcomeEmail } from './email'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -284,6 +285,24 @@ export const createUserByAdmin = async (userData: any) => {
     // IMPORTANTE: Fazer logout do usuário criado para não ficar logado
     await signOut(auth)
     console.log('Logged out from created user to prevent auto-login')
+
+    // Enviar email de boas-vindas se o usuário tem acesso a um curso
+    if (userData.selectedCourse) {
+      try {
+        const course = await getCourseById(userData.selectedCourse)
+        if (course) {
+          await sendAdminWelcomeEmail({
+            userName: userData.displayName,
+            userEmail: userData.email,
+            courseName: course.name
+          })
+          console.log('Welcome email sent to:', userData.email)
+        }
+      } catch (emailError) {
+        console.error('Error sending welcome email:', emailError)
+        // Não falhar a criação do usuário se o email falhar
+      }
+    }
 
     return userCredential.user.uid
   } catch (error: any) {
@@ -928,6 +947,32 @@ export const updatePaymentStatus = async (paymentId: string, status: 'pending' |
       updatedAt: serverTimestamp()
     });
     console.log('Payment status updated:', paymentId, status);
+
+    // Se o pagamento foi aprovado, enviar email de boas-vindas
+    if (status === 'approved') {
+      try {
+        const paymentDoc = await getDoc(paymentRef);
+        const paymentData = paymentDoc.data();
+        
+        if (paymentData) {
+          const userData = await getUserData(paymentData.userId);
+          const course = await getCourseById(paymentData.courseId);
+          
+          if (userData && course) {
+            await sendWelcomeEmail({
+              userName: userData.displayName,
+              userEmail: userData.email,
+              courseName: course.name,
+              accessExpiryDate: paymentData.expiryDate ? new Date(paymentData.expiryDate).toLocaleDateString('pt-BR') : undefined
+            });
+            console.log('Welcome email sent for approved payment to:', userData.email);
+          }
+        }
+      } catch (emailError) {
+        console.error('Error sending welcome email for payment:', emailError);
+        // Não falhar a atualização do pagamento se o email falhar
+      }
+    }
   } catch (error: any) {
     console.error('Error updating payment status:', error);
     throw error;
