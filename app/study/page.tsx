@@ -158,28 +158,34 @@ export default function StudyPage() {
     if (isCorrect) {
       setCompletedCards(prev => [...prev, currentCard]);
       setSessionStats(prev => ({ ...prev, correctCards: prev.correctCards + 1 }));
+      
+      // Remove o card correto da fila
+      setStudyQueue(prev => prev.filter((_, index) => index !== currentIndex));
     } else {
       setWrongCards(prev => [...prev, currentCard]);
       setSessionStats(prev => ({ ...prev, wrongCards: prev.wrongCards + 1 }));
       
-      // Add wrong card back to the end of the queue for review
-      setStudyQueue(prev => [...prev.slice(currentIndex + 1), currentCard]);
+      // Move o card errado para o final da fila para revisão
+      setStudyQueue(prev => {
+        const newQueue = prev.filter((_, index) => index !== currentIndex);
+        return [...newQueue, currentCard];
+      });
     }
 
     // Move to next card automatically after a short delay
     setTimeout(() => {
-      if (currentIndex + 1 < studyQueue.length) {
-        setCurrentIndex(prev => prev + 1);
+      // Se ainda há cards na fila, continua
+      if (studyQueue.length > 1) {
+        // Se estamos no último card, volta para o início
+        if (currentIndex >= studyQueue.length - 1) {
+          setCurrentIndex(0);
+        } else {
+          setCurrentIndex(prev => prev);
+        }
         setShowAnswer(false);
       } else {
-        // Check if there are more cards in the queue (including wrong ones that were added back)
-        if (studyQueue.length > currentIndex + 1) {
-          setCurrentIndex(prev => prev + 1);
-          setShowAnswer(false);
-        } else {
-          // Session completed - all cards studied
-          handleSessionComplete();
-        }
+        // Só finaliza quando não há mais cards na fila
+        handleSessionComplete();
       }
     }, 1500); // Delay de 1.5 segundos para mostrar o resultado
   };
@@ -265,9 +271,11 @@ export default function StudyPage() {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  // Calcular progresso real baseado no índice atual
-  const progressPercentage = studyQueue.length > 0 ? ((currentIndex + 1) / studyQueue.length) * 100 : 0;
-  const remainingCards = studyQueue.length - currentIndex - 1;
+  // Calcular progresso baseado nos cards estudados vs total original
+  const totalOriginalCards = flashcards.length;
+  const cardsStudied = completedCards.length + wrongCards.length;
+  const progressPercentage = totalOriginalCards > 0 ? (cardsStudied / totalOriginalCards) * 100 : 0;
+  const remainingCards = Math.max(0, studyQueue.length - 1);
 
   if (loading) {
     return (
@@ -405,7 +413,7 @@ export default function StudyPage() {
         </div>
 
         {/* Flashcard */}
-        {currentCard ? (
+        {currentCard && studyQueue.length > 0 ? (
           <div className="mb-8">
             <FlashcardComponent
               flashcard={currentCard}
@@ -425,7 +433,12 @@ export default function StudyPage() {
             <div className="bg-white rounded-lg shadow-lg p-8">
               <CheckCircleIcon className="w-16 h-16 text-green-500 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Sessão Concluída!</h2>
-              <p className="text-gray-600 mb-6">Todos os cards foram estudados.</p>
+              <p className="text-gray-600 mb-6">Todos os cards foram estudados corretamente.</p>
+              <div className="mb-6 text-sm text-gray-500">
+                <p>Cards acertados: {sessionStats.correctCards}</p>
+                <p>Cards errados: {sessionStats.wrongCards}</p>
+                <p>Tempo total: {formatTime(studyTime)}</p>
+              </div>
               <button
                 onClick={handleRestart}
                 className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
@@ -437,7 +450,7 @@ export default function StudyPage() {
         )}
 
         {/* Navigation Buttons */}
-        {currentCard && (
+        {currentCard && studyQueue.length > 0 && (
           <div className="flex justify-between items-center">
             <button
               onClick={handlePrevious}
