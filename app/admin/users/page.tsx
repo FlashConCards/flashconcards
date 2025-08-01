@@ -83,6 +83,8 @@ export default function AdminUsersPage() {
         return
       }
 
+      console.log('🚀 Iniciando adição de usuário:', newUser)
+
       // Chamar API para adicionar usuário e enviar email
       const response = await fetch('/api/admin/add-user', {
         method: 'POST',
@@ -97,7 +99,10 @@ export default function AdminUsersPage() {
         })
       })
 
+      console.log('📡 Resposta da API:', response.status, response.statusText)
+
       const result = await response.json()
+      console.log('📋 Resultado da API:', result)
 
       if (response.ok) {
         // Adicionar usuário à lista local
@@ -119,6 +124,7 @@ export default function AdminUsersPage() {
 
         setUsers(prev => [...prev, userData])
         toast.success(result.message)
+        console.log('✅ Usuário adicionado com sucesso')
 
         // Limpar formulário
         setNewUser({
@@ -129,11 +135,12 @@ export default function AdminUsersPage() {
         })
         setShowAddUserModal(false)
       } else {
+        console.error('❌ Erro na API:', result)
         toast.error(result.error || 'Erro ao adicionar usuário')
       }
 
     } catch (error) {
-      console.error('Erro ao adicionar usuário:', error)
+      console.error('❌ Erro ao adicionar usuário:', error)
       toast.error('Erro ao adicionar usuário')
     }
   }
