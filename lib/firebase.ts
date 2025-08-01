@@ -1069,6 +1069,13 @@ export const getUserAccessibleCourses = async (userId: string) => {
   try {
     // 1. Buscar dados do usuário para ver permissões do admin
     const userData = await getUserData(userId)
+    
+    // Verificar se o usuário tem acesso pago
+    if (!userData || (!userData.isPaid && !userData.isAdmin)) {
+      console.log('User does not have paid access for accessible courses:', userId);
+      return [];
+    }
+    
     const adminGrantedCourses: string[] = []
     
     if (userData?.selectedCourse) {
@@ -1098,6 +1105,13 @@ export const getCoursesWithAccess = async (userId: string) => {
   try {
     // Primeiro, verificar se o acesso do usuário expirou
     const userData = await getUserData(userId);
+    
+    // Verificar se o usuário tem acesso pago
+    if (!userData || (!userData.isPaid && !userData.isAdmin)) {
+      console.log('User does not have paid access:', userId);
+      return [];
+    }
+    
     if (userData && userData.courseAccessExpiry) {
       const expiryDate = userData.courseAccessExpiry.toDate();
       const currentDate = new Date();
@@ -1121,9 +1135,15 @@ export const getCoursesWithAccess = async (userId: string) => {
       }
     }
 
-    // Se não tem curso selecionado, retornar todos os cursos disponíveis
-    const allCourses = await getCourses();
-    return allCourses || [];
+    // Se não tem curso selecionado e é admin, retornar todos os cursos
+    if (userData && userData.isAdmin) {
+      const allCourses = await getCourses();
+      return allCourses || [];
+    }
+
+    // Se não tem curso selecionado e não é admin, não retornar nada
+    console.log('User has no selected course and is not admin:', userId);
+    return [];
   } catch (error) {
     console.error('Error getting courses with access:', error);
     return [];
