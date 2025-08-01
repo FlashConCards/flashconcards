@@ -1220,6 +1220,11 @@ export const getUserStudySessions = async (uid: string) => {
 
 export const getUserProgressBySubTopic = async (uid: string, subTopicId: string) => {
   try {
+    // Buscar flashcards do sub-tópico
+    const flashcards = await getFlashcards(subTopicId);
+    const totalCards = flashcards.length;
+    
+    // Buscar sessões de estudo do usuário para este sub-tópico
     const q = query(
       collection(db, 'studySessions'),
       where('uid', '==', uid),
@@ -1231,18 +1236,18 @@ export const getUserProgressBySubTopic = async (uid: string, subTopicId: string)
       ...doc.data()
     })) as any[]
     
-    const totalCards = sessions.reduce((sum, session) => sum + (session.flashcardsCount || 0), 0)
     const correctCards = sessions.reduce((sum, session) => sum + (session.correctCards || 0), 0)
     const wrongCards = sessions.reduce((sum, session) => sum + (session.wrongCards || 0), 0)
     const studyTime = sessions.reduce((sum, session) => sum + (session.studyTime || 0), 0)
+    const studiedCards = correctCards + wrongCards
     
     return {
       totalCards,
-      studiedCards: correctCards + wrongCards,
+      studiedCards,
       correctCards,
       wrongCards,
       studyTime,
-      accuracy: totalCards > 0 ? (correctCards / totalCards) * 100 : 0,
+      accuracy: studiedCards > 0 ? (correctCards / studiedCards) * 100 : 0,
       lastStudied: sessions.length > 0 ? sessions[0].createdAt : null
     }
   } catch (error: any) {

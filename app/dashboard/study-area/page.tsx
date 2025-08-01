@@ -48,6 +48,7 @@ function SubTopicCard({ subTopic, onStartStudy, getProgressForSubTopic, formatLa
     lastStudied: undefined
   });
   const [deepening, setDeepening] = useState<any>(null);
+  const [showDeepening, setShowDeepening] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -106,16 +107,36 @@ function SubTopicCard({ subTopic, onStartStudy, getProgressForSubTopic, formatLa
           <span>Último estudo: {formatLastStudied(progress.lastStudied)}</span>
         </div>
         
+        {/* Botão Aprofundar */}
+        {deepening && !showDeepening && (
+          <button
+            onClick={() => setShowDeepening(true)}
+            className="w-full mb-4 p-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105 flex items-center justify-center space-x-2 font-medium"
+          >
+            <AcademicCapIcon className="w-5 h-5" />
+            <span>Aprofundar</span>
+          </button>
+        )}
+
         {/* Aprofundamento */}
-        {deepening && (
+        {deepening && showDeepening && (
           <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-            <div className="flex items-center gap-2 mb-2">
-              <AcademicCapIcon className="w-5 h-5 text-blue-600" />
-              <h6 className="font-semibold text-blue-900">Aprofundamento</h6>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <AcademicCapIcon className="w-5 h-5 text-blue-600" />
+                <h6 className="font-semibold text-blue-900">Aprofundamento</h6>
+              </div>
+              <button
+                onClick={() => setShowDeepening(false)}
+                className="text-blue-600 hover:text-blue-800 text-sm"
+              >
+                Ocultar
+              </button>
             </div>
-            <p className="text-sm text-blue-800 leading-relaxed">
-              {deepening.content}
-            </p>
+            <div 
+              className="text-sm text-blue-800 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: deepening.content }}
+            />
           </div>
         )}
         
