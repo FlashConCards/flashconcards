@@ -189,6 +189,18 @@ export default function StatsPage() {
     return `${hours}h ${minutes}m`;
   };
 
+  const calculateWeeklyStudyTime = () => {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    
+    const weeklySessions = studySessions.filter(session => {
+      const sessionDate = new Date(session.date);
+      return sessionDate >= oneWeekAgo;
+    });
+    
+    return weeklySessions.reduce((total, session) => total + session.studyTime, 0);
+  };
+
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
   if (loading) {
@@ -228,7 +240,7 @@ export default function StatsPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -259,7 +271,7 @@ export default function StatsPage() {
                 <ChartBarIcon className="w-6 h-6 text-yellow-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Taxa de Acerto</p>
+                <p className="text-sm font-medium text-gray-600">Assertividade</p>
                 <p className="text-2xl font-bold text-gray-900">{totalStats.averageAccuracy.toFixed(1)}%</p>
               </div>
             </div>
@@ -273,6 +285,18 @@ export default function StatsPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Tempo Total</p>
                 <p className="text-2xl font-bold text-gray-900">{formatTime(totalStats.totalStudyTime)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-indigo-100 rounded-lg">
+                <CalendarIcon className="w-6 h-6 text-indigo-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Tempo/Semana</p>
+                <p className="text-2xl font-bold text-gray-900">{formatTime(calculateWeeklyStudyTime())}</p>
               </div>
             </div>
           </div>
@@ -376,7 +400,7 @@ export default function StatsPage() {
                     Erros
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Taxa de Acerto
+                    Assertividade
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Tempo
