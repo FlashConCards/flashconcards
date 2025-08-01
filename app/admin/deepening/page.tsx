@@ -4,9 +4,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
-  getDeepenings,
+  getDeepeningsBySubTopic,
   createDeepening,
   deleteDeepening,
+  getSubTopics,
   getTopics,
   getSubjects,
   getCourses
@@ -14,10 +15,17 @@ import {
 
 interface Deepening {
   id: string;
-  topicId: string;
+  subTopicId: string;
   content: string;
   createdAt: any;
   updatedAt: any;
+}
+
+interface SubTopic {
+  id: string;
+  name: string;
+  description: string;
+  topicId: string;
 }
 
 interface Topic {
@@ -41,21 +49,24 @@ export default function DeepeningPage() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const subTopicId = searchParams.get('subTopicId');
   const topicId = searchParams.get('topicId');
   const subjectId = searchParams.get('subjectId');
   const courseId = searchParams.get('courseId');
   
   const [deepenings, setDeepenings] = useState<Deepening[]>([]);
+  const [subTopics, setSubTopics] = useState<SubTopic[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
+  const [selectedSubTopic, setSelectedSubTopic] = useState<SubTopic | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newDeepening, setNewDeepening] = useState({
-    topicId: '',
+    subTopicId: '',
     content: ''
   });
   const editorRef = useRef<HTMLDivElement>(null);
@@ -96,12 +107,21 @@ export default function DeepeningPage() {
               if (topicId) {
                 const topic = topicsData?.find(t => t.id === topicId);
                 setSelectedTopic(topic || null);
-                setNewDeepening({...newDeepening, topicId: topicId});
                 
-                // Carregar aprofundamentos do tópico
-                const deepeningsData = await getDeepenings();
-                const topicDeepenings = deepeningsData?.filter(d => d.topicId === topicId) || [];
-                setDeepenings(topicDeepenings);
+                if (topic) {
+                  const subTopicsData = await getSubTopics(topicId);
+                  setSubTopics(subTopicsData || []);
+                  
+                  if (subTopicId) {
+                    const subTopic = subTopicsData?.find(st => st.id === subTopicId);
+                    setSelectedSubTopic(subTopic || null);
+                    setNewDeepening({...newDeepening, subTopicId: subTopicId});
+                    
+                    // Carregar aprofundamentos do subtópico
+                    const deepeningsData = await getDeepeningsBySubTopic(subTopicId);
+                    setDeepenings(deepeningsData || []);
+                  }
+                }
               }
             }
           }
@@ -116,49 +136,40 @@ export default function DeepeningPage() {
   };
 
   useEffect(() => {
-    if (user?.isAdmin) {
-      loadData();
-    }
-  }, [user, courseId, subjectId, topicId]);
+    loadData();
+  }, [courseId, subjectId, topicId, subTopicId]);
 
-  // Funções do editor rico
   const execCommand = (command: string, value: string = '') => {
     document.execCommand(command, false, value);
-    if (editorRef.current) {
-      setNewDeepening({...newDeepening, content: editorRef.current.innerHTML});
-  }
+    editorRef.current?.focus();
   };
 
   const insertHTML = (html: string) => {
     if (editorRef.current) {
       const selection = window.getSelection();
-    if (selection && selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        range.deleteContents();
-        const div = document.createElement('div');
-        div.innerHTML = html;
-        const fragment = document.createDocumentFragment();
-        while (div.firstChild) {
-          fragment.appendChild(div.firstChild);
-        }
-        range.insertNode(fragment);
-        setNewDeepening({...newDeepening, content: editorRef.current.innerHTML});
-      }
+      const range = selection?.getRangeAt(0);
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      range?.insertNode(div);
+      editorRef.current.focus();
     }
   };
 
   const handleAddDeepening = async () => {
     try {
-      if (!newDeepening.topicId || !newDeepening.content.trim()) {
+      if (!newDeepening.subTopicId || !newDeepening.content.trim()) {
         alert('Preencha todos os campos obrigatórios');
         return;
       }
 
-      await createDeepening(newDeepening);
+      await createDeepening({
+        ...newDeepening,
+        topicId: selectedTopic?.id || ''
+      });
       await loadData();
       
       setNewDeepening({
-        topicId: '',
+        subTopicId: '',
         content: ''
       });
       setShowAddModal(false);
@@ -201,14 +212,14 @@ export default function DeepeningPage() {
     <div className="min-h-screen bg-gray-100">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
-              <div>
+          <div>
             <h1 className="text-3xl font-bold text-gray-800">Gerenciar Aprofundamentos</h1>
-            {selectedCourse && selectedSubject && selectedTopic && (
+            {selectedCourse && selectedSubject && selectedTopic && selectedSubTopic && (
               <p className="text-gray-600 mt-2">
-                Curso: {selectedCourse.name} → Matéria: {selectedSubject.name} → Tópico: {selectedTopic.name}
+                Curso: {selectedCourse.name} → Matéria: {selectedSubject.name} → Tópico: {selectedTopic.name} → Subtópico: {selectedSubTopic.name}
               </p>
             )}
-              </div>
+          </div>
           <div className="flex space-x-4">
             <button
               onClick={() => router.push('/admin')}
@@ -216,7 +227,7 @@ export default function DeepeningPage() {
             >
               Voltar ao Painel
             </button>
-            {selectedTopic && (
+            {selectedSubTopic && (
               <button
                 onClick={() => setShowAddModal(true)}
                 className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
@@ -227,15 +238,39 @@ export default function DeepeningPage() {
           </div>
         </div>
 
+        {/* SubTopics Selection */}
+        {selectedTopic && subTopics.length > 0 && !selectedSubTopic && (
+          <div className="bg-white rounded-lg shadow mb-8">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-800">Selecione um Subtópico</h2>
+              <p className="text-gray-600 mt-1">Escolha um subtópico para gerenciar seus aprofundamentos</p>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {subTopics.map((subTopic) => (
+                  <div
+                    key={subTopic.id}
+                    onClick={() => router.push(`/admin/deepening?courseId=${courseId}&subjectId=${subjectId}&topicId=${topicId}&subTopicId=${subTopic.id}`)}
+                    className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all"
+                  >
+                    <h3 className="font-semibold text-gray-900 mb-2">{subTopic.name}</h3>
+                    <p className="text-sm text-gray-600">{subTopic.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Deepenings List */}
-        {selectedTopic && (
+        {selectedSubTopic && (
           <div className="bg-white rounded-lg shadow">
             <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-800">Aprofundamentos do Tópico "{selectedTopic.name}" ({deepenings.length})</h2>
+              <h2 className="text-xl font-semibold text-gray-800">Aprofundamentos do Subtópico "{selectedSubTopic.name}" ({deepenings.length})</h2>
             </div>
             <div className="p-6">
               {deepenings.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">Nenhum aprofundamento cadastrado para este tópico ainda.</p>
+                <p className="text-gray-500 text-center py-8">Nenhum aprofundamento cadastrado para este subtópico ainda.</p>
               ) : (
                 <div className="space-y-4">
                   {deepenings.map((deepening) => (
@@ -247,15 +282,15 @@ export default function DeepeningPage() {
                               className="text-gray-700"
                               dangerouslySetInnerHTML={{ __html: deepening.content }}
                             />
-          </div>
-                      </div>
+                          </div>
+                        </div>
                         <div className="ml-4">
-                        <button
-                          onClick={() => handleDeleteDeepening(deepening.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
+                          <button
+                            onClick={() => handleDeleteDeepening(deepening.id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
                             Excluir
-                        </button>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -267,10 +302,10 @@ export default function DeepeningPage() {
         )}
 
         {/* Add Deepening Modal */}
-        {showAddModal && selectedTopic && (
+        {showAddModal && selectedSubTopic && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-              <h3 className="text-lg font-semibold mb-4">Adicionar Aprofundamento para "{selectedTopic.name}"</h3>
+              <h3 className="text-lg font-semibold mb-4">Adicionar Aprofundamento para "{selectedSubTopic.name}"</h3>
               
               <div className="space-y-4">
                 {/* Rich Text Editor */}
