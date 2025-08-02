@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       // Atualizar avaliação existente
       await updateCourseRating(existingRating.id, {
         rating,
-        comment: comment || existingRating.comment,
+        comment: comment || (existingRating as any).comment || '',
         updatedAt: new Date()
       })
       return NextResponse.json({ 
