@@ -32,6 +32,15 @@ export async function POST(request: NextRequest) {
             console.log('✅ Curso encontrado:', course.name, 'ID:', selectedCourseId)
           } else {
             console.log('⚠️ Curso não encontrado:', courseName)
+            // Se não encontrar pelo nome exato, tentar buscar por similaridade
+            const similarCourse = courses.find((c: any) => 
+              c.name.toLowerCase().includes(courseName.toLowerCase()) ||
+              courseName.toLowerCase().includes(c.name.toLowerCase())
+            )
+            if (similarCourse) {
+              selectedCourseId = similarCourse.id
+              console.log('✅ Curso similar encontrado:', similarCourse.name, 'ID:', selectedCourseId)
+            }
           }
         }
       } catch (error) {

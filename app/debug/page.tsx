@@ -10,6 +10,8 @@ export default function DebugPage() {
   const router = useRouter()
   const [debugInfo, setDebugInfo] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [selectedCourse, setSelectedCourse] = useState('')
+  const [courses, setCourses] = useState<any[]>([])
 
   const createTestCourse = async () => {
     try {
@@ -67,8 +69,21 @@ export default function DebugPage() {
   useEffect(() => {
     if (user) {
       checkUserAccess()
+      loadCourses()
     }
   }, [user])
+
+  const loadCourses = async () => {
+    try {
+      const response = await fetch('/api/courses')
+      if (response.ok) {
+        const coursesData = await response.json()
+        setCourses(coursesData)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar cursos:', error)
+    }
+  }
 
   if (!user) {
     return (
@@ -104,13 +119,68 @@ export default function DebugPage() {
                 {loading ? 'Criando...' : 'Criar Curso de Teste'}
               </button>
               
-              <button
-                onClick={checkUserAccess}
-                disabled={loading}
-                className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
-              >
-                {loading ? 'Verificando...' : 'Verificar Acesso'}
-              </button>
+                             <button
+                 onClick={checkUserAccess}
+                 disabled={loading}
+                 className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
+               >
+                 {loading ? 'Verificando...' : 'Verificar Acesso'}
+               </button>
+
+               <div className="border-t pt-4">
+                 <h3 className="font-semibold mb-2">Atualizar Acesso do Usuário</h3>
+                 <select
+                   value={selectedCourse}
+                   onChange={(e) => setSelectedCourse(e.target.value)}
+                   className="w-full p-2 border rounded mb-2"
+                 >
+                   <option value="">Selecione um curso</option>
+                   {courses.map((course) => (
+                     <option key={course.id} value={course.name}>
+                       {course.name}
+                     </option>
+                   ))}
+                 </select>
+                 <button
+                   onClick={async () => {
+                     if (!selectedCourse) {
+                       toast.error('Selecione um curso')
+                       return
+                     }
+                     try {
+                       setLoading(true)
+                       const response = await fetch('/api/admin/update-user-access', {
+                         method: 'POST',
+                         headers: {
+                           'Content-Type': 'application/json',
+                         },
+                         body: JSON.stringify({
+                           userId: user.uid,
+                           courseName: selectedCourse,
+                           isPaid: true
+                         })
+                       })
+                       const result = await response.json()
+                       
+                       if (response.ok) {
+                         toast.success('Acesso atualizado com sucesso!')
+                         checkUserAccess()
+                       } else {
+                         toast.error(result.error || 'Erro ao atualizar acesso')
+                       }
+                     } catch (error) {
+                       console.error('Erro:', error)
+                       toast.error('Erro ao atualizar acesso')
+                     } finally {
+                       setLoading(false)
+                     }
+                   }}
+                   disabled={loading || !selectedCourse}
+                   className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                 >
+                   {loading ? 'Atualizando...' : 'Atualizar Acesso'}
+                 </button>
+               </div>
             </div>
           </div>
 

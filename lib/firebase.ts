@@ -1119,16 +1119,35 @@ export const getPublicCourses = async () => {
 // Buscar cursos com controle de acesso
 export const getCoursesWithAccess = async (userId: string) => {
   try {
-    // Primeiro, verificar se o acesso do usuário expirou
-    const userData = await getUserData(userId);
+    console.log('🔍 getCoursesWithAccess chamada para usuário:', userId);
     
-    // Verificar se o usuário tem acesso pago
-    if (!userData || (!userData.isPaid && !userData.isAdmin)) {
-      console.log('User does not have paid access:', userId);
+    // Buscar dados do usuário
+    const userData = await getUserData(userId);
+    console.log('👤 Dados do usuário:', {
+      uid: userData?.uid,
+      email: userData?.email,
+      isPaid: userData?.isPaid,
+      isAdmin: userData?.isAdmin,
+      selectedCourse: userData?.selectedCourse,
+      createdByAdmin: userData?.createdByAdmin
+    });
+    
+    // Verificar se o usuário existe
+    if (!userData) {
+      console.log('❌ Usuário não encontrado:', userId);
       return [];
     }
     
-    if (userData && userData.courseAccessExpiry) {
+    // Verificar se o usuário tem acesso (pago OU admin OU criado pelo admin)
+    const hasAccess = userData.isPaid || userData.isAdmin || userData.createdByAdmin;
+    
+    if (!hasAccess) {
+      console.log('❌ Usuário não tem acesso:', userId);
+      return [];
+    }
+    
+    // Verificar expiração do acesso
+    if (userData.courseAccessExpiry) {
       const expiryDate = userData.courseAccessExpiry.toDate();
       const currentDate = new Date();
       
@@ -1138,30 +1157,35 @@ export const getCoursesWithAccess = async (userId: string) => {
           selectedCourse: '',
           isPaid: false
         });
-        console.log('User access expired, removed course access');
+        console.log('❌ Acesso expirou, removido curso selecionado');
         return [];
       }
     }
 
     // Se o usuário tem um curso selecionado, retornar apenas esse curso
-    if (userData && userData.selectedCourse) {
+    if (userData.selectedCourse) {
+      console.log('📚 Buscando curso selecionado:', userData.selectedCourse);
       const courseData = await getCourseById(userData.selectedCourse);
       if (courseData) {
+        console.log('✅ Curso encontrado:', courseData.name);
         return [courseData];
+      } else {
+        console.log('❌ Curso selecionado não encontrado:', userData.selectedCourse);
       }
     }
 
     // Se não tem curso selecionado e é admin, retornar todos os cursos
-    if (userData && userData.isAdmin) {
+    if (userData.isAdmin) {
+      console.log('👑 Usuário é admin, retornando todos os cursos');
       const allCourses = await getCourses();
       return allCourses || [];
     }
 
     // Se não tem curso selecionado e não é admin, não retornar nada
-    console.log('User has no selected course and is not admin:', userId);
+    console.log('❌ Usuário não tem curso selecionado e não é admin:', userId);
     return [];
   } catch (error) {
-    console.error('Error getting courses with access:', error);
+    console.error('❌ Erro em getCoursesWithAccess:', error);
     return [];
   }
 }
