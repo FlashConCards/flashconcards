@@ -16,13 +16,14 @@ import {
   ChartBarIcon,
   PlusIcon
 } from '@heroicons/react/24/outline'
-import { User } from '@/types'
+import { User, Course } from '@/types'
 import toast from 'react-hot-toast'
 
 export default function AdminUsersPage() {
   const { user } = useAuth()
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
+  const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddUserModal, setShowAddUserModal] = useState(false)
   const [newUser, setNewUser] = useState({
@@ -41,7 +42,21 @@ export default function AdminUsersPage() {
   // Carregar usuários do Firebase
   useEffect(() => {
     loadUsers()
+    loadCourses()
   }, [])
+
+  const loadCourses = async () => {
+    try {
+      const response = await fetch('/api/courses')
+      if (response.ok) {
+        const coursesData = await response.json()
+        setCourses(coursesData)
+        console.log('Cursos carregados:', coursesData.length)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar cursos:', error)
+    }
+  }
 
   const loadUsers = async () => {
     try {
@@ -524,13 +539,21 @@ export default function AdminUsersPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Curso (Opcional)
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={newUser.courseId}
                     onChange={(e) => setNewUser(prev => ({ ...prev, courseId: e.target.value }))}
                     className="input-field"
-                    placeholder="Nome do curso"
-                  />
+                  >
+                    <option value="">Selecione um curso (opcional)</option>
+                    {courses.map((course) => (
+                      <option key={course.id} value={course.name}>
+                        {course.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Se um curso for selecionado, o usuário terá acesso automático a ele
+                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendGmailDirectAdminEmail } from '@/lib/email-gmail-direct'
+import { createUserByAdmin, getCourseById } from '@/lib/firebase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,25 +18,47 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Aqui você implementaria a criação real no Firebase
-    // Por enquanto, vamos simular
+    // Buscar o ID do curso pelo nome
+    let selectedCourseId = ''
+    if (courseName) {
+      try {
+        // Buscar todos os cursos e encontrar o que corresponde ao nome
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/courses`)
+        if (response.ok) {
+          const courses = await response.json()
+          const course = courses.find((c: any) => c.name === courseName)
+          if (course) {
+            selectedCourseId = course.id
+            console.log('✅ Curso encontrado:', course.name, 'ID:', selectedCourseId)
+          } else {
+            console.log('⚠️ Curso não encontrado:', courseName)
+          }
+        }
+      } catch (error) {
+        console.error('❌ Erro ao buscar curso:', error)
+      }
+    }
+
+    // Criar usuário no Firebase
     const userData = {
-      uid: Date.now().toString(),
       displayName,
       email,
-      photoURL: '',
-      isPaid: false,
+      password: password || '123456',
+      isPaid: true, // Usuários criados pelo admin têm acesso pago
       isActive: true,
       isAdmin: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      selectedCourse: selectedCourseId, // ID do curso selecionado
       studyTime: 0,
       cardsStudied: 0,
       cardsCorrect: 0,
       cardsWrong: 0,
     }
 
-    console.log('👤 Usuário criado:', userData)
+    console.log('👤 Criando usuário no Firebase:', userData)
+
+    // Criar usuário usando a função do Firebase
+    const userId = await createUserByAdmin(userData)
+    console.log('✅ Usuário criado com sucesso:', userId)
 
     // Enviar email de boas-vindas
     try {
@@ -53,7 +76,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         message: 'Usuário adicionado e email enviado com sucesso!',
-        user: userData
+        user: { uid: userId, ...userData }
       })
 
     } catch (emailError) {
@@ -62,7 +85,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         message: 'Usuário adicionado, mas erro ao enviar email',
-        user: userData,
+        user: { uid: userId, ...userData },
         emailError: emailError instanceof Error ? emailError.message : 'Erro desconhecido'
       })
     }
@@ -70,7 +93,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('❌ Erro ao adicionar usuário:', error)
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: error instanceof Error ? error.message : 'Erro interno do servidor' },
       { status: 500 }
     )
   }
