@@ -965,6 +965,158 @@ export const createTestimonial = async (testimonialData: any) => {
   }
 }
 
+// ===== AVALIAÇÕES DE CURSOS (/course-ratings) =====
+export const getCourseRatings = async (courseId?: string) => {
+  try {
+    let q: Query | CollectionReference = collection(db, 'course-ratings')
+    
+    if (courseId) {
+      q = query(q, where('courseId', '==', courseId))
+    }
+    
+    const querySnapshot = await getDocs(q)
+    const ratings = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as any[]
+    console.log('Course ratings loaded:', ratings.length)
+    return ratings
+  } catch (error: any) {
+    console.error('Error getting course ratings:', error)
+    return []
+  }
+}
+
+export const createCourseRating = async (ratingData: any) => {
+  try {
+    console.log('Creating course rating:', ratingData)
+    const docRef = await addDoc(collection(db, 'course-ratings'), {
+      ...ratingData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    })
+    console.log('Course rating created successfully:', docRef.id)
+    return docRef.id
+  } catch (error) {
+    console.error('Error creating course rating:', error)
+    throw error
+  }
+}
+
+export const updateCourseRating = async (ratingId: string, ratingData: any) => {
+  try {
+    console.log('Updating course rating:', ratingId, ratingData)
+    const ratingRef = doc(db, 'course-ratings', ratingId)
+    await updateDoc(ratingRef, {
+      ...ratingData,
+      updatedAt: serverTimestamp()
+    })
+    console.log('Course rating updated successfully')
+  } catch (error) {
+    console.error('Error updating course rating:', error)
+    throw error
+  }
+}
+
+export const deleteCourseRating = async (ratingId: string) => {
+  try {
+    console.log('Deleting course rating:', ratingId)
+    await deleteDoc(doc(db, 'course-ratings', ratingId))
+    console.log('Course rating deleted successfully')
+  } catch (error) {
+    console.error('Error deleting course rating:', error)
+    throw error
+  }
+}
+
+export const getUserCourseRating = async (userId: string, courseId: string) => {
+  try {
+    const q = query(
+      collection(db, 'course-ratings'),
+      where('userId', '==', userId),
+      where('courseId', '==', courseId)
+    )
+    const querySnapshot = await getDocs(q)
+    
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0]
+      return {
+        id: doc.id,
+        ...doc.data()
+      }
+    }
+    return null
+  } catch (error) {
+    console.error('Error getting user course rating:', error)
+    return null
+  }
+}
+
+export const getCourseAverageRating = async (courseId: string) => {
+  try {
+    const ratings = await getCourseRatings(courseId)
+    if (ratings.length === 0) return 0
+    
+    const totalRating = ratings.reduce((sum, rating) => sum + (rating.rating || 0), 0)
+    return totalRating / ratings.length
+  } catch (error) {
+    console.error('Error calculating average rating:', error)
+    return 0
+  }
+}
+
+// ===== COMENTÁRIOS DE CURSOS (/course-comments) =====
+export const getCourseComments = async (courseId?: string) => {
+  try {
+    let q: Query | CollectionReference = collection(db, 'course-comments')
+    
+    if (courseId) {
+      q = query(q, where('courseId', '==', courseId), orderBy('createdAt', 'desc'))
+    } else {
+      q = query(q, orderBy('createdAt', 'desc'))
+    }
+    
+    const querySnapshot = await getDocs(q)
+    const comments = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as any[]
+    console.log('Course comments loaded:', comments.length)
+    return comments
+  } catch (error: any) {
+    console.error('Error getting course comments:', error)
+    return []
+  }
+}
+
+export const createCourseComment = async (commentData: any) => {
+  try {
+    console.log('Creating course comment:', commentData)
+    const docRef = await addDoc(collection(db, 'course-comments'), {
+      ...commentData,
+      status: 'approved', // Comentários de cursos são aprovados automaticamente
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    })
+    console.log('Course comment created successfully:', docRef.id)
+    return docRef.id
+  } catch (error) {
+    console.error('Error creating course comment:', error)
+    throw error
+  }
+}
+
+export const deleteCourseComment = async (commentId: string) => {
+  try {
+    console.log('Deleting course comment:', commentId)
+    await deleteDoc(doc(db, 'course-comments', commentId))
+    console.log('Course comment deleted successfully')
+  } catch (error) {
+    console.error('Error deleting course comment:', error)
+    throw error
+  }
+}
+
 // ===== SESSÕES DE ESTUDO (/study-sessions) =====
 export const createStudySession = async (sessionData: any) => {
   try {

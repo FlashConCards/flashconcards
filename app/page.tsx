@@ -19,6 +19,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { motion } from 'framer-motion'
 import { getCourses, getTestimonials } from '@/lib/firebase'
+import TestimonialModal from '@/components/TestimonialModal'
 
 const features = [
   {
@@ -53,25 +54,26 @@ export default function HomePage() {
   const [courses, setCourses] = useState<any[]>([])
   const [testimonials, setTestimonials] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [showTestimonialModal, setShowTestimonialModal] = useState(false)
 
   // Carregar dados reais do Firebase
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true)
-        const [coursesData, testimonialsData] = await Promise.all([
-          getCourses(),
-          getTestimonials('approved')
-        ])
-        setCourses(coursesData || [])
-        setTestimonials(testimonialsData || [])
-      } catch (error) {
-        console.error('Error loading data:', error)
-      } finally {
-        setLoading(false)
-      }
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      const [coursesData, testimonialsData] = await Promise.all([
+        getCourses(),
+        getTestimonials('approved')
+      ])
+      setCourses(coursesData || [])
+      setTestimonials(testimonialsData || [])
+    } catch (error) {
+      console.error('Error loading data:', error)
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     loadData()
   }, [])
 
@@ -462,7 +464,7 @@ export default function HomePage() {
               </div>
             )}
 
-            <div className="text-center mt-8">
+            <div className="text-center mt-8 space-y-4">
               <button
                 onClick={() => router.push('/testimonials')}
                 className="btn-outline flex items-center gap-2 mx-auto"
@@ -470,10 +472,33 @@ export default function HomePage() {
                 Ver Todos os Depoimentos
                 <ArrowRightIcon className="w-4 h-4" />
               </button>
+              
+              <button
+                onClick={() => setShowTestimonialModal(true)}
+                className="btn-primary flex items-center gap-2 mx-auto"
+              >
+                Deixar Meu Depoimento
+                <ArrowRightIcon className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Modal de Testimonial */}
+      {showTestimonialModal && (
+        <TestimonialModal
+          isOpen={showTestimonialModal}
+          onClose={() => {
+            setShowTestimonialModal(false);
+            // Recarregar testimonials após enviar
+            loadData();
+          }}
+          userId={user?.uid}
+          userName={user?.displayName || ''}
+          userEmail={user?.email || ''}
+        />
+      )}
 
       {/* CTA Section */}
       <section className="py-20 bg-primary-600">

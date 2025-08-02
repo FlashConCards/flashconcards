@@ -8,11 +8,14 @@ import {
   ShoppingCartIcon,
   CreditCardIcon,
   QrCodeIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  StarIcon
 } from '@heroicons/react/24/outline';
 import { getPublicCourses, getCoursesWithAccess } from '@/lib/firebase';
 import { Course } from '@/types';
 import toast from 'react-hot-toast';
+import RatingStars from '@/components/RatingStars';
+import CourseRatingModal from '@/components/CourseRatingModal';
 
 export default function CourseSelectionPage() {
   const { user } = useAuth();
@@ -22,6 +25,9 @@ export default function CourseSelectionPage() {
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [courseRatings, setCourseRatings] = useState<{[key: string]: {rating: number, count: number}}>({});
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [selectedCourseForRating, setSelectedCourseForRating] = useState<Course | null>(null);
 
   // Carregar cursos públicos e cursos do usuário
   const loadCourses = async () => {
@@ -46,11 +52,42 @@ export default function CourseSelectionPage() {
         const accessibleCourses = await getCoursesWithAccess(user.uid);
         setUserCourses(accessibleCourses || []);
       }
+
+      // Carregar avaliações dos cursos
+      await loadCourseRatings(publicCourses);
     } catch (error) {
       console.error('Erro ao carregar cursos:', error);
       toast.error('Erro ao carregar cursos');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Carregar avaliações dos cursos
+  const loadCourseRatings = async (coursesList: Course[]) => {
+    try {
+      const ratingsData: {[key: string]: {rating: number, count: number}} = {};
+      
+      for (const course of coursesList) {
+        const response = await fetch(`/api/course-ratings?courseId=${course.id}`);
+        const data = await response.json();
+        
+        if (data.ratings && data.ratings.length > 0) {
+          ratingsData[course.id] = {
+            rating: data.averageRating || 0,
+            count: data.ratings.length
+          };
+        } else {
+          ratingsData[course.id] = {
+            rating: 0,
+            count: 0
+          };
+        }
+      }
+      
+      setCourseRatings(ratingsData);
+    } catch (error) {
+      console.error('Erro ao carregar avaliações:', error);
     }
   };
 
@@ -73,6 +110,16 @@ export default function CourseSelectionPage() {
     
     setSelectedCourse(course);
     setShowPaymentModal(true);
+  };
+
+  const handleRatingClick = (course: Course) => {
+    if (!user) {
+      toast.error('Faça login para avaliar os cursos');
+      return;
+    }
+    
+    setSelectedCourseForRating(course);
+    setShowRatingModal(true);
   };
 
   const handlePayment = async (paymentMethod: 'pix' | 'credit') => {
@@ -210,6 +257,29 @@ export default function CourseSelectionPage() {
                      <p className="text-sm sm:text-base text-gray-600 mb-4 line-clamp-3">
                        {course.description}
                      </p>
+                     
+                     {/* Avaliação do curso */}
+                     <div className="mb-4">
+                       <div className="flex items-center justify-between mb-2">
+                         <RatingStars
+                           rating={courseRatings[course.id]?.rating || 0}
+                           readonly={true}
+                           size="sm"
+                           showCount={true}
+                           count={courseRatings[course.id]?.count || 0}
+                         />
+                         <button
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             handleRatingClick(course);
+                           }}
+                           className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                         >
+                           Avaliar
+                         </button>
+                       </div>
+                     </div>
+                     
                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
                        <span className="text-2xl sm:text-3xl font-bold text-primary-600">
                          R$ {course.price?.toFixed(2).replace('.', ',') || '0,00'}
@@ -278,6 +348,24 @@ export default function CourseSelectionPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Modal de Avaliação */}
+      {showRatingModal && selectedCourseForRating && user && (
+        <CourseRatingModal
+          isOpen={showRatingModal}
+          onClose={() => {
+            setShowRatingModal(false);
+            setSelectedCourseForRating(null);
+            // Recarregar avaliações após enviar
+            loadCourseRatings(courses);
+          }}
+          courseId={selectedCourseForRating.id}
+          courseName={selectedCourseForRating.name}
+          userId={user.uid}
+          userName={user.displayName || 'Usuário'}
+          userEmail={user.email || ''}
+        />
       )}
     </div>
   );
