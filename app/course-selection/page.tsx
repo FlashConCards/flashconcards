@@ -10,7 +10,7 @@ import {
   QrCodeIcon,
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
-import { getPublicCourses } from '@/lib/firebase';
+import { getPublicCourses, getCoursesWithAccess } from '@/lib/firebase';
 import { Course } from '@/types';
 import toast from 'react-hot-toast';
 
@@ -18,16 +18,23 @@ export default function CourseSelectionPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
+  const [userCourses, setUserCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  // Carregar cursos públicos
+  // Carregar cursos públicos e cursos do usuário
   const loadCourses = async () => {
     try {
       setLoading(true);
       const publicCourses = await getPublicCourses();
       setCourses(publicCourses);
+      
+      // Se o usuário está logado, carregar seus cursos
+      if (user) {
+        const accessibleCourses = await getCoursesWithAccess(user.uid);
+        setUserCourses(accessibleCourses || []);
+      }
     } catch (error) {
       console.error('Erro ao carregar cursos:', error);
       toast.error('Erro ao carregar cursos');
@@ -38,9 +45,21 @@ export default function CourseSelectionPage() {
 
   useEffect(() => {
     loadCourses();
-  }, []);
+  }, [user]);
+
+  // Verificar se o usuário já possui acesso ao curso
+  const hasCourseAccess = (courseId: string) => {
+    return userCourses.some(course => course.id === courseId);
+  };
 
   const handleCourseSelect = (course: Course) => {
+    // Se o usuário já possui acesso, redirecionar para o dashboard
+    if (hasCourseAccess(course.id)) {
+      toast.success('Você já possui acesso a este curso!');
+      router.push('/dashboard');
+      return;
+    }
+    
     setSelectedCourse(course);
     setShowPaymentModal(true);
   };
@@ -141,39 +160,59 @@ export default function CourseSelectionPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course) => (
-              <div
-                key={course.id}
-                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => handleCourseSelect(course)}
-              >
-                <div className="aspect-video bg-gradient-to-br from-blue-500 to-purple-600 rounded-t-lg flex items-center justify-center">
-                  <AcademicCapIcon className="w-16 h-16 text-white" />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    {course.name}
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    {course.description}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-3xl font-bold text-primary-600">
-                      R$ {course.price?.toFixed(2).replace('.', ',') || '0,00'}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <ShoppingCartIcon className="w-5 h-5 text-primary-600" />
-                      <span className="text-sm font-medium text-primary-600">Comprar</span>
-                    </div>
+            {courses.map((course) => {
+              const hasAccess = hasCourseAccess(course.id);
+              
+              return (
+                <div
+                  key={course.id}
+                  className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer ${
+                    hasAccess ? 'ring-2 ring-green-500' : ''
+                  }`}
+                  onClick={() => handleCourseSelect(course)}
+                >
+                  <div className="aspect-video bg-gradient-to-br from-blue-500 to-purple-600 rounded-t-lg flex items-center justify-center relative">
+                    <AcademicCapIcon className="w-16 h-16 text-white" />
+                    {hasAccess && (
+                      <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                        DISPONÍVEL
+                      </div>
+                    )}
                   </div>
-                  {course.expirationMonths && (
-                    <p className="text-sm text-gray-500 mt-2">
-                      Acesso por {course.expirationMonths} meses
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      {course.name}
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      {course.description}
                     </p>
-                  )}
+                    <div className="flex items-center justify-between">
+                      <span className="text-3xl font-bold text-primary-600">
+                        R$ {course.price?.toFixed(2).replace('.', ',') || '0,00'}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {hasAccess ? (
+                          <>
+                            <CheckCircleIcon className="w-5 h-5 text-green-600" />
+                            <span className="text-sm font-medium text-green-600">Disponível</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCartIcon className="w-5 h-5 text-primary-600" />
+                            <span className="text-sm font-medium text-primary-600">Comprar</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    {course.expirationMonths && (
+                      <p className="text-sm text-gray-500 mt-2">
+                        Acesso por {course.expirationMonths} meses
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
