@@ -66,13 +66,13 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-8">
+      <div className="max-w-md w-full space-y-6 sm:space-y-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">Criar Conta</h2>
-          <p className="mt-2 text-gray-600">Junte-se ao FlashConCards</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Criar Conta</h2>
+          <p className="mt-2 text-sm sm:text-base text-gray-600">Junte-se ao FlashConCards</p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-6 sm:mt-8 space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">

@@ -252,36 +252,36 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 sm:py-6 gap-4 sm:gap-0">
             <div className="flex items-center">
-              <BookOpenIcon className="h-8 w-8 text-blue-600" />
-              <h1 className="ml-2 text-2xl font-bold text-gray-900">Dashboard</h1>
+              <BookOpenIcon className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+              <h1 className="ml-2 text-xl sm:text-2xl font-bold text-gray-900">Dashboard</h1>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
               <button
                 onClick={() => router.push('/dashboard/study-area')}
-                className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                className="flex items-center justify-center sm:justify-start space-x-2 bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm sm:text-base"
               >
-                <BookOpenIcon className="h-5 w-5" />
+                <BookOpenIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>Área de Estudos</span>
               </button>
               
               <button
                 onClick={() => router.push('/dashboard/stats')}
-                className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+                className="flex items-center justify-center sm:justify-start space-x-2 bg-indigo-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base"
               >
-                <ChartBarIcon className="h-5 w-5" />
+                <ChartBarIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>Estatísticas</span>
               </button>
               
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-gray-900"
+                  className="flex items-center justify-center sm:justify-start space-x-2 text-gray-700 hover:text-gray-900 w-full sm:w-auto px-3 py-2 rounded-lg hover:bg-gray-100"
                 >
-                  <UserCircleIcon className="h-6 w-6" />
-                  <span>{user.displayName || user.email}</span>
+                  <UserCircleIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+                  <span className="text-sm sm:text-base truncate">{user.displayName || user.email}</span>
                 </button>
                 
                 {showUserMenu && (

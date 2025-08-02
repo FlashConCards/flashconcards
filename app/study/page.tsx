@@ -528,20 +528,20 @@ export default function StudyPage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-14 sm:h-16">
             <button
               onClick={() => router.push('/dashboard')}
-              className="flex items-center text-gray-600 hover:text-gray-900"
+              className="flex items-center text-gray-600 hover:text-gray-900 text-sm sm:text-base"
             >
-              <ArrowLeftIcon className="w-5 h-5 mr-2" />
-              Voltar
+              <ArrowLeftIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Voltar</span>
             </button>
 
-            <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-600">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <div className="text-xs sm:text-sm text-gray-600">
                 {currentIndex + 1} de {studyQueue.length}
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-xs sm:text-sm text-gray-600">
                 {formatTime(studyTime)}
               </div>
             </div>

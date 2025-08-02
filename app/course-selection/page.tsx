@@ -134,23 +134,23 @@ export default function CourseSelectionPage() {
       {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Cursos Disponíveis</h1>
-              <p className="text-gray-600">Escolha um curso e comece a estudar hoje mesmo!</p>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 sm:py-6 gap-4 sm:gap-0">
+            <div className="w-full sm:w-auto">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Cursos Disponíveis</h1>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">Escolha um curso e comece a estudar hoje mesmo!</p>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto">
               {user ? (
                 <button
                   onClick={() => router.push('/dashboard')}
-                  className="btn-outline"
+                  className="btn-outline text-sm sm:text-base px-3 sm:px-4 py-2"
                 >
                   Dashboard
                 </button>
               ) : (
                 <button
                   onClick={() => router.push('/login')}
-                  className="btn-primary"
+                  className="btn-primary text-sm sm:text-base px-3 sm:px-4 py-2"
                 >
                   Fazer Login
                 </button>
@@ -160,17 +160,17 @@ export default function CourseSelectionPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {courses.length === 0 ? (
-          <div className="text-center py-12">
-            <AcademicCapIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum curso disponível</h3>
-            <p className="text-gray-600 mb-4">
+          <div className="text-center py-8 sm:py-12">
+            <AcademicCapIcon className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">Nenhum curso disponível</h3>
+            <p className="text-sm sm:text-base text-gray-600 mb-4 px-4">
               Em breve teremos novos cursos disponíveis. Fique atento!
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {courses.map((course) => {
               const hasAccess = hasCourseAccess(course.id);
               
@@ -203,37 +203,37 @@ export default function CourseSelectionPage() {
                        </div>
                      )}
                    </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      {course.name}
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      {course.description}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-3xl font-bold text-primary-600">
-                        R$ {course.price?.toFixed(2).replace('.', ',') || '0,00'}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {hasAccess ? (
-                          <>
-                            <CheckCircleIcon className="w-5 h-5 text-green-600" />
-                            <span className="text-sm font-medium text-green-600">Disponível</span>
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingCartIcon className="w-5 h-5 text-primary-600" />
-                            <span className="text-sm font-medium text-primary-600">Comprar</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    {course.expirationMonths && (
-                      <p className="text-sm text-gray-500 mt-2">
-                        Acesso por {course.expirationMonths} meses
-                      </p>
-                    )}
-                  </div>
+                                     <div className="p-4 sm:p-6">
+                     <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 line-clamp-2">
+                       {course.name}
+                     </h3>
+                     <p className="text-sm sm:text-base text-gray-600 mb-4 line-clamp-3">
+                       {course.description}
+                     </p>
+                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+                       <span className="text-2xl sm:text-3xl font-bold text-primary-600">
+                         R$ {course.price?.toFixed(2).replace('.', ',') || '0,00'}
+                       </span>
+                       <div className="flex items-center gap-2">
+                         {hasAccess ? (
+                           <>
+                             <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                             <span className="text-xs sm:text-sm font-medium text-green-600">Disponível</span>
+                           </>
+                         ) : (
+                           <>
+                             <ShoppingCartIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600" />
+                             <span className="text-xs sm:text-sm font-medium text-primary-600">Comprar</span>
+                           </>
+                         )}
+                       </div>
+                     </div>
+                     {course.expirationMonths && (
+                       <p className="text-xs sm:text-sm text-gray-500 mt-2">
+                         Acesso por {course.expirationMonths} meses
+                       </p>
+                     )}
+                   </div>
                 </div>
               );
             })}
@@ -243,36 +243,36 @@ export default function CourseSelectionPage() {
 
       {/* Modal de Pagamento */}
       {showPaymentModal && selectedCourse && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md mx-auto">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
               Escolha a forma de pagamento
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
               {selectedCourse.name} - R$ {selectedCourse.price?.toFixed(2).replace('.', ',')}
             </p>
             
             <div className="space-y-3">
               <button
                 onClick={() => handlePayment('pix')}
-                className="w-full flex items-center justify-center gap-3 p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <QrCodeIcon className="w-6 h-6 text-green-600" />
-                <span className="font-medium">Pagar com PIX</span>
+                <QrCodeIcon className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+                <span className="text-sm sm:text-base font-medium">Pagar com PIX</span>
               </button>
               
               <button
                 onClick={() => handlePayment('credit')}
-                className="w-full flex items-center justify-center gap-3 p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-center gap-2 sm:gap-3 p-3 sm:p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <CreditCardIcon className="w-6 h-6 text-blue-600" />
-                <span className="font-medium">Cartão de Crédito (até 10x)</span>
+                <CreditCardIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                <span className="text-sm sm:text-base font-medium">Cartão de Crédito (até 10x)</span>
               </button>
             </div>
             
             <button
               onClick={() => setShowPaymentModal(false)}
-              className="w-full mt-4 p-3 text-gray-600 hover:text-gray-800 transition-colors"
+              className="w-full mt-4 p-3 text-sm sm:text-base text-gray-600 hover:text-gray-800 transition-colors"
             >
               Cancelar
             </button>

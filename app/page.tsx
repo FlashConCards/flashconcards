@@ -117,16 +117,16 @@ export default function HomePage() {
       {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 sm:py-6 gap-4 sm:gap-0">
             <div className="flex items-center space-x-2">
-              <BookOpenIcon className="w-8 h-8 text-primary-600" />
-              <h1 className="text-2xl font-bold text-gray-900">FlashConCards</h1>
+              <BookOpenIcon className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600" />
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">FlashConCards</h1>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto">
               {user ? (
                 <button
                   onClick={() => router.push('/dashboard')}
-                  className="btn-primary"
+                  className="btn-primary text-sm sm:text-base px-4 sm:px-6 py-2"
                 >
                   Dashboard
                 </button>
@@ -134,13 +134,13 @@ export default function HomePage() {
                 <>
                   <button
                     onClick={() => router.push('/login')}
-                    className="text-gray-600 hover:text-gray-900 font-medium"
+                    className="text-gray-600 hover:text-gray-900 font-medium text-sm sm:text-base"
                   >
                     Entrar
                   </button>
                   <button
                     onClick={() => router.push('/register')}
-                    className="btn-primary"
+                    className="btn-primary text-sm sm:text-base px-4 sm:px-6 py-2"
                   >
                     Cadastrar
                   </button>
@@ -153,14 +153,14 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
             transition={{ duration: 0.8 }}
             className="text-center"
           >
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 sm:mb-6">
               Domine os{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-purple-600">
                 Concursos
@@ -168,11 +168,11 @@ export default function HomePage() {
               <br />
               com Flashcards Inteligentes
             </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 max-w-3xl mx-auto px-4">
               Plataforma revolucionária que combina tecnologia de repetição espaçada com conteúdo
               rico para maximizar seu aprendizado e aprovação nos concursos.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
               <button
                 onClick={() => {
                   if (!user) {
@@ -182,15 +182,15 @@ export default function HomePage() {
                     router.push('/dashboard')
                   }
                 }}
-                className="btn-primary text-lg px-8 py-4 flex items-center justify-center gap-2"
+                className="btn-primary text-sm sm:text-base lg:text-lg px-6 sm:px-8 py-3 sm:py-4 flex items-center justify-center gap-2"
               >
-                <RocketLaunchIcon className="w-6 h-6" />
+                <RocketLaunchIcon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
                 Começar Agora
-                <ArrowRightIcon className="w-5 h-5" />
+                <ArrowRightIcon className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               <button
                 onClick={handleViewAllCourses}
-                className="btn-outline text-lg px-8 py-4"
+                className="btn-outline text-sm sm:text-base lg:text-lg px-6 sm:px-8 py-3 sm:py-4"
               >
                 Ver Cursos
               </button>
