@@ -100,7 +100,7 @@ export default function AdminUsersPage() {
       console.log('🚀 Iniciando adição de usuário:', newUser)
 
       // Chamar API para adicionar usuário e enviar email
-      const response = await fetch('/api/admin/add-user', {
+      const response = await fetch('/api/admin/test-add-user', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
