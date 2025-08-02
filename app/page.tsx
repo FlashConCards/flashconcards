@@ -15,11 +15,14 @@ import {
   ChartBarIcon,
   LightBulbIcon,
   ShieldCheckIcon,
-  RocketLaunchIcon
+  RocketLaunchIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline'
 import { motion } from 'framer-motion'
-import { getCourses, getTestimonials } from '@/lib/firebase'
+import { getCourses, getTestimonials, getCourseRatings, getCourseComments, getAllUsers, getFlashcards } from '@/lib/firebase'
 import TestimonialModal from '@/components/TestimonialModal'
+import CourseRatingModal from '@/components/CourseRatingModal'
+import CourseCommentModal from '@/components/CourseCommentModal'
 
 const features = [
   {
@@ -53,19 +56,49 @@ export default function HomePage() {
   // Estados para dados reais
   const [courses, setCourses] = useState<any[]>([])
   const [testimonials, setTestimonials] = useState<any[]>([])
+  const [courseRatings, setCourseRatings] = useState<any[]>([])
+  const [courseComments, setCourseComments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showTestimonialModal, setShowTestimonialModal] = useState(false)
+  const [showRatingModal, setShowRatingModal] = useState(false)
+  const [showCommentModal, setShowCommentModal] = useState(false)
+  const [selectedCourse, setSelectedCourse] = useState<any>(null)
+  
+  // Estados para estatísticas reais
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    totalFlashcards: 0,
+    totalCourses: 0
+  })
 
   // Carregar dados reais do Firebase
   const loadData = async () => {
     try {
       setLoading(true)
-      const [coursesData, testimonialsData] = await Promise.all([
+      const [coursesData, testimonialsData, ratingsData, commentsData, usersData, flashcardsData] = await Promise.all([
         getCourses(),
-        getTestimonials('approved')
+        getTestimonials('approved'),
+        getCourseRatings(),
+        getCourseComments(),
+        getAllUsers(),
+        getFlashcards()
       ])
+      
       setCourses(coursesData || [])
       setTestimonials(testimonialsData || [])
+      setCourseRatings(ratingsData || [])
+      setCourseComments(commentsData || [])
+      
+      // Calcular estatísticas reais
+      const totalStudents = usersData?.length || 0
+      const totalFlashcards = flashcardsData?.length || 0
+      const totalCourses = coursesData?.length || 0
+      
+      setStats({
+        totalStudents,
+        totalFlashcards,
+        totalCourses
+      })
     } catch (error) {
       console.error('Error loading data:', error)
     } finally {
@@ -92,7 +125,6 @@ export default function HomePage() {
       router.push('/login')
       return
     }
-    // Remover verificação de pagamento - ir direto para dashboard
     router.push('/dashboard')
   }
 
@@ -100,9 +132,26 @@ export default function HomePage() {
     if (!user) {
       router.push('/login')
     } else {
-      // Remover verificação de pagamento - ir direto para dashboard
       router.push('/dashboard')
     }
+  }
+
+  const handleRateCourse = (course: any) => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+    setSelectedCourse(course)
+    setShowRatingModal(true)
+  }
+
+  const handleCommentCourse = (course: any) => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+    setSelectedCourse(course)
+    setShowCommentModal(true)
   }
 
   const renderStars = (rating: number) => {
@@ -112,6 +161,18 @@ export default function HomePage() {
         className={`w-4 h-4 ${i < Math.floor(rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
       />
     ))
+  }
+
+  const getCourseAverageRating = (courseId: string) => {
+    const filteredRatings = courseRatings.filter((rating: any) => rating.courseId === courseId)
+    if (filteredRatings.length === 0) return 0
+    
+    const totalRating = filteredRatings.reduce((sum: number, rating: any) => sum + (rating.rating || 0), 0)
+    return totalRating / filteredRatings.length
+  }
+
+  const getCourseCommentsCount = (courseId: string) => {
+    return courseComments.filter(comment => comment.courseId === courseId).length
   }
 
   return (
@@ -162,7 +223,7 @@ export default function HomePage() {
             transition={{ duration: 0.8 }}
             className="text-center"
           >
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 sm:mb-6">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 mb-4 sm:mb-6">
               Domine os{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-purple-600">
                 Concursos
@@ -170,7 +231,7 @@ export default function HomePage() {
               <br />
               com Flashcards Inteligentes
             </h1>
-            <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 max-w-3xl mx-auto px-4">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 max-w-3xl mx-auto px-4">
               Plataforma revolucionária que combina tecnologia de repetição espaçada com conteúdo
               rico para maximizar seu aprendizado e aprovação nos concursos.
             </p>
@@ -180,19 +241,18 @@ export default function HomePage() {
                   if (!user) {
                     router.push('/register')
                   } else {
-                    // Remover verificação de pagamento - ir direto para dashboard
                     router.push('/dashboard')
                   }
                 }}
-                className="btn-primary text-sm sm:text-base lg:text-lg px-6 sm:px-8 py-3 sm:py-4 flex items-center justify-center gap-2"
+                className="btn-primary text-xs sm:text-sm md:text-base lg:text-lg px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4 flex items-center justify-center gap-2"
               >
-                <RocketLaunchIcon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+                <RocketLaunchIcon className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-6 lg:h-6" />
                 Começar Agora
-                <ArrowRightIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <ArrowRightIcon className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
               </button>
               <button
                 onClick={handleViewAllCourses}
-                className="btn-outline text-sm sm:text-base lg:text-lg px-6 sm:px-8 py-3 sm:py-4"
+                className="btn-outline text-xs sm:text-sm md:text-base lg:text-lg px-4 sm:px-6 md:px-8 py-2 sm:py-3 md:py-4"
               >
                 Ver Cursos
               </button>
@@ -203,14 +263,14 @@ export default function HomePage() {
           <motion.div
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 3, repeat: Infinity }}
-            className="absolute top-20 left-10 opacity-20"
+            className="absolute top-20 left-10 opacity-20 hidden lg:block"
           >
             <BookOpenIcon className="w-16 h-16 text-primary-400" />
           </motion.div>
           <motion.div
             animate={{ y: [0, 10, 0] }}
             transition={{ duration: 4, repeat: Infinity }}
-            className="absolute top-40 right-20 opacity-20"
+            className="absolute top-40 right-20 opacity-20 hidden lg:block"
           >
             <AcademicCapIcon className="w-12 h-12 text-purple-400" />
           </motion.div>
@@ -224,18 +284,18 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="grid grid-cols-2 md:grid-cols-3 gap-8 text-center"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center"
           >
             <div>
-              <div className="text-3xl font-bold text-primary-600 mb-2">{courses.length}</div>
+              <div className="text-3xl font-bold text-primary-600 mb-2">{stats.totalCourses}</div>
               <div className="text-gray-600">Cursos Disponíveis</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-primary-600 mb-2">730</div>
+              <div className="text-3xl font-bold text-primary-600 mb-2">{stats.totalFlashcards}</div>
               <div className="text-gray-600">Flashcards</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-primary-600 mb-2">4.2k</div>
+              <div className="text-3xl font-bold text-primary-600 mb-2">{stats.totalStudents}</div>
               <div className="text-gray-600">Estudantes</div>
             </div>
           </motion.div>
@@ -259,7 +319,7 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {loading ? (
               <div className="col-span-full text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
@@ -270,90 +330,119 @@ export default function HomePage() {
                 <p className="text-gray-600">Nenhum curso disponível no momento.</p>
               </div>
             ) : (
-              (courses || []).map((course: any, index: number) => (
-                <motion.div
-                  key={course.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
-                  transition={{ duration: 0.8, delay: 0.6 + index * 0.1 }}
-                  whileHover={{ y: -5, scale: 1.02 }}
-                  className="bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer transform transition-all duration-300"
-                  onClick={() => handleCourseClick(course.id)}
-                >
-                  <div className="relative">
-                    {course.image ? (
-                      <img
-                        src={course.image}
-                        alt={course.name}
-                        className="w-full h-48 object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder-course.jpg';
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
-                        <BookOpenIcon className="h-12 w-12 text-gray-400" />
-                      </div>
-                    )}
-                    <div className="absolute top-4 right-4 bg-green-500 text-white px-2 py-1 rounded-full text-sm font-medium">
-                      Ativo
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-xl font-bold text-gray-900">{course.name}</h3>
-                      <div className="flex items-center">
-                        {renderStars(course.rating)}
-                        <span className="ml-1 text-sm text-gray-600">({course.rating})</span>
+              (courses || []).map((course: any, index: number) => {
+                const averageRating = getCourseAverageRating(course.id)
+                const commentsCount = getCourseCommentsCount(course.id)
+                
+                return (
+                  <motion.div
+                    key={course.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
+                    transition={{ duration: 0.8, delay: 0.6 + index * 0.1 }}
+                    whileHover={{ y: -5, scale: 1.02 }}
+                    className="bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer transform transition-all duration-300"
+                    onClick={() => handleCourseClick(course.id)}
+                  >
+                    <div className="relative">
+                      {course.image ? (
+                        <img
+                          src={course.image}
+                          alt={course.name}
+                          className="w-full h-48 object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder-course.jpg';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                          <BookOpenIcon className="h-12 w-12 text-gray-400" />
+                        </div>
+                      )}
+                      <div className="absolute top-4 right-4 bg-green-500 text-white px-2 py-1 rounded-full text-sm font-medium">
+                        Ativo
                       </div>
                     </div>
-                    <p className="text-gray-600 mb-4">{course.description}</p>
+                    <div className="p-4 sm:p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2">
+                        <h3 className="text-lg sm:text-xl font-bold text-gray-900">{course.name}</h3>
+                        <div className="flex items-center">
+                          {renderStars(averageRating)}
+                          <span className="ml-1 text-xs sm:text-sm text-gray-600">({averageRating.toFixed(1)})</span>
+                        </div>
+                      </div>
+                      <p className="text-sm sm:text-base text-gray-600 mb-4">{course.description}</p>
 
-                    <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                      <div className="flex items-center text-gray-600">
-                        <BookOpenIcon className="w-4 h-4 mr-2" />
-                        {course.subjects} matérias
+                      <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-4 text-xs sm:text-sm">
+                        <div className="flex items-center text-gray-600">
+                          <BookOpenIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                          {course.subjects} matérias
+                        </div>
+                        <div className="flex items-center text-gray-600">
+                          <AcademicCapIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                          {course.flashcards} flashcards
+                        </div>
+                        <div className="flex items-center text-gray-600">
+                          <UserGroupIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                          {course.students} alunos
+                        </div>
+                        <div className="flex items-center text-gray-600">
+                          <ClockIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                          {course.expirationMonths || 6} meses
+                        </div>
                       </div>
-                      <div className="flex items-center text-gray-600">
-                        <AcademicCapIcon className="w-4 h-4 mr-2" />
-                        {course.flashcards} flashcards
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <UserGroupIcon className="w-4 h-4 mr-2" />
-                        {course.students} alunos
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <ClockIcon className="w-4 h-4 mr-2" />
-                        Acesso vitalício
-                      </div>
-                    </div>
 
-                    <div className="mb-4">
-                      <h4 className="font-semibold text-gray-900 mb-2">Principais Matérias:</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {(course.features || []).map((feature: any, idx: number) => (
-                          <span
-                            key={idx}
-                            className="bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded-full"
-                          >
-                            {feature}
-                          </span>
-                        ))}
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Principais Matérias:</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {(course.features || []).map((feature: any, idx: number) => (
+                            <span
+                              key={idx}
+                              className="bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded-full"
+                            >
+                              {feature}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="text-2xl font-bold text-primary-600">
-                        R$ {course.price.toFixed(2).replace('.', ',')}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+                        <div className="text-xl sm:text-2xl font-bold text-primary-600">
+                          R$ {course.price.toFixed(2).replace('.', ',')}
+                        </div>
+                        <button className="btn-primary flex items-center gap-2 text-xs sm:text-sm">
+                          {!user ? 'Entrar para Comprar' : !user.isPaid ? 'Comprar Agora' : 'Acessar'}
+                          <ArrowRightIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                        </button>
                       </div>
-                      <button className="btn-primary flex items-center gap-2">
-                        {!user ? 'Entrar para Comprar' : !user.isPaid ? 'Comprar Agora' : 'Acessar'}
-                        <ArrowRightIcon className="w-4 h-4" />
-                      </button>
+
+                      {/* Botões de avaliação e comentário */}
+                      <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRateCourse(course)
+                          }}
+                          className="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm text-primary-600 hover:text-primary-700 border border-primary-200 rounded-lg hover:bg-primary-50 transition-colors"
+                        >
+                          <StarIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                          Avaliar
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleCommentCourse(course)
+                          }}
+                          className="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          <ChatBubbleLeftRightIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                          Comentar ({commentsCount})
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))
+                  </motion.div>
+                )
+              })
             )}
           </div>
         </div>
@@ -376,21 +465,21 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                                {(features || []).map((feature, index) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+            {(features || []).map((feature, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
                 transition={{ duration: 0.8, delay: 1 + index * 0.1 }}
                 whileHover={{ y: -5 }}
-                className="text-center p-6 rounded-lg hover:bg-gray-50 transition-colors"
+                className="text-center p-4 sm:p-6 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <feature.icon className="w-8 h-8 text-primary-600" />
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <feature.icon className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                <p className="text-sm sm:text-base text-gray-600">{feature.description}</p>
               </motion.div>
             ))}
           </div>
@@ -491,10 +580,43 @@ export default function HomePage() {
           isOpen={showTestimonialModal}
           onClose={() => {
             setShowTestimonialModal(false);
-            // Recarregar testimonials após enviar
             loadData();
           }}
           userId={user?.uid}
+          userName={user?.displayName || ''}
+          userEmail={user?.email || ''}
+        />
+      )}
+
+      {/* Modal de Avaliação de Curso */}
+      {showRatingModal && selectedCourse && (
+        <CourseRatingModal
+          isOpen={showRatingModal}
+          onClose={() => {
+            setShowRatingModal(false);
+            setSelectedCourse(null);
+            loadData();
+          }}
+          courseId={selectedCourse.id}
+          courseName={selectedCourse.name}
+          userId={user?.uid || ''}
+          userName={user?.displayName || ''}
+          userEmail={user?.email || ''}
+        />
+      )}
+
+      {/* Modal de Comentário de Curso */}
+      {showCommentModal && selectedCourse && (
+        <CourseCommentModal
+          isOpen={showCommentModal}
+          onClose={() => {
+            setShowCommentModal(false);
+            setSelectedCourse(null);
+            loadData();
+          }}
+          courseId={selectedCourse.id}
+          courseName={selectedCourse.name}
+          userId={user?.uid || ''}
           userName={user?.displayName || ''}
           userEmail={user?.email || ''}
         />
@@ -520,7 +642,6 @@ export default function HomePage() {
                   if (!user) {
                     router.push('/register')
                   } else {
-                    // Remover verificação de pagamento - ir direto para dashboard
                     router.push('/dashboard')
                   }
                 }}
@@ -543,7 +664,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <BookOpenIcon className="w-8 h-8 text-primary-400" />
