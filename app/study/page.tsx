@@ -64,8 +64,8 @@ export default function StudyPage() {
       return;
     }
 
-    // Verificar se o usuário tem acesso pago ou é admin
-    if (!user.isPaid && !user.isAdmin) {
+    // Verificar se o usuário tem acesso pago, é admin ou foi criado pelo admin
+    if (!user.isPaid && !user.isAdmin && !user.createdByAdmin) {
       toast.error('Você precisa ter acesso pago para estudar. Entre em contato conosco.');
       router.push('/contact');
       return;

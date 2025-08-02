@@ -122,8 +122,8 @@ export default function CoursesPage() {
       return;
     }
 
-    // Verificar se o usuário tem acesso pago ou é admin
-    if (!user.isPaid && !user.isAdmin) {
+    // Verificar se o usuário tem acesso pago, é admin ou foi criado pelo admin
+    if (!user.isPaid && !user.isAdmin && !user.createdByAdmin) {
       toast.error('Você precisa ter acesso pago para ver os cursos. Entre em contato conosco.');
       router.push('/contact');
       return;
@@ -147,8 +147,8 @@ export default function CoursesPage() {
     )
   }
 
-  // Verificar se usuário tem acesso pago
-  if (!user.isPaid && !user.isAdmin) {
+  // Verificar se usuário tem acesso pago, é admin ou foi criado pelo admin
+  if (!user.isPaid && !user.isAdmin && !user.createdByAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
