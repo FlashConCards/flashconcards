@@ -439,6 +439,20 @@ export const createCourse = async (courseData: any) => {
   }
 }
 
+export const updateCourse = async (courseId: string, courseData: any) => {
+  try {
+    console.log('Updating course:', courseId, courseData)
+    await updateDoc(doc(db, 'courses', courseId), {
+      ...courseData,
+      updatedAt: serverTimestamp()
+    })
+    console.log('Course updated successfully:', courseId)
+  } catch (error) {
+    console.error('Error updating course:', error)
+    throw error
+  }
+}
+
 export const deleteCourse = async (courseId: string) => {
   try {
     await deleteDoc(doc(db, 'courses', courseId))

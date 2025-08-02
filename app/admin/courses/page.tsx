@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
-import { getCourses, createCourse, deleteCourse, uploadFile } from '@/lib/firebase';
+import { getCourses, createCourse, updateCourse, deleteCourse, uploadFile } from '@/lib/firebase';
 import { PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 interface Course {
@@ -12,6 +12,7 @@ interface Course {
   description: string;
   image: string;
   price: number;
+  expirationMonths?: number;
   createdAt: any;
 }
 
@@ -21,6 +22,8 @@ export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [uploading, setUploading] = useState(false);
   const [newCourse, setNewCourse] = useState({
     name: '',
@@ -29,8 +32,16 @@ export default function CoursesPage() {
     price: 0,
     expirationMonths: 6 // Padrão: 6 meses
   });
+  const [editCourse, setEditCourse] = useState({
+    name: '',
+    description: '',
+    image: '',
+    price: 0,
+    expirationMonths: 6
+  });
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
+  const [editImagePreview, setEditImagePreview] = useState<string>('');
 
   // Check if user is admin
   useEffect(() => {
@@ -186,6 +197,56 @@ export default function CoursesPage() {
     }
   };
 
+  const handleEditCourse = (course: Course) => {
+    setEditingCourse(course);
+    setEditCourse({
+      name: course.name,
+      description: course.description,
+      image: course.image,
+      price: course.price,
+      expirationMonths: course.expirationMonths || 6
+    });
+    setEditImagePreview(course.image);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateCourse = async () => {
+    if (!editingCourse) return;
+    
+    try {
+      setUploading(true);
+      
+      let imageUrl = editCourse.image;
+      
+      // Se foi selecionada uma nova imagem, usar o preview
+      if (editImagePreview && editImagePreview !== editingCourse.image) {
+        imageUrl = editImagePreview;
+      }
+      
+      const courseData = {
+        name: editCourse.name,
+        description: editCourse.description,
+        price: editCourse.price,
+        image: imageUrl,
+        expirationMonths: editCourse.expirationMonths
+      };
+      
+      await updateCourse(editingCourse.id, courseData);
+      await loadCourses();
+      
+      setShowEditModal(false);
+      setEditingCourse(null);
+      setEditCourse({ name: '', description: '', image: '', price: 0, expirationMonths: 6 });
+      setEditImagePreview('');
+      setUploading(false);
+      alert('Curso atualizado com sucesso!');
+    } catch (error: any) {
+      console.error('Error updating course:', error);
+      alert(`Erro ao atualizar curso: ${error.message}`);
+      setUploading(false);
+    }
+  };
+
   const handleDeleteCourse = async (courseId: string) => {
     if (confirm('Tem certeza que deseja excluir este curso?')) {
       try {
@@ -258,6 +319,12 @@ export default function CoursesPage() {
                 </span>
                   
                   <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleEditCourse(course)}
+                      className="text-xs bg-green-100 text-green-800 px-3 py-1 rounded hover:bg-green-200"
+                    >
+                      Editar
+                    </button>
                     <button
                       onClick={() => router.push(`/admin/subjects?courseId=${course.id}`)}
                       className="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded hover:bg-blue-200"
@@ -411,6 +478,156 @@ export default function CoursesPage() {
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {uploading ? 'Salvando...' : 'Adicionar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Course Modal */}
+        {showEditModal && editingCourse && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h3 className="text-lg font-semibold mb-4">Editar Curso</h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nome do Curso *
+                  </label>
+                  <input
+                    type="text"
+                    value={editCourse.name}
+                    onChange={(e) => setEditCourse({...editCourse, name: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Nome do curso"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Descrição *
+                  </label>
+                  <textarea
+                    value={editCourse.description}
+                    onChange={(e) => setEditCourse({...editCourse, description: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Descrição do curso"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Preço
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editCourse.price}
+                    onChange={(e) => setEditCourse({...editCourse, price: parseFloat(e.target.value) || 0})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Expiração (meses)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="60"
+                    value={editCourse.expirationMonths}
+                    onChange={(e) => setEditCourse({...editCourse, expirationMonths: parseInt(e.target.value) || 6})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="6"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Tempo de acesso ao curso em meses (padrão: 6 meses)
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Imagem do Curso
+                  </label>
+                  
+                  {editImagePreview ? (
+                    <div className="relative">
+                      <img
+                        src={editImagePreview}
+                        alt="Preview"
+                        className="w-full h-48 object-cover rounded-md"
+                      />
+                      <button
+                        onClick={() => {
+                          setEditImagePreview('');
+                          setEditCourse({...editCourse, image: ''});
+                        }}
+                        className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                      >
+                        <XMarkIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center">
+                      <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            if (file.size > 5 * 1024 * 1024) {
+                              alert('A imagem é muito grande. Selecione uma imagem menor que 5MB.');
+                              return;
+                            }
+                            
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                              const result = e.target?.result as string;
+                              setEditImagePreview(result);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        className="hidden"
+                        id="edit-image-upload"
+                      />
+                      <label
+                        htmlFor="edit-image-upload"
+                        className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                      >
+                        Selecionar Nova Imagem
+                      </label>
+                      <p className="text-sm text-gray-500 mt-2">
+                        JPG, PNG, GIF até 5MB
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingCourse(null);
+                    setEditCourse({ name: '', description: '', image: '', price: 0, expirationMonths: 6 });
+                    setEditImagePreview('');
+                  }}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleUpdateCourse}
+                  disabled={uploading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploading ? 'Salvando...' : 'Atualizar'}
                 </button>
               </div>
             </div>
