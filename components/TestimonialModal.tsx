@@ -28,6 +28,11 @@ export default function TestimonialModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    if (!userId) {
+      toast.error('Você precisa estar logado para deixar um depoimento')
+      return
+    }
+    
     if (rating === 0) {
       toast.error('Por favor, selecione uma avaliação')
       return

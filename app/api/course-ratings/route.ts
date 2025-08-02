@@ -5,7 +5,9 @@ import {
   updateCourseRating, 
   deleteCourseRating,
   getUserCourseRating,
-  getCourseAverageRating
+  getCourseAverageRating,
+  getUserAccessibleCourses,
+  getUserData
 } from '@/lib/firebase'
 
 export async function GET(request: NextRequest) {
@@ -49,21 +51,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Verificar se o usuário tem acesso ao curso
+    const userData = await getUserData(userId)
+    if (!userData) {
+      return NextResponse.json(
+        { error: 'Usuário não encontrado' },
+        { status: 404 }
+      )
+    }
+
+    // Verificar se o usuário tem acesso ao curso específico
+    const accessibleCourses = await getUserAccessibleCourses(userId)
+    if (!accessibleCourses.includes(courseId)) {
+      return NextResponse.json(
+        { error: 'Você não tem acesso a este curso para avaliá-lo' },
+        { status: 403 }
+      )
+    }
+
     // Verificar se o usuário já avaliou este curso
     const existingRating = await getUserCourseRating(userId, courseId)
 
     if (existingRating) {
-      // Atualizar avaliação existente
-      await updateCourseRating(existingRating.id, {
-        rating,
-        comment: comment || (existingRating as any).comment || '',
-        updatedAt: new Date()
-      })
-      return NextResponse.json({ 
-        success: true, 
-        message: 'Avaliação atualizada com sucesso',
-        ratingId: existingRating.id
-      })
+      return NextResponse.json(
+        { error: 'Você já avaliou este curso. Cada usuário pode avaliar um curso apenas uma vez.' },
+        { status: 400 }
+      )
     } else {
       // Criar nova avaliação
       const ratingId = await createCourseRating({

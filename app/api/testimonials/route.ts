@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { 
   getTestimonials, 
   createTestimonial, 
-  updateTestimonialStatus 
+  updateTestimonialStatus,
+  getUserData
 } from '@/lib/firebase'
 
 export async function GET(request: NextRequest) {
@@ -33,11 +34,39 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Verificar se o usuário está logado
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Você precisa estar logado para deixar um depoimento' },
+        { status: 401 }
+      )
+    }
+
+    // Verificar se o usuário existe
+    const userData = await getUserData(userId)
+    if (!userData) {
+      return NextResponse.json(
+        { error: 'Usuário não encontrado' },
+        { status: 404 }
+      )
+    }
+
+    // Verificar se o usuário já deixou um depoimento
+    const existingTestimonials = await getTestimonials('all')
+    const userTestimonial = existingTestimonials.find(t => t.userId === userId)
+    
+    if (userTestimonial) {
+      return NextResponse.json(
+        { error: 'Você já deixou um depoimento. Cada usuário pode deixar apenas um depoimento.' },
+        { status: 400 }
+      )
+    }
+
     const testimonialId = await createTestimonial({
       name,
       content,
       rating: parseInt(rating),
-      userId: userId || null,
+      userId: userId,
       userEmail: userEmail || '',
       course: body.course || 'Plataforma FlashConCards'
     })

@@ -19,7 +19,7 @@ import {
   ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline'
 import { motion } from 'framer-motion'
-import { getCourses, getTestimonials, getCourseRatings, getCourseComments, getAllUsers, getFlashcards } from '@/lib/firebase'
+import { getCourses, getTestimonials, getCourseRatings, getCourseComments, getAllUsers, getFlashcards, getUserAccessibleCourses } from '@/lib/firebase'
 import TestimonialModal from '@/components/TestimonialModal'
 import CourseRatingModal from '@/components/CourseRatingModal'
 import CourseCommentModal from '@/components/CourseCommentModal'
@@ -70,6 +70,9 @@ export default function HomePage() {
     totalFlashcards: 0,
     totalCourses: 0
   })
+  
+  // Estado para cursos acessíveis do usuário
+  const [accessibleCourses, setAccessibleCourses] = useState<string[]>([])
 
   // Carregar dados reais do Firebase
   const loadData = async () => {
@@ -99,6 +102,17 @@ export default function HomePage() {
         totalFlashcards,
         totalCourses
       })
+
+      // Carregar cursos acessíveis do usuário
+      if (user) {
+        try {
+          const userAccessibleCourses = await getUserAccessibleCourses(user.uid)
+          setAccessibleCourses(userAccessibleCourses)
+        } catch (error) {
+          console.error('Error loading accessible courses:', error)
+          setAccessibleCourses([])
+        }
+      }
     } catch (error) {
       console.error('Error loading data:', error)
     } finally {
@@ -143,6 +157,11 @@ export default function HomePage() {
     }
     setSelectedCourse(course)
     setShowRatingModal(true)
+  }
+
+  // Verificar se o usuário tem acesso ao curso
+  const userHasAccessToCourse = (courseId: string) => {
+    return accessibleCourses.includes(courseId)
   }
 
   const handleCommentCourse = (course: any) => {
@@ -333,6 +352,7 @@ export default function HomePage() {
               (courses || []).map((course: any, index: number) => {
                 const averageRating = getCourseAverageRating(course.id)
                 const commentsCount = getCourseCommentsCount(course.id)
+                const hasAccess = user ? userHasAccessToCourse(course.id) : false
                 
                 return (
                   <motion.div
@@ -418,16 +438,26 @@ export default function HomePage() {
 
                       {/* Botões de avaliação e comentário */}
                       <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleRateCourse(course)
-                          }}
-                          className="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm text-primary-600 hover:text-primary-700 border border-primary-200 rounded-lg hover:bg-primary-50 transition-colors"
-                        >
-                          <StarIcon className="w-3 h-3 sm:w-4 sm:h-4" />
-                          Avaliar
-                        </button>
+                        {hasAccess ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleRateCourse(course)
+                            }}
+                            className="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm text-primary-600 hover:text-primary-700 border border-primary-200 rounded-lg hover:bg-primary-50 transition-colors"
+                          >
+                            <StarIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                            Avaliar
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            className="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm text-gray-400 border border-gray-200 rounded-lg cursor-not-allowed"
+                          >
+                            <StarIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                            {user ? 'Sem Acesso' : 'Faça Login'}
+                          </button>
+                        )}
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
