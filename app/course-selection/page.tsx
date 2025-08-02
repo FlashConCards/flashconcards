@@ -28,6 +28,17 @@ export default function CourseSelectionPage() {
     try {
       setLoading(true);
       const publicCourses = await getPublicCourses();
+      console.log('📚 Cursos públicos carregados:', publicCourses);
+      
+      // Log das imagens dos cursos
+      publicCourses.forEach((course, index) => {
+        console.log(`Curso ${index + 1}:`, {
+          name: course.name,
+          image: course.image,
+          hasImage: !!course.image
+        });
+      });
+      
       setCourses(publicCourses);
       
       // Se o usuário está logado, carregar seus cursos
@@ -171,14 +182,27 @@ export default function CourseSelectionPage() {
                   }`}
                   onClick={() => handleCourseSelect(course)}
                 >
-                  <div className="aspect-video bg-gradient-to-br from-blue-500 to-purple-600 rounded-t-lg flex items-center justify-center relative">
-                    <AcademicCapIcon className="w-16 h-16 text-white" />
-                    {hasAccess && (
-                      <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                        DISPONÍVEL
-                      </div>
-                    )}
-                  </div>
+                                     <div className="aspect-video bg-gradient-to-br from-blue-500 to-purple-600 rounded-t-lg flex items-center justify-center relative overflow-hidden">
+                     {course.image ? (
+                       <img
+                         src={course.image}
+                         alt={course.name}
+                         className="w-full h-full object-cover"
+                         onError={(e) => {
+                           e.currentTarget.style.display = 'none';
+                           e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                         }}
+                       />
+                     ) : null}
+                     <div className={`w-full h-full flex items-center justify-center ${course.image ? 'hidden' : ''}`}>
+                       <AcademicCapIcon className="w-16 h-16 text-white" />
+                     </div>
+                     {hasAccess && (
+                       <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                         DISPONÍVEL
+                       </div>
+                     )}
+                   </div>
                   <div className="p-6">
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
                       {course.name}
