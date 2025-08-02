@@ -12,6 +12,7 @@ export default function DebugPage() {
   const [loading, setLoading] = useState(false)
   const [selectedCourse, setSelectedCourse] = useState('')
   const [courses, setCourses] = useState<any[]>([])
+  const [subjectsDebug, setSubjectsDebug] = useState<any>(null)
 
   const createTestCourse = async () => {
     try {
@@ -85,6 +86,38 @@ export default function DebugPage() {
     }
   }
 
+  const debugSubjects = async () => {
+    if (!selectedCourse) {
+      toast.error('Selecione um curso primeiro')
+      return
+    }
+
+    try {
+      setLoading(true)
+      const response = await fetch('/api/admin/debug-subjects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ courseId: selectedCourse })
+      })
+      const result = await response.json()
+      
+      if (response.ok) {
+        setSubjectsDebug(result)
+        console.log('Subjects debug:', result)
+        toast.success('Debug das matérias realizado!')
+      } else {
+        toast.error(result.error || 'Erro ao debug das matérias')
+      }
+    } catch (error) {
+      console.error('Erro:', error)
+      toast.error('Erro ao debug das matérias')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -119,13 +152,21 @@ export default function DebugPage() {
                 {loading ? 'Criando...' : 'Criar Curso de Teste'}
               </button>
               
-                             <button
-                 onClick={checkUserAccess}
-                 disabled={loading}
-                 className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
-               >
-                 {loading ? 'Verificando...' : 'Verificar Acesso'}
-               </button>
+                                               <button
+                    onClick={checkUserAccess}
+                    disabled={loading}
+                    className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
+                  >
+                    {loading ? 'Verificando...' : 'Verificar Acesso'}
+                  </button>
+
+                  <button
+                    onClick={debugSubjects}
+                    disabled={loading || !selectedCourse}
+                    className="w-full bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                  >
+                    {loading ? 'Verificando...' : 'Debug Matérias'}
+                  </button>
 
                <div className="border-t pt-4">
                  <h3 className="font-semibold mb-2">Atualizar Acesso do Usuário</h3>
@@ -257,10 +298,60 @@ export default function DebugPage() {
                   ))}
                 </div>
               </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-} 
+                         )}
+           </div>
+         )}
+
+         {subjectsDebug && (
+           <div className="bg-white p-6 rounded-lg shadow mt-6">
+             <h2 className="text-xl font-semibold mb-4">Debug das Matérias</h2>
+             
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+               <div>
+                 <h3 className="font-semibold mb-2">Cursos</h3>
+                 <div className="space-y-1 text-sm">
+                   <p><strong>Total de Cursos:</strong> {subjectsDebug.allCourses?.length || 0}</p>
+                   {subjectsDebug.allCourses?.map((course: any) => (
+                     <div key={course.id} className="border p-2 rounded">
+                       <p><strong>ID:</strong> {course.id}</p>
+                       <p><strong>Nome:</strong> {course.name}</p>
+                     </div>
+                   ))}
+                 </div>
+               </div>
+
+               <div>
+                 <h3 className="font-semibold mb-2">Todas as Matérias</h3>
+                 <div className="space-y-1 text-sm">
+                   <p><strong>Total de Matérias:</strong> {subjectsDebug.allSubjects?.length || 0}</p>
+                   {subjectsDebug.allSubjects?.map((subject: any) => (
+                     <div key={subject.id} className="border p-2 rounded">
+                       <p><strong>ID:</strong> {subject.id}</p>
+                       <p><strong>Nome:</strong> {subject.name}</p>
+                       <p><strong>Curso ID:</strong> {subject.courseId}</p>
+                     </div>
+                   ))}
+                 </div>
+               </div>
+
+               <div>
+                 <h3 className="font-semibold mb-2">Matérias do Curso Selecionado</h3>
+                 <div className="space-y-1 text-sm">
+                   <p><strong>Curso ID:</strong> {subjectsDebug.courseId}</p>
+                   <p><strong>Matérias:</strong> {subjectsDebug.courseSubjects?.length || 0}</p>
+                   {subjectsDebug.courseSubjects?.map((subject: any) => (
+                     <div key={subject.id} className="border p-2 rounded bg-green-50">
+                       <p><strong>ID:</strong> {subject.id}</p>
+                       <p><strong>Nome:</strong> {subject.name}</p>
+                       <p><strong>Descrição:</strong> {subject.description}</p>
+                     </div>
+                   ))}
+                 </div>
+               </div>
+             </div>
+           </div>
+         )}
+       </div>
+     </div>
+   )
+ } 
