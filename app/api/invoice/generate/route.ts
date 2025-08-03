@@ -23,7 +23,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (payment.status !== 'approved') {
+    // Fazer cast para acessar propriedades do pagamento
+    const paymentData = payment as any;
+    if (paymentData.status !== 'approved') {
       return NextResponse.json(
         { error: 'Pagamento não foi aprovado' },
         { status: 400 }
