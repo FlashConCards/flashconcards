@@ -22,7 +22,7 @@ export const sendEmail = async ({ to, subject, html, text }: {
 
   try {
     const result = await resend.emails.send({
-      from: 'FlashConCards <noreply@flashconcards.com>',
+      from: 'FlashConCards <onboarding@resend.dev>', // Usar domínio verificado do Resend
       to: [to],
       subject,
       html,
@@ -53,7 +53,7 @@ export const sendWelcomeEmail = async (data: WelcomeEmailData) => {
       : 'Seu acesso não tem data de expiração.';
 
     const result = await resend.emails.send({
-      from: 'FlashConCards <noreply@flashconcards.com>',
+      from: 'FlashConCards <onboarding@resend.dev>', // Usar domínio verificado do Resend
       to: [userEmail],
       subject: `🎉 Bem-vindo ao ${courseName}! Sua jornada de estudos começa agora!`,
       html: `
@@ -247,7 +247,7 @@ export const sendAdminWelcomeEmail = async (data: WelcomeEmailData) => {
     const { userName, userEmail, courseName } = data;
     
     const result = await resend.emails.send({
-      from: 'FlashConCards <noreply@flashconcards.com>',
+      from: 'FlashConCards <onboarding@resend.dev>', // Usar domínio verificado do Resend
       to: [userEmail],
       subject: `🎉 Acesso Liberado! Bem-vindo ao ${courseName}!`,
       html: `
