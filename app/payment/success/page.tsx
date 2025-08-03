@@ -23,7 +23,7 @@ export default function PaymentSuccessPage() {
       return;
     }
 
-    // Carregar dados do pagamento
+    // Carregar dados do pagamento e gerar nota fiscal
     const loadPaymentData = async () => {
       try {
         setLoading(true);
@@ -32,6 +32,32 @@ export default function PaymentSuccessPage() {
 
         if (response.ok && data.success) {
           setPaymentData(data);
+          
+          // Gerar nota fiscal automaticamente se o pagamento foi aprovado
+          if (data.status === 'approved') {
+            try {
+              const invoiceResponse = await fetch('/api/invoice/generate', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  paymentId: paymentId,
+                  userId: data.external_reference?.split('_')[0] || '',
+                  courseId: data.external_reference?.split('_')[1] || '',
+                  courseName: data.description || 'Curso FlashConCards',
+                  amount: data.transaction_amount || 0
+                })
+              });
+
+              const invoiceData = await invoiceResponse.json();
+              if (invoiceData.success) {
+                console.log('✅ Nota fiscal gerada:', invoiceData.invoiceNumber);
+              }
+            } catch (error) {
+              console.error('Erro ao gerar nota fiscal:', error);
+            }
+          }
         } else {
           toast.error(data.error || 'Erro ao carregar dados do pagamento');
         }

@@ -1638,4 +1638,83 @@ export const getUserProgressBySubTopic = async (uid: string, subTopicId: string)
       lastStudied: null
     }
   }
+}
+
+// Invoice functions
+export const createInvoice = async (invoiceData: any) => {
+  try {
+    console.log('Creating invoice:', invoiceData.invoiceNumber);
+    
+    const docRef = await addDoc(collection(db, 'invoices'), {
+      ...invoiceData,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    
+    console.log('Invoice created with ID:', docRef.id);
+    return docRef.id;
+  } catch (error: any) {
+    console.error('Error creating invoice:', error);
+    throw error;
+  }
+}
+
+export const getInvoiceById = async (invoiceId: string) => {
+  try {
+    const docRef = doc(db, 'invoices', invoiceId);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      return {
+        id: docSnap.id,
+        ...docSnap.data()
+      };
+    } else {
+      return null;
+    }
+  } catch (error: any) {
+    console.error('Error getting invoice:', error);
+    return null;
+  }
+}
+
+export const getInvoicesByUserId = async (userId: string) => {
+  try {
+    const q = query(
+      collection(db, 'invoices'),
+      where('userId', '==', userId),
+      orderBy('issueDate', 'desc')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error: any) {
+    console.error('Error getting user invoices:', error);
+    return [];
+  }
+}
+
+export const getPaymentById = async (paymentId: string) => {
+  try {
+    const q = query(
+      collection(db, 'payments'),
+      where('paymentId', '==', paymentId)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0];
+      return {
+        id: doc.id,
+        ...doc.data()
+      };
+    }
+    return null;
+  } catch (error: any) {
+    console.error('Error getting payment:', error);
+    return null;
+  }
 } 
