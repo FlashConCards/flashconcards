@@ -18,6 +18,22 @@ const validateCPF = (cpf: string): boolean => {
   // Verifica se todos os dígitos são iguais (CPF inválido)
   if (/^(\d)\1{10}$/.test(cleanCPF)) return false;
   
+  // Lista de CPFs conhecidos como fake/inválidos
+  const fakeCPFs = [
+    '00000000000', '11111111111', '22222222222', '33333333333', '44444444444',
+    '55555555555', '66666666666', '77777777777', '88888888888', '99999999999',
+    '12345678909', '98765432100', '11111111111', '22222222222', '33333333333',
+    '44444444444', '55555555555', '66666666666', '77777777777', '88888888888',
+    '99999999999', '00000000000', '12345678901', '12345678902', '12345678903',
+    '12345678904', '12345678905', '12345678906', '12345678907', '12345678908',
+    '12345678909', '98765432100', '98765432101', '98765432102', '98765432103',
+    '98765432104', '98765432105', '98765432106', '98765432107', '98765432108',
+    '98765432109'
+  ];
+  
+  // Verifica se é um CPF fake conhecido
+  if (fakeCPFs.includes(cleanCPF)) return false;
+  
   // Validação do primeiro dígito verificador
   let sum = 0;
   for (let i = 0; i < 9; i++) {
@@ -35,6 +51,35 @@ const validateCPF = (cpf: string): boolean => {
   remainder = (sum * 10) % 11;
   if (remainder === 10 || remainder === 11) remainder = 0;
   if (remainder !== parseInt(cleanCPF.charAt(10))) return false;
+  
+  // Verificações adicionais para CPFs que parecem fake
+  const firstDigit = parseInt(cleanCPF.charAt(0));
+  const secondDigit = parseInt(cleanCPF.charAt(1));
+  
+  // CPFs que começam com sequências muito óbvias
+  if (firstDigit === 0 && secondDigit === 0) return false; // 00xxxxxxx
+  if (firstDigit === 1 && secondDigit === 1) return false; // 11xxxxxxx
+  if (firstDigit === 2 && secondDigit === 2) return false; // 22xxxxxxx
+  if (firstDigit === 3 && secondDigit === 3) return false; // 33xxxxxxx
+  if (firstDigit === 4 && secondDigit === 4) return false; // 44xxxxxxx
+  if (firstDigit === 5 && secondDigit === 5) return false; // 55xxxxxxx
+  if (firstDigit === 6 && secondDigit === 6) return false; // 66xxxxxxx
+  if (firstDigit === 7 && secondDigit === 7) return false; // 77xxxxxxx
+  if (firstDigit === 8 && secondDigit === 8) return false; // 88xxxxxxx
+  if (firstDigit === 9 && secondDigit === 9) return false; // 99xxxxxxx
+  
+  // CPFs com padrões sequenciais óbvios
+  if (cleanCPF.match(/^(\d)\1{2}/)) return false; // Primeiros 3 dígitos iguais
+  if (cleanCPF.match(/^(\d)\1{3}/)) return false; // Primeiros 4 dígitos iguais
+  if (cleanCPF.match(/^(\d)\1{4}/)) return false; // Primeiros 5 dígitos iguais
+  
+  // CPFs com sequências muito regulares
+  if (cleanCPF.match(/^123/)) return false; // 123xxxxxxx
+  if (cleanCPF.match(/^321/)) return false; // 321xxxxxxx
+  if (cleanCPF.match(/^456/)) return false; // 456xxxxxxx
+  if (cleanCPF.match(/^654/)) return false; // 654xxxxxxx
+  if (cleanCPF.match(/^789/)) return false; // 789xxxxxxx
+  if (cleanCPF.match(/^987/)) return false; // 987xxxxxxx
   
   return true;
 };
