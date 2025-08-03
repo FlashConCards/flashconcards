@@ -8,7 +8,8 @@ import {
   DownloadIcon,
   EyeIcon,
   CalendarIcon,
-  CurrencyDollarIcon
+  CurrencyDollarIcon,
+  EnvelopeIcon
 } from '@heroicons/react/24/outline';
 import { getInvoicesByUserId } from '@/lib/firebase';
 import toast from 'react-hot-toast';
@@ -61,6 +62,29 @@ export default function InvoicesPage() {
     } catch (error) {
       console.error('Erro ao baixar nota fiscal:', error);
       toast.error('Erro ao baixar nota fiscal');
+    }
+  };
+
+  const resendInvoiceEmail = async (invoice: any) => {
+    try {
+      const response = await fetch('/api/invoice/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ invoiceId: invoice.id })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast.success('Nota fiscal reenviada por email!');
+      } else {
+        toast.error(data.error || 'Erro ao reenviar nota fiscal');
+      }
+    } catch (error) {
+      console.error('Erro ao reenviar nota fiscal:', error);
+      toast.error('Erro ao reenviar nota fiscal');
     }
   };
 
@@ -129,29 +153,36 @@ export default function InvoicesPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        invoice.status === 'issued' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {invoice.status === 'issued' ? 'Emitida' : invoice.status}
-                      </span>
-                      <button
-                        onClick={() => downloadInvoice(invoice)}
-                        className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                        title="Baixar nota fiscal"
-                      >
-                        <DownloadIcon className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => window.open(`/invoices/${invoice.id}`, '_blank')}
-                        className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                        title="Visualizar nota fiscal"
-                      >
-                        <EyeIcon className="w-5 h-5" />
-                      </button>
-                    </div>
+                                         <div className="flex items-center space-x-2">
+                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                         invoice.status === 'issued' 
+                           ? 'bg-green-100 text-green-800' 
+                           : 'bg-gray-100 text-gray-800'
+                       }`}>
+                         {invoice.status === 'issued' ? 'Emitida' : invoice.status}
+                       </span>
+                       <button
+                         onClick={() => resendInvoiceEmail(invoice)}
+                         className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                         title="Reenviar nota fiscal por email"
+                       >
+                         <EnvelopeIcon className="w-5 h-5" />
+                       </button>
+                       <button
+                         onClick={() => downloadInvoice(invoice)}
+                         className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                         title="Baixar nota fiscal"
+                       >
+                         <DownloadIcon className="w-5 h-5" />
+                       </button>
+                       <button
+                         onClick={() => window.open(`/invoices/${invoice.id}`, '_blank')}
+                         className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                         title="Visualizar nota fiscal"
+                       >
+                         <EyeIcon className="w-5 h-5" />
+                       </button>
+                     </div>
                   </div>
                 </div>
               ))}

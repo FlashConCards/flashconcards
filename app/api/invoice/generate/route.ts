@@ -65,11 +65,30 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Nota fiscal gerada:', invoiceNumber);
 
+    // Enviar nota fiscal por email
+    try {
+      const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/invoice/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ invoiceId })
+      });
+
+      if (emailResponse.ok) {
+        console.log('✅ Email da nota fiscal enviado com sucesso');
+      } else {
+        console.error('❌ Erro ao enviar email da nota fiscal');
+      }
+    } catch (error) {
+      console.error('❌ Erro ao enviar email da nota fiscal:', error);
+    }
+
     return NextResponse.json({
       success: true,
       invoiceId,
       invoiceNumber,
-      message: 'Nota fiscal gerada com sucesso'
+      message: 'Nota fiscal gerada e enviada por email com sucesso'
     });
 
   } catch (error: any) {
