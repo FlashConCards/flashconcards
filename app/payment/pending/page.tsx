@@ -62,9 +62,9 @@ export default function PaymentPendingPage() {
         if (data.status === 'approved') {
           toast.success('Pagamento aprovado!');
           router.push('/payment/success');
-        } else if (data.status === 'pending') {
-          toast.info('Pagamento ainda em processamento...');
-          setPaymentData(data);
+                 } else if (data.status === 'pending') {
+           toast.success('Pagamento ainda em processamento...');
+           setPaymentData(data);
         } else {
           toast.error(`Status do pagamento: ${data.status}`);
         }
