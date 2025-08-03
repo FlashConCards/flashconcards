@@ -5,7 +5,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { 
   DocumentTextIcon,
-  DownloadIcon,
+  ArrowDownTrayIcon,
   EyeIcon,
   CalendarIcon,
   CurrencyDollarIcon,
@@ -173,7 +173,7 @@ export default function InvoicesPage() {
                          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                          title="Baixar nota fiscal"
                        >
-                         <DownloadIcon className="w-5 h-5" />
+                         <ArrowDownTrayIcon className="w-5 h-5" />
                        </button>
                        <button
                          onClick={() => window.open(`/invoices/${invoice.id}`, '_blank')}

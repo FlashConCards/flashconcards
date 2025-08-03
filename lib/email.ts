@@ -2,6 +2,30 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// Função genérica para enviar emails
+export const sendEmail = async ({ to, subject, html, text }: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+}) => {
+  try {
+    const result = await resend.emails.send({
+      from: 'FlashConCards <noreply@flashconcards.com>',
+      to: [to],
+      subject,
+      html,
+      text
+    });
+
+    console.log('✅ Email enviado com sucesso:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Erro ao enviar email:', error);
+    throw error;
+  }
+};
+
 export interface WelcomeEmailData {
   userName: string;
   userEmail: string;
