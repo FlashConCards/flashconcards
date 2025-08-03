@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Declaração de tipo para a variável global
+declare global {
+  var verificationCodes: Map<string, { code: string; timestamp: number; displayName: string }>;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { email, code } = await request.json();
