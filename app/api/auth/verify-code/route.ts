@@ -27,6 +27,15 @@ export async function POST(request: NextRequest) {
     }
 
     const savedData = global.verificationCodes.get(email);
+    
+    // Verificar se savedData existe
+    if (!savedData) {
+      return NextResponse.json(
+        { error: 'Código não encontrado. Solicite um novo código.' },
+        { status: 404 }
+      );
+    }
+    
     const now = Date.now();
     const tenMinutes = 10 * 60 * 1000; // 10 minutos em millisegundos
 
