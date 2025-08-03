@@ -207,7 +207,7 @@ export default function HomePage() {
             <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto">
               {user ? (
                 <button
-                  onClick={() => router.push('/')}
+                  onClick={() => router.push('/dashboard')}
                   className="btn-primary text-sm sm:text-base px-4 sm:px-6 py-2"
                 >
                   Dashboard
