@@ -193,7 +193,7 @@ export default function MediaUpload({
                   <img
                     src={url}
                     alt={`Upload ${index + 1}`}
-                    className="w-full h-24 object-cover rounded-lg"
+                    className="w-full h-24 object-contain rounded-lg bg-gray-50"
                   />
                 ) : (
                   <div className="w-full h-24 bg-gray-100 rounded-lg flex items-center justify-center">

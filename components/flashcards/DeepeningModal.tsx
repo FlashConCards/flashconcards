@@ -1,9 +1,10 @@
 'use client'
 
-import { Fragment } from 'react'
+import { Fragment, useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { XMarkIcon, PlayIcon, DocumentIcon, LinkIcon } from '@heroicons/react/24/outline'
 import { Deepening } from '@/types'
+import ImageModal from '@/components/ImageModal'
 
 interface DeepeningModalProps {
   isOpen: boolean
@@ -12,6 +13,8 @@ interface DeepeningModalProps {
 }
 
 export default function DeepeningModal({ isOpen, onClose, deepening }: DeepeningModalProps) {
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  
   if (!deepening) return null
 
   return (
@@ -77,7 +80,8 @@ export default function DeepeningModal({ isOpen, onClose, deepening }: Deepening
                                 <img
                                   src={image}
                                   alt={`Imagem ${index + 1}`}
-                                  className="w-full h-48 object-cover rounded-lg shadow-md group-hover:shadow-lg transition-shadow"
+                                  className="w-full h-auto max-h-96 object-contain rounded-lg shadow-md group-hover:shadow-lg transition-shadow cursor-pointer"
+                                  onClick={() => setSelectedImage(image)}
                                 />
                               </div>
                             ))}
@@ -168,5 +172,13 @@ export default function DeepeningModal({ isOpen, onClose, deepening }: Deepening
         </div>
       </Dialog>
     </Transition.Root>
+    
+    {/* Modal de Imagem */}
+    <ImageModal
+      isOpen={!!selectedImage}
+      onClose={() => setSelectedImage(null)}
+      imageUrl={selectedImage || ''}
+      alt="Imagem em tamanho completo"
+    />
   )
 } 
