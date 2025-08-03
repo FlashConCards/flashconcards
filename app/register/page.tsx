@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
 export default function RegisterPage() {
@@ -12,17 +12,90 @@ export default function RegisterPage() {
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    verificationCode: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [sendingCode, setSendingCode] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [verifyingCode, setVerifyingCode] = useState(false);
   const { register } = useAuth();
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const sendVerificationCode = async () => {
+    if (!formData.email) {
+      toast.error('Digite seu email primeiro');
+      return;
+    }
+
+    setSendingCode(true);
+    try {
+      const response = await fetch('/api/auth/send-verification-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          displayName: formData.name
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast.success('Código enviado para seu email!');
+        setCodeSent(true);
+      } else {
+        toast.error(data.error || 'Erro ao enviar código');
+      }
+    } catch (error) {
+      console.error('Erro ao enviar código:', error);
+      toast.error('Erro ao enviar código de verificação');
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  const verifyCode = async () => {
+    if (!formData.verificationCode) {
+      toast.error('Digite o código de verificação');
+      return;
+    }
+
+    setVerifyingCode(true);
+    try {
+      const response = await fetch('/api/auth/verify-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          code: formData.verificationCode
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast.success('Código verificado com sucesso!');
+        // Continuar com o registro
+        await completeRegistration();
+      } else {
+        toast.error(data.error || 'Erro ao verificar código');
+      }
+    } catch (error) {
+      console.error('Erro ao verificar código:', error);
+      toast.error('Erro ao verificar código');
+    } finally {
+      setVerifyingCode(false);
+    }
+  };
+
+  const completeRegistration = async () => {
     if (formData.password !== formData.confirmPassword) {
       toast.error('As senhas não coincidem');
       return;
@@ -55,6 +128,22 @@ export default function RegisterPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!codeSent) {
+      toast.error('Você precisa enviar e verificar o código primeiro');
+      return;
+    }
+
+    if (!formData.verificationCode) {
+      toast.error('Digite o código de verificação');
+      return;
+    }
+
+    await verifyCode();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,17 +183,62 @@ export default function RegisterPage() {
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email
               </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="seu@email.com"
-              />
+              <div className="mt-1 flex space-x-2">
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="seu@email.com"
+                />
+                <button
+                  type="button"
+                  onClick={sendVerificationCode}
+                  disabled={sendingCode || !formData.email}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                >
+                  <EnvelopeIcon className="w-4 h-4" />
+                  <span>{sendingCode ? 'Enviando...' : 'Enviar Código'}</span>
+                </button>
+              </div>
+              {codeSent && (
+                <p className="mt-1 text-sm text-green-600">
+                  ✅ Código enviado! Verifique seu email.
+                </p>
+              )}
             </div>
+
+            {codeSent && (
+              <div>
+                <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700">
+                  Código de Verificação
+                </label>
+                <div className="mt-1 flex space-x-2">
+                  <input
+                    id="verificationCode"
+                    name="verificationCode"
+                    type="text"
+                    required
+                    value={formData.verificationCode}
+                    onChange={handleChange}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Digite o código de 6 dígitos"
+                    maxLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={verifyCode}
+                    disabled={verifyingCode || !formData.verificationCode}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {verifyingCode ? 'Verificando...' : 'Verificar'}
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
