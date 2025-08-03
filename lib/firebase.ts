@@ -1236,9 +1236,9 @@ export const getUserAccessibleCourses = async (userId: string) => {
     // 1. Buscar dados do usuário para ver permissões do admin
     const userData = await getUserData(userId)
     
-    // Verificar se o usuário tem acesso pago
-    if (!userData || (!userData.isPaid && !userData.isAdmin)) {
-      console.log('User does not have paid access for accessible courses:', userId);
+    // Verificar se o usuário tem acesso (pago OU admin OU criado pelo admin)
+    if (!userData || (!userData.isPaid && !userData.isAdmin && !userData.createdByAdmin)) {
+      console.log('User does not have access for accessible courses:', userId);
       return [];
     }
     
