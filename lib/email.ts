@@ -1,6 +1,11 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Verificar se a API key do Resend está configurada
+if (!process.env.RESEND_API_KEY) {
+  console.warn('⚠️ RESEND_API_KEY não configurada. Emails não serão enviados.');
+}
+
+const resend = new Resend(process.env.RESEND_API_KEY || 'dummy-key');
 
 // Função genérica para enviar emails
 export const sendEmail = async ({ to, subject, html, text }: {
@@ -9,6 +14,12 @@ export const sendEmail = async ({ to, subject, html, text }: {
   html: string;
   text: string;
 }) => {
+  // Verificar se a API key está configurada
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('⚠️ RESEND_API_KEY não configurada. Email não enviado.');
+    return { id: 'dummy-id', from: 'dummy@example.com', to: [to], subject };
+  }
+
   try {
     const result = await resend.emails.send({
       from: 'FlashConCards <noreply@flashconcards.com>',
