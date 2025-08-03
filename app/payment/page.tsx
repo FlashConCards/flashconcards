@@ -9,6 +9,7 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import QRCode from 'qrcode';
 
 export default function PaymentPage() {
   const searchParams = useSearchParams();
@@ -16,6 +17,7 @@ export default function PaymentPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentData, setPaymentData] = useState<any>(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
 
   const paymentId = searchParams.get('paymentId');
   const method = searchParams.get('method');
@@ -49,12 +51,23 @@ export default function PaymentPage() {
               // Pagamento aprovado, redirecionar para sucesso
               toast.success('Pagamento aprovado!');
               router.push('/payment/success');
-            } else if (data.status === 'pending') {
-              // Pagamento pendente, mostrar QR code se for PIX
-              if (data.payment_method_id === 'pix') {
-                setPaymentData(data);
-                setLoading(false);
-              } else {
+            } else              if (data.status === 'pending') {
+               // Pagamento pendente, mostrar QR code se for PIX
+               if (data.payment_method_id === 'pix') {
+                 setPaymentData(data);
+                 
+                 // Gerar QR code se tiver os dados
+                 if (data.pixQrCode) {
+                   try {
+                     const qrCodeDataUrl = await QRCode.toDataURL(data.pixQrCode);
+                     setQrCodeUrl(qrCodeDataUrl);
+                   } catch (error) {
+                     console.error('Erro ao gerar QR code:', error);
+                   }
+                 }
+                 
+                 setLoading(false);
+               } else {
                 toast.success('Pagamento em processamento...');
                 setTimeout(() => {
                   router.push('/payment/pending');
@@ -159,18 +172,36 @@ export default function PaymentPage() {
                 )}
               </div>
 
-              {/* QR Code placeholder - você precisará implementar a geração real do QR code */}
-              <div className="bg-white border-2 border-gray-300 rounded-lg p-8 mb-6">
-                <div className="text-center">
-                  <QrCodeIcon className="w-32 h-32 text-gray-400 mx-auto mb-4" />
-                  <p className="text-sm text-gray-500">
-                    QR Code do PIX será gerado aqui
-                  </p>
-                  <p className="text-xs text-gray-400 mt-2">
-                    (Implementar geração do QR code)
-                  </p>
-                </div>
-              </div>
+                             {/* QR Code real */}
+               <div className="bg-white border-2 border-gray-300 rounded-lg p-8 mb-6">
+                 <div className="text-center">
+                   {qrCodeUrl ? (
+                     <div>
+                       <img 
+                         src={qrCodeUrl} 
+                         alt="QR Code PIX" 
+                         className="w-48 h-48 mx-auto mb-4"
+                       />
+                       <p className="text-sm text-gray-600 mb-2">
+                         Escaneie o QR code com o app do seu banco
+                       </p>
+                       <p className="text-xs text-gray-500">
+                         Ou copie o código PIX abaixo
+                       </p>
+                       <div className="mt-2 p-2 bg-gray-100 rounded text-xs font-mono break-all">
+                         {paymentData.pixQrCode}
+                       </div>
+                     </div>
+                   ) : (
+                     <div>
+                       <QrCodeIcon className="w-32 h-32 text-gray-400 mx-auto mb-4" />
+                       <p className="text-sm text-gray-500">
+                         Carregando QR code...
+                       </p>
+                     </div>
+                   )}
+                 </div>
+               </div>
 
               <div className="space-y-4">
                 <button

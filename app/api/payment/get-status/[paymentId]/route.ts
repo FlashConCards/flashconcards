@@ -51,7 +51,10 @@ export async function GET(
         status: paymentResult.status,
         payment_method_id: paymentResult.payment_method_id,
         transaction_amount: paymentResult.transaction_amount,
-        external_reference: paymentResult.external_reference
+        external_reference: paymentResult.external_reference,
+        // Dados do QR code PIX
+        pixQrCode: paymentResult.point_of_interaction?.transaction_data?.qr_code,
+        pixQrCodeBase64: paymentResult.point_of_interaction?.transaction_data?.qr_code_base64
       });
 
     } catch (paymentError: any) {
