@@ -24,8 +24,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Fazer cast para acessar propriedades da nota fiscal
+    const invoiceData = invoice as any;
+
     // Buscar dados do usuário
-    const userData = await getUserData(invoice.userId);
+    const userData = await getUserData(invoiceData.userId);
     if (!userData) {
       return NextResponse.json(
         { error: 'Usuário não encontrado' },
@@ -48,7 +51,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Criar conteúdo do email
-    const emailSubject = `Nota Fiscal ${invoice.invoiceNumber} - FlashConCards`;
+    const emailSubject = `Nota Fiscal ${invoiceData.invoiceNumber} - FlashConCards`;
     
     const emailHtml = `
       <!DOCTYPE html>
@@ -56,7 +59,7 @@ export async function POST(request: NextRequest) {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Nota Fiscal ${invoice.invoiceNumber}</title>
+        <title>Nota Fiscal ${invoiceData.invoiceNumber}</title>
         <style>
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -83,11 +86,11 @@ export async function POST(request: NextRequest) {
             <p>Sua nota fiscal foi gerada com sucesso! Abaixo estão os detalhes:</p>
             
             <div class="invoice-details">
-              <div class="invoice-number">${invoice.invoiceNumber}</div>
+              <div class="invoice-number">${invoiceData.invoiceNumber}</div>
               
               <div style="margin-bottom: 20px;">
-                <strong>Data de Emissão:</strong> ${formatDate(invoice.issueDate)}<br>
-                <strong>Vencimento:</strong> ${formatDate(invoice.dueDate)}<br>
+                <strong>Data de Emissão:</strong> ${formatDate(invoiceData.issueDate)}<br>
+                <strong>Vencimento:</strong> ${formatDate(invoiceData.dueDate)}<br>
                 <strong>Status:</strong> <span style="color: #059669; font-weight: bold;">Emitida</span>
               </div>
               
@@ -100,7 +103,7 @@ export async function POST(request: NextRequest) {
               
               <div style="margin-bottom: 20px;">
                 <strong>Itens:</strong>
-                ${invoice.items.map((item: any) => `
+                ${invoiceData.items.map((item: any) => `
                   <div class="item">
                     <span>${item.description}</span>
                     <span>${formatCurrency(item.totalPrice)}</span>
@@ -111,15 +114,15 @@ export async function POST(request: NextRequest) {
               <div class="total">
                 <div class="item">
                   <span>Subtotal:</span>
-                  <span>${formatCurrency(invoice.totalAmount)}</span>
+                  <span>${formatCurrency(invoiceData.totalAmount)}</span>
                 </div>
                 <div class="item">
                   <span>Impostos:</span>
-                  <span>${formatCurrency(invoice.taxAmount)}</span>
+                  <span>${formatCurrency(invoiceData.taxAmount)}</span>
                 </div>
                 <div class="item">
                   <span><strong>Total:</strong></span>
-                  <span><strong>${formatCurrency(invoice.netAmount)}</strong></span>
+                  <span><strong>${formatCurrency(invoiceData.netAmount)}</strong></span>
                 </div>
               </div>
             </div>
@@ -150,22 +153,22 @@ export async function POST(request: NextRequest) {
     `;
 
     const emailText = `
-      FlashConCards - Nota Fiscal ${invoice.invoiceNumber}
+      FlashConCards - Nota Fiscal ${invoiceData.invoiceNumber}
       
       Olá ${userData.displayName || userData.email},
       
       Sua nota fiscal foi gerada com sucesso!
       
       DETALHES DA NOTA FISCAL:
-      Número: ${invoice.invoiceNumber}
-      Data de Emissão: ${formatDate(invoice.issueDate)}
-      Vencimento: ${formatDate(invoice.dueDate)}
+      Número: ${invoiceData.invoiceNumber}
+      Data de Emissão: ${formatDate(invoiceData.issueDate)}
+      Vencimento: ${formatDate(invoiceData.dueDate)}
       Status: Emitida
       
       ITENS:
-      ${invoice.items.map((item: any) => `${item.description} - ${formatCurrency(item.totalPrice)}`).join('\n')}
+      ${invoiceData.items.map((item: any) => `${item.description} - ${formatCurrency(item.totalPrice)}`).join('\n')}
       
-      TOTAL: ${formatCurrency(invoice.netAmount)}
+      TOTAL: ${formatCurrency(invoiceData.netAmount)}
       
       Informações Importantes:
       - Esta nota fiscal é isenta de impostos conforme art. 150, VI, "d" da CF/88
