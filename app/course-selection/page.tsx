@@ -91,8 +91,32 @@ export default function CourseSelectionPage() {
     }
   };
 
+  // Verificar status de pagamento pendente
+  const checkPendingPayment = async () => {
+    if (!user) return;
+    
+    try {
+      // Buscar pagamentos pendentes do usuário
+      const response = await fetch(`/api/payment/get-status?userId=${user.uid}`);
+      const data = await response.json();
+      
+      if (data.success && data.payment && data.payment.status === 'approved') {
+        console.log('✅ Pagamento aprovado detectado, recarregando cursos...');
+        await loadCourses();
+        toast.success('Pagamento aprovado! Seu acesso foi liberado.');
+      }
+    } catch (error) {
+      console.error('Erro ao verificar pagamento pendente:', error);
+    }
+  };
+
   useEffect(() => {
     loadCourses();
+    
+    // Verificar pagamentos pendentes a cada 30 segundos
+    const interval = setInterval(checkPendingPayment, 30000);
+    
+    return () => clearInterval(interval);
   }, [user]);
 
   // Verificar se o usuário já possui acesso ao curso

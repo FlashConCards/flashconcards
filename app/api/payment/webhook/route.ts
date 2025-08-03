@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { MercadoPagoConfig, Payment } from 'mercadopago'
 import { sendGmailDirectEmail } from '@/lib/email-gmail-direct'
-import { getCourseById, getUserById } from '@/lib/firebase'
+import { getCourseById, getUserById, updateUser, calculateAccessExpiry } from '@/lib/firebase'
 
 // Configurar Mercado Pago
 const client = new MercadoPagoConfig({ 
@@ -35,19 +35,34 @@ export async function POST(request: NextRequest) {
               const course = await getCourseById(courseId) as any
               
               if (user && course) {
+                // Calcular data de expiração do acesso (6 meses por padrão)
+                const expirationMonths = course.expirationMonths || 6
+                const accessExpiryDate = calculateAccessExpiry(expirationMonths)
+                
+                // Atualizar status do usuário no Firebase
+                await updateUser(userId, {
+                  isPaid: true,
+                  selectedCourse: courseId,
+                  courseAccessExpiry: accessExpiryDate,
+                  paymentDate: new Date(),
+                  lastPaymentId: paymentId
+                })
+                
+                console.log(`✅ Usuário ${userId} atualizado com acesso ao curso ${courseId}`)
+                
                 // Enviar email de boas-vindas automaticamente
                 await sendGmailDirectEmail({
                   userName: user.displayName || 'Usuário',
                   userEmail: user.email || '',
                   courseName: course.name || 'Curso',
-                  accessExpiryDate: user.accessExpiryDate
+                  accessExpiryDate: accessExpiryDate.toLocaleDateString('pt-BR')
                 })
                 
                 console.log(`📧 Email de boas-vindas enviado para: ${user.email}`)
               }
-            } catch (emailError) {
-              console.error('❌ Erro ao enviar email de boas-vindas:', emailError)
-              // Não falhar o webhook se o email falhar
+            } catch (error) {
+              console.error('❌ Erro ao processar pagamento aprovado:', error)
+              // Não falhar o webhook se houver erro
             }
           }
         }
