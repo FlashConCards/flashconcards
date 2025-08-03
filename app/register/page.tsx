@@ -4,98 +4,80 @@ import { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { EyeIcon, EyeSlashIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon, CalendarIcon, IdentificationIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+
+// Função para validar CPF
+const validateCPF = (cpf: string): boolean => {
+  // Remove caracteres não numéricos
+  const cleanCPF = cpf.replace(/\D/g, '');
+  
+  // Verifica se tem 11 dígitos
+  if (cleanCPF.length !== 11) return false;
+  
+  // Verifica se todos os dígitos são iguais (CPF inválido)
+  if (/^(\d)\1{10}$/.test(cleanCPF)) return false;
+  
+  // Validação do primeiro dígito verificador
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cleanCPF.charAt(i)) * (10 - i);
+  }
+  let remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cleanCPF.charAt(9))) return false;
+  
+  // Validação do segundo dígito verificador
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cleanCPF.charAt(i)) * (11 - i);
+  }
+  remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cleanCPF.charAt(10))) return false;
+  
+  return true;
+};
+
+// Função para formatar CPF
+const formatCPF = (value: string): string => {
+  const cleanValue = value.replace(/\D/g, '');
+  return cleanValue.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+};
+
+// Função para validar data de nascimento
+const validateBirthDate = (birthDate: string): boolean => {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  const age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    return age - 1 >= 13; // Mínimo 13 anos
+  }
+  
+  return age >= 13;
+};
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    cpf: '',
+    birthDate: '',
     password: '',
-    confirmPassword: '',
-    verificationCode: ''
+    confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [sendingCode, setSendingCode] = useState(false);
-  const [codeSent, setCodeSent] = useState(false);
-  const [verifyingCode, setVerifyingCode] = useState(false);
   const { register } = useAuth();
   const router = useRouter();
 
-  const sendVerificationCode = async () => {
-    if (!formData.email) {
-      toast.error('Digite seu email primeiro');
-      return;
-    }
-
-    setSendingCode(true);
-    try {
-      const response = await fetch('/api/auth/send-verification-code', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          displayName: formData.name
-        })
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        toast.success('Código enviado para seu email!');
-        setCodeSent(true);
-      } else {
-        toast.error(data.error || 'Erro ao enviar código');
-      }
-    } catch (error) {
-      console.error('Erro ao enviar código:', error);
-      toast.error('Erro ao enviar código de verificação');
-    } finally {
-      setSendingCode(false);
-    }
-  };
-
-  const verifyCode = async () => {
-    if (!formData.verificationCode) {
-      toast.error('Digite o código de verificação');
-      return;
-    }
-
-    setVerifyingCode(true);
-    try {
-      const response = await fetch('/api/auth/verify-code', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          code: formData.verificationCode
-        })
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        toast.success('Código verificado com sucesso!');
-        // Continuar com o registro
-        await completeRegistration();
-      } else {
-        toast.error(data.error || 'Erro ao verificar código');
-      }
-    } catch (error) {
-      console.error('Erro ao verificar código:', error);
-      toast.error('Erro ao verificar código');
-    } finally {
-      setVerifyingCode(false);
-    }
-  };
-
-  const completeRegistration = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validações
     if (formData.password !== formData.confirmPassword) {
       toast.error('As senhas não coincidem');
       return;
@@ -106,11 +88,23 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!validateCPF(formData.cpf)) {
+      toast.error('CPF inválido');
+      return;
+    }
+
+    if (!validateBirthDate(formData.birthDate)) {
+      toast.error('Você deve ter pelo menos 13 anos para se registrar');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const userData = {
         displayName: formData.name,
+        cpf: formData.cpf.replace(/\D/g, ''), // Salvar apenas números
+        birthDate: formData.birthDate,
         isAdmin: false,
         isPaid: false,
         isActive: true,
@@ -130,27 +124,22 @@ export default function RegisterPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!codeSent) {
-      toast.error('Você precisa enviar e verificar o código primeiro');
-      return;
-    }
-
-    if (!formData.verificationCode) {
-      toast.error('Digite o código de verificação');
-      return;
-    }
-
-    await verifyCode();
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    
+    if (name === 'cpf') {
+      // Formatar CPF automaticamente
+      const formattedValue = formatCPF(value);
+      setFormData({
+        ...formData,
+        [name]: formattedValue
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
   };
 
   return (
@@ -183,62 +172,65 @@ export default function RegisterPage() {
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email
               </label>
-              <div className="mt-1 flex space-x-2">
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                value={formData.email}
+                onChange={handleChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="seu@email.com"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="cpf" className="block text-sm font-medium text-gray-700">
+                CPF
+              </label>
+              <div className="mt-1 relative">
                 <input
-                  id="email"
-                  name="email"
-                  type="email"
+                  id="cpf"
+                  name="cpf"
+                  type="text"
                   required
-                  value={formData.email}
+                  value={formData.cpf}
                   onChange={handleChange}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="seu@email.com"
+                  maxLength={14}
+                  className="block w-full px-3 py-2 pl-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="000.000.000-00"
                 />
-                <button
-                  type="button"
-                  onClick={sendVerificationCode}
-                  disabled={sendingCode || !formData.email}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                >
-                  <EnvelopeIcon className="w-4 h-4" />
-                  <span>{sendingCode ? 'Enviando...' : 'Enviar Código'}</span>
-                </button>
+                <IdentificationIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
-              {codeSent && (
-                <p className="mt-1 text-sm text-green-600">
-                  ✅ Código enviado! Verifique seu email.
+              {formData.cpf && !validateCPF(formData.cpf) && (
+                <p className="mt-1 text-sm text-red-600">
+                  ⚠️ CPF inválido
                 </p>
               )}
             </div>
 
-            {codeSent && (
-              <div>
-                <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700">
-                  Código de Verificação
-                </label>
-                <div className="mt-1 flex space-x-2">
-                  <input
-                    id="verificationCode"
-                    name="verificationCode"
-                    type="text"
-                    required
-                    value={formData.verificationCode}
-                    onChange={handleChange}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="Digite o código de 6 dígitos"
-                    maxLength={6}
-                  />
-                  <button
-                    type="button"
-                    onClick={verifyCode}
-                    disabled={verifyingCode || !formData.verificationCode}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {verifyingCode ? 'Verificando...' : 'Verificar'}
-                  </button>
-                </div>
+            <div>
+              <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700">
+                Data de Nascimento
+              </label>
+              <div className="mt-1 relative">
+                <input
+                  id="birthDate"
+                  name="birthDate"
+                  type="date"
+                  required
+                  value={formData.birthDate}
+                  onChange={handleChange}
+                  className="block w-full px-3 py-2 pl-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+                <CalendarIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
-            )}
+              {formData.birthDate && !validateBirthDate(formData.birthDate) && (
+                <p className="mt-1 text-sm text-red-600">
+                  ⚠️ Você deve ter pelo menos 13 anos
+                </p>
+              )}
+            </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
