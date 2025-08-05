@@ -88,21 +88,18 @@ export default function SubjectsPage() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [newSubject, setNewSubject] = useState({
     name: '',
-    description: '',
     courseId: '',
     order: 1,
     isActive: true
   });
   const [newTopic, setNewTopic] = useState({
     name: '',
-    description: '',
     subjectId: '',
     order: 1,
     isActive: true
   });
   const [newSubTopic, setNewSubTopic] = useState({
     name: '',
-    description: '',
     topicId: '',
     order: 1,
     isActive: true
@@ -201,7 +198,7 @@ export default function SubjectsPage() {
 
   const handleCreateSubject = async () => {
     try {
-      if (!newSubject.name || !newSubject.description) {
+      if (!newSubject.name || !newSubject.courseId) {
         alert('Preencha todos os campos obrigatórios');
         return;
       }
@@ -210,7 +207,6 @@ export default function SubjectsPage() {
       await loadData();
       setNewSubject({
         name: '',
-        description: '',
         courseId: '',
         order: 1,
         isActive: true
@@ -225,17 +221,16 @@ export default function SubjectsPage() {
 
   const handleCreateTopic = async () => {
     try {
-      if (!newTopic.name || !newTopic.description || !selectedSubject) {
+      if (!newTopic.name || !newTopic.subjectId) {
         alert('Preencha todos os campos obrigatórios');
         return;
       }
 
-      newTopic.subjectId = selectedSubject.id;
+      newTopic.subjectId = selectedSubject?.id || ''; // Ensure subjectId is set if selectedSubject is null
       await createTopic(newTopic);
-      await loadTopics(selectedSubject.id);
+      await loadTopics(selectedSubject?.id || '');
       setNewTopic({
         name: '',
-        description: '',
         subjectId: '',
         order: 1,
         isActive: true
@@ -250,17 +245,16 @@ export default function SubjectsPage() {
 
   const handleCreateSubTopic = async () => {
     try {
-      if (!newSubTopic.name || !newSubTopic.description || !selectedTopic) {
+      if (!newSubTopic.name || !newSubTopic.topicId) {
         alert('Preencha todos os campos obrigatórios');
         return;
       }
 
-      newSubTopic.topicId = selectedTopic.id;
+      newSubTopic.topicId = selectedTopic?.id || ''; // Ensure topicId is set if selectedTopic is null
       await createSubTopic(newSubTopic);
-      await loadSubTopics(selectedTopic.id);
+      await loadSubTopics(selectedTopic?.id || '');
       setNewSubTopic({
         name: '',
-        description: '',
         topicId: '',
         order: 1,
         isActive: true
@@ -306,7 +300,6 @@ export default function SubjectsPage() {
       case 'subject':
         setNewSubject({
           name: item.name,
-          description: item.description,
           courseId: item.courseId,
           order: item.order,
           isActive: item.isActive
@@ -316,7 +309,6 @@ export default function SubjectsPage() {
       case 'topic':
         setNewTopic({
           name: item.name,
-          description: item.description,
           subjectId: item.subjectId,
           order: item.order,
           isActive: item.isActive
@@ -326,7 +318,6 @@ export default function SubjectsPage() {
       case 'subtopic':
         setNewSubTopic({
           name: item.name,
-          description: item.description,
           topicId: item.topicId,
           order: item.order,
           isActive: item.isActive
@@ -457,7 +448,6 @@ export default function SubjectsPage() {
                     setEditingItem(null);
                     setNewSubject({
                       name: '',
-                      description: '',
                       courseId: '',
                       order: 1,
                       isActive: true
@@ -485,7 +475,6 @@ export default function SubjectsPage() {
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-900">{subject.name}</h3>
-                        <p className="text-sm text-gray-600">{subject.description}</p>
                       </div>
                       <div className="flex space-x-1 ml-2">
                         <button
@@ -528,7 +517,6 @@ export default function SubjectsPage() {
                       setEditingItem(null);
                       setNewTopic({
                         name: '',
-                        description: '',
                         subjectId: selectedSubject.id,
                         order: 1,
                         isActive: true
@@ -558,7 +546,6 @@ export default function SubjectsPage() {
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <h3 className="font-medium text-gray-900">{topic.name}</h3>
-                          <p className="text-sm text-gray-600">{topic.description}</p>
                         </div>
                         <div className="flex space-x-1 ml-2">
                           <button
@@ -604,7 +591,6 @@ export default function SubjectsPage() {
                       setEditingItem(null);
                       setNewSubTopic({
                         name: '',
-                        description: '',
                         topicId: selectedTopic.id,
                         order: 1,
                         isActive: true
@@ -634,7 +620,6 @@ export default function SubjectsPage() {
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <h3 className="font-medium text-gray-900">{subTopic.name}</h3>
-                          <p className="text-sm text-gray-600">{subTopic.description}</p>
                         </div>
                         <div className="flex space-x-1 ml-2">
                           <button
@@ -757,12 +742,12 @@ export default function SubjectsPage() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Descrição *
+                    Curso *
                   </label>
-                  <textarea
-                    value={newSubject.description}
-                    onChange={(e) => setNewSubject({...newSubject, description: e.target.value})}
-                    rows={3}
+                  <input
+                    type="text"
+                    value={newSubject.courseId}
+                    onChange={(e) => setNewSubject({...newSubject, courseId: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -821,14 +806,20 @@ export default function SubjectsPage() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Descrição *
+                    Matéria *
                   </label>
-                  <textarea
-                    value={newTopic.description}
-                    onChange={(e) => setNewTopic({...newTopic, description: e.target.value})}
-                    rows={3}
+                  <select
+                    value={newTopic.subjectId}
+                    onChange={(e) => setNewTopic({...newTopic, subjectId: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  >
+                    <option value="">Selecione uma matéria</option>
+                    {subjects.map((subject) => (
+                      <option key={subject.id} value={subject.id}>
+                        {subject.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -885,14 +876,20 @@ export default function SubjectsPage() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Descrição *
+                    Tópico *
                   </label>
-                  <textarea
-                    value={newSubTopic.description}
-                    onChange={(e) => setNewSubTopic({...newSubTopic, description: e.target.value})}
-                    rows={3}
+                  <select
+                    value={newSubTopic.topicId}
+                    onChange={(e) => setNewSubTopic({...newSubTopic, topicId: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  >
+                    <option value="">Selecione um tópico</option>
+                    {topics.map((topic) => (
+                      <option key={topic.id} value={topic.id}>
+                        {topic.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
