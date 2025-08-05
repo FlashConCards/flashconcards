@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   getSubjects,
   getTopics,
@@ -73,6 +73,9 @@ interface Flashcard {
 export default function SubjectsPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const courseId = searchParams.get('courseId') || '';
+  
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [subTopics, setSubTopics] = useState<SubTopic[]>([]);
@@ -88,7 +91,8 @@ export default function SubjectsPage() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [newSubject, setNewSubject] = useState({
     name: '',
-    courseId: '',
+    description: '',
+    courseId: courseId,
     order: 1,
     isActive: true
   });
@@ -198,7 +202,7 @@ export default function SubjectsPage() {
 
   const handleCreateSubject = async () => {
     try {
-      if (!newSubject.name || !newSubject.courseId) {
+      if (!newSubject.name || !newSubject.description) {
         alert('Preencha todos os campos obrigatórios');
         return;
       }
@@ -207,7 +211,8 @@ export default function SubjectsPage() {
       await loadData();
       setNewSubject({
         name: '',
-        courseId: '',
+        description: '',
+        courseId: courseId,
         order: 1,
         isActive: true
       });
@@ -300,6 +305,7 @@ export default function SubjectsPage() {
       case 'subject':
         setNewSubject({
           name: item.name,
+          description: item.description,
           courseId: item.courseId,
           order: item.order,
           isActive: item.isActive
@@ -345,7 +351,7 @@ export default function SubjectsPage() {
       switch (editingItem.type) {
         case 'subject':
           await updateSubject(editingItem.id, newSubject);
-          await loadData();
+        await loadData();
           break;
         case 'topic':
           await updateTopic(editingItem.id, newTopic);
@@ -367,7 +373,7 @@ export default function SubjectsPage() {
       setShowSubTopicModal(false);
       setShowFlashcardModal(false);
       alert('Item atualizado com sucesso!');
-    } catch (error: any) {
+      } catch (error: any) {
       console.error('Erro ao atualizar item:', error);
       alert(`Erro ao atualizar item: ${error.message}`);
     }
@@ -448,7 +454,8 @@ export default function SubjectsPage() {
                     setEditingItem(null);
                     setNewSubject({
                       name: '',
-                      courseId: '',
+                      description: '',
+                      courseId: courseId,
                       order: 1,
                       isActive: true
                     });
@@ -654,7 +661,7 @@ export default function SubjectsPage() {
           {/* Flashcards */}
           <div className="bg-white rounded-lg shadow">
             <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold text-gray-800 flex items-center">
                   <BookOpenIcon className="w-6 h-6 mr-2" />
                   Flashcards ({flashcards.length})
@@ -742,13 +749,14 @@ export default function SubjectsPage() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Curso *
+                    Descrição *
                   </label>
-                  <input
-                    type="text"
-                    value={newSubject.courseId}
-                    onChange={(e) => setNewSubject({...newSubject, courseId: e.target.value})}
+                  <textarea
+                    value={newSubject.description}
+                    onChange={(e) => setNewSubject({...newSubject, description: e.target.value})}
+                    rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Descreva o conteúdo desta matéria..."
                   />
                 </div>
 
@@ -955,7 +963,7 @@ export default function SubjectsPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Explicação (opcional)
