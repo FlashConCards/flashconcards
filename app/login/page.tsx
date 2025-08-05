@@ -27,7 +27,19 @@ export default function LoginPage() {
       setLoading(true);
       await login(email, password);
       toast.success('Login realizado com sucesso!');
-      router.push('/dashboard');
+      
+      // Verificar se é admin e redirecionar adequadamente
+      const adminEmails = [
+        'claudioghabryel.cg@gmail.com',
+        'natalhia775@gmail.com',
+        'claudioghabryel7@gmail.com'
+      ];
+      
+      if (adminEmails.includes(email)) {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (error: any) {
       console.error('Login error:', error);
       toast.error(error.message || 'Erro ao fazer login');
