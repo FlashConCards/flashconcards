@@ -1,64 +1,62 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData()
-    const file = formData.get('file') as File
-    const type = formData.get('type') as string // 'image', 'video', 'pdf'
-    const path = formData.get('path') as string
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+    const path = formData.get('path') as string;
 
-    if (!file) {
+    if (!file || !path) {
       return NextResponse.json(
-        { success: false, error: 'Nenhum arquivo fornecido' },
+        { error: 'Arquivo e caminho são obrigatórios' },
         { status: 400 }
-      )
+      );
     }
 
     // Validar tipo de arquivo
-    const allowedTypes = {
-      image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-      video: ['video/mp4', 'video/webm', 'video/ogg'],
-      pdf: ['application/pdf']
-    }
-
-    if (!allowedTypes[type as keyof typeof allowedTypes]?.includes(file.type)) {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { success: false, error: 'Tipo de arquivo não permitido' },
+        { error: 'Tipo de arquivo não suportado. Use apenas imagens (JPEG, PNG, GIF, WebP).' },
         { status: 400 }
-      )
+      );
     }
 
-    // Validar tamanho do arquivo (10MB máximo)
-    const maxSize = 10 * 1024 * 1024 // 10MB
+    // Validar tamanho (máximo 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
       return NextResponse.json(
-        { success: false, error: 'Arquivo muito grande. Máximo 10MB.' },
+        { error: 'Arquivo muito grande. Tamanho máximo: 5MB.' },
         { status: 400 }
-      )
+      );
     }
 
-    // Gerar nome único para o arquivo
-    const timestamp = Date.now()
-    const fileName = `${type}/${timestamp}_${file.name}`
-    const fullPath = path ? `${path}/${fileName}` : fileName
+    // Converter File para Buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
 
-    // Mock: Upload para Firebase Storage (temporário para deploy)
-    const downloadURL = `https://mock-storage-url.com/${fullPath}`
+    // Upload para Firebase Storage
+    const storageRef = ref(storage, path);
+    const metadata = {
+      contentType: file.type,
+      cacheControl: 'public, max-age=31536000',
+    };
 
-    return NextResponse.json({
-      success: true,
-      url: downloadURL,
-      path: fullPath,
-      fileName: file.name,
-      size: file.size,
-      type: file.type
-    })
+    const snapshot = await uploadBytes(storageRef, buffer, metadata);
+    const downloadURL = await getDownloadURL(snapshot.ref);
 
-  } catch (error) {
-    console.error('Erro no upload:', error)
+    return NextResponse.json({ 
+      success: true, 
+      url: downloadURL 
+    });
+
+  } catch (error: any) {
+    console.error('Error uploading file:', error);
     return NextResponse.json(
-      { success: false, error: 'Erro ao fazer upload do arquivo' },
+      { error: `Erro no upload: ${error.message}` },
       { status: 500 }
-    )
+    );
   }
 } 

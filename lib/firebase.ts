@@ -1558,7 +1558,6 @@ export const uploadFile = async (file: File, path: string) => {
     console.log('=== UPLOAD FILE START ===');
     console.log('File:', file.name, 'Size:', file.size, 'Type:', file.type);
     console.log('Path:', path);
-    console.log('Storage bucket:', storage.app.options.storageBucket);
     
     // Validar tipo de arquivo
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -1572,32 +1571,34 @@ export const uploadFile = async (file: File, path: string) => {
       throw new Error('Arquivo muito grande. Tamanho máximo: 5MB.');
     }
     
-    const storageRef = ref(storage, path);
-    console.log('Storage reference created');
+    // Usar API route para contornar CORS
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('path', path);
     
-    // Adicionar metadata para melhor compatibilidade
-    const metadata = {
-      contentType: file.type,
-      cacheControl: 'public, max-age=31536000',
-    };
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
     
-    const snapshot = await uploadBytes(storageRef, file, metadata);
-    console.log('Upload completed, getting download URL...');
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Erro no upload');
+    }
     
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    console.log('Download URL:', downloadURL);
+    const result = await response.json();
+    console.log('Upload completed via API route');
+    console.log('Download URL:', result.url);
     console.log('=== UPLOAD FILE END ===');
     
-    return downloadURL
+    return result.url;
   } catch (error: any) {
     console.error('=== UPLOAD FILE ERROR ===');
     console.error('Error uploading file:', error);
     console.error('Error type:', typeof error);
     console.error('Error message:', error.message);
-    console.error('Error code:', error.code);
-    console.error('Error stack:', error.stack);
     console.error('=== UPLOAD FILE ERROR END ===');
-    throw error
+    throw error;
   }
 }
 
