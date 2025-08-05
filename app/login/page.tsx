@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
+import { EyeIcon, EyeSlashIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -12,38 +12,24 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login, user } = useAuth();
+  const { login } = useAuth();
   const router = useRouter();
-
-  // Verificar se o usuário já está logado e redirecionar
-  useEffect(() => {
-    if (user) {
-      console.log('User already logged in:', user.email, 'isAdmin:', user.isAdmin);
-      if (user.isAdmin) {
-        console.log('Redirecting admin to /admin');
-        router.push('/admin');
-      } else {
-        // SEMPRE redirecionar para course-selection primeiro
-        console.log('Redirecting user to /course-selection');
-        router.push('/course-selection');
-      }
-    }
-  }, [user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    
+    if (!email || !password) {
+      toast.error('Preencha todos os campos');
+      return;
+    }
 
     try {
+      setLoading(true);
       await login(email, password);
       toast.success('Login realizado com sucesso!');
-      
-      // Aguardar um pouco para o AuthProvider atualizar o user
-      setTimeout(() => {
-        // O useEffect acima vai cuidar do redirecionamento
-      }, 100);
-      
+      router.push('/dashboard');
     } catch (error: any) {
+      console.error('Login error:', error);
       toast.error(error.message || 'Erro ao fazer login');
     } finally {
       setLoading(false);
@@ -52,79 +38,109 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-6 sm:space-y-8">
-        <div className="text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Entrar</h2>
-          <p className="mt-2 text-sm sm:text-base text-gray-600">Acesse sua conta FlashConCards</p>
-        </div>
+      {/* Botão Voltar */}
+      <Link 
+        href="/"
+        className="absolute top-6 left-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+      >
+        <ArrowLeftIcon className="w-5 h-5 mr-2" />
+        <span className="hidden sm:inline">Voltar ao Início</span>
+      </Link>
 
-        <form className="mt-6 sm:mt-8 space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Bem-vindo de volta!</h1>
+            <p className="text-gray-600">Entre na sua conta para continuar</p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                E-mail
               </label>
               <input
                 id="email"
-                name="email"
                 type="email"
-                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="seu@email.com"
+                required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Senha
               </label>
-              <div className="mt-1 relative">
+              <div className="relative">
                 <input
                   id="password"
-                  name="password"
                   type={showPassword ? 'text' : 'password'}
-                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full px-3 py-2 pr-10 text-sm sm:text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Sua senha"
+                  required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                    <EyeSlashIcon className="w-5 h-5" />
                   ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400" />
+                    <EyeIcon className="w-5 h-5" />
                   )}
                 </button>
               </div>
             </div>
-          </div>
 
-          <div>
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Entrando...' : 'Entrar'}
             </button>
-          </div>
+          </form>
 
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
+          {/* Links */}
+          <div className="mt-6 text-center">
+            <p className="text-gray-600">
               Não tem uma conta?{' '}
-              <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-                Registre-se
+              <Link href="/register" className="text-blue-600 hover:text-blue-700 font-medium">
+                Cadastre-se
               </Link>
             </p>
           </div>
-        </form>
+
+          {/* Divider */}
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Ou</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact */}
+          <div className="mt-6 text-center">
+            <p className="text-gray-600 text-sm">
+              Precisa de ajuda?{' '}
+              <Link href="/contact" className="text-blue-600 hover:text-blue-700 font-medium">
+                Entre em contato
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

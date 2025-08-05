@@ -526,7 +526,7 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          <div className="features-scroll flex overflow-x-auto pb-4 space-x-6 sm:space-x-8 scrollbar-hide transition-all duration-500 ease-in-out">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {(features || []).map((feature, index) => (
               <motion.div
                 key={index}
@@ -534,13 +534,13 @@ export default function HomePage() {
                 animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
                 transition={{ duration: 0.8, delay: 1 + index * 0.1 }}
                 whileHover={{ y: -5, scale: 1.02 }}
-                className="text-center p-3 sm:p-4 rounded-lg hover:bg-gray-50 transition-all duration-300 ease-in-out min-w-[240px] sm:min-w-[260px] flex-shrink-0 transform hover:shadow-lg"
+                className="text-center p-6 rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out border border-gray-100"
               >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <feature.icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" />
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <feature.icon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">{feature.description}</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">{feature.title}</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">{feature.description}</p>
               </motion.div>
             ))}
           </div>

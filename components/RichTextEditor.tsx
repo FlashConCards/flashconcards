@@ -1,16 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 
-// Importação dinâmica do React Quill para evitar problemas de SSR
-const ReactQuill = dynamic(() => import('react-quill'), {
-  ssr: false,
-  loading: () => {
-    console.log('ReactQuill loading...');
-    return <div className="h-48 bg-gray-100 animate-pulse rounded border border-gray-300 p-4">Carregando editor...</div>
-  }
-});
+// Importação direta do React Quill
+const ReactQuill = React.lazy(() => import('react-quill'));
 
 import 'react-quill/dist/quill.snow.css';
 
@@ -27,25 +20,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   placeholder = "Digite o conteúdo aqui...",
   className = ""
 }) => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [quillLoaded, setQuillLoaded] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    console.log('RichTextEditor mounted');
-    setIsLoaded(true);
-    
-    // Verificar se o ReactQuill está disponível
-    const checkQuill = async () => {
-      try {
-        const Quill = await import('react-quill');
-        console.log('ReactQuill loaded successfully');
-        setQuillLoaded(true);
-      } catch (error) {
-        console.error('Error loading ReactQuill:', error);
-      }
-    };
-    
-    checkQuill();
+    setIsClient(true);
   }, []);
 
   const modules = {
@@ -71,11 +49,21 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     'link', 'image'
   ];
 
-  console.log('RichTextEditor rendering, isLoaded:', isLoaded, 'quillLoaded:', quillLoaded);
+  if (!isClient) {
+    return (
+      <div className={`${className} h-48 bg-gray-100 animate-pulse rounded border border-gray-300 p-4`}>
+        Carregando editor...
+      </div>
+    );
+  }
 
   return (
     <div className={className}>
-      {isLoaded && quillLoaded ? (
+      <React.Suspense fallback={
+        <div className="h-48 bg-gray-100 animate-pulse rounded border border-gray-300 p-4">
+          Carregando editor...
+        </div>
+      }>
         <ReactQuill
           theme="snow"
           value={value}
@@ -85,11 +73,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           placeholder={placeholder}
           style={{ height: '300px' }}
         />
-      ) : (
-        <div className="h-48 bg-gray-100 animate-pulse rounded border border-gray-300 p-4">
-          {quillLoaded ? 'Editor carregado!' : 'Carregando editor...'}
-        </div>
-      )}
+      </React.Suspense>
     </div>
   );
 };
