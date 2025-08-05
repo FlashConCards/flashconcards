@@ -15,29 +15,29 @@ import {
   createFlashcard, 
   updateFlashcard, 
   deleteFlashcard,
-  getTopics
+  getSubTopics
 } from '@/lib/firebase';
-import { Flashcard, Topic } from '@/types';
+import { Flashcard, SubTopic } from '@/types';
 import toast from 'react-hot-toast';
 
 export default function ModeratorFlashcardsPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
-  const [topics, setTopics] = useState<Topic[]>([]);
+  const [subTopics, setSubTopics] = useState<SubTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedFlashcard, setSelectedFlashcard] = useState<Flashcard | null>(null);
   const [newFlashcard, setNewFlashcard] = useState({
-    question: '',
-    answer: '',
-    topicId: ''
+    front: '',
+    back: '',
+    subTopicId: ''
   });
   const [editFlashcard, setEditFlashcard] = useState({
-    question: '',
-    answer: '',
-    topicId: ''
+    front: '',
+    back: '',
+    subTopicId: ''
   });
 
   useEffect(() => {
@@ -57,12 +57,12 @@ export default function ModeratorFlashcardsPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [flashcardsData, topicsData] = await Promise.all([
+      const [flashcardsData, subTopicsData] = await Promise.all([
         getFlashcards(),
-        getTopics()
+        getSubTopics()
       ]);
       setFlashcards(flashcardsData || []);
-      setTopics(topicsData || []);
+      setSubTopics(subTopicsData || []);
       setLoading(false);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -72,19 +72,19 @@ export default function ModeratorFlashcardsPage() {
 
   const handleAddFlashcard = async () => {
     try {
-      if (!newFlashcard.question || !newFlashcard.answer || !newFlashcard.topicId) {
+      if (!newFlashcard.front || !newFlashcard.back || !newFlashcard.subTopicId) {
         toast.error('Preencha todos os campos obrigatórios');
         return;
       }
 
       await createFlashcard({
-        question: newFlashcard.question,
-        answer: newFlashcard.answer,
-        topicId: newFlashcard.topicId
+        front: newFlashcard.front,
+        back: newFlashcard.back,
+        subTopicId: newFlashcard.subTopicId
       });
 
       await loadData();
-      setNewFlashcard({ question: '', answer: '', topicId: '' });
+      setNewFlashcard({ front: '', back: '', subTopicId: '' });
       setShowAddModal(false);
       toast.success('Flashcard adicionado com sucesso!');
     } catch (error: any) {
@@ -96,9 +96,9 @@ export default function ModeratorFlashcardsPage() {
   const handleEditFlashcard = (flashcard: Flashcard) => {
     setSelectedFlashcard(flashcard);
     setEditFlashcard({
-      question: flashcard.question,
-      answer: flashcard.answer,
-      topicId: flashcard.topicId
+      front: flashcard.front,
+      back: flashcard.back,
+      subTopicId: flashcard.subTopicId
     });
     setShowEditModal(true);
   };
@@ -185,17 +185,17 @@ export default function ModeratorFlashcardsPage() {
           ) : (
             <div className="divide-y divide-gray-200">
               {flashcards.map((flashcard) => {
-                const topic = topics.find(t => t.id === flashcard.topicId);
+                const subTopic = subTopics.find(st => st.id === flashcard.subTopicId);
                 return (
                   <div key={flashcard.id} className="px-6 py-4 hover:bg-gray-50">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="text-lg font-medium text-gray-900">Pergunta</h3>
-                        <p className="text-sm text-gray-600 mt-1">{flashcard.question}</p>
-                        <h4 className="text-md font-medium text-gray-900 mt-3">Resposta</h4>
-                        <p className="text-sm text-gray-600 mt-1">{flashcard.answer}</p>
+                        <h3 className="text-lg font-medium text-gray-900">Frente</h3>
+                        <p className="text-sm text-gray-600 mt-1">{flashcard.front}</p>
+                        <h4 className="text-md font-medium text-gray-900 mt-3">Verso</h4>
+                        <p className="text-sm text-gray-600 mt-1">{flashcard.back}</p>
                         <p className="text-xs text-gray-500 mt-2">
-                          Tópico: {topic?.name || 'N/A'}
+                          Subtópico: {subTopic?.name || 'N/A'}
                         </p>
                       </div>
                       <div className="flex space-x-2 ml-4">
@@ -230,43 +230,43 @@ export default function ModeratorFlashcardsPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Pergunta *
+                  Frente *
                 </label>
                 <textarea
-                  value={newFlashcard.question}
-                  onChange={(e) => setNewFlashcard({...newFlashcard, question: e.target.value})}
+                  value={newFlashcard.front}
+                  onChange={(e) => setNewFlashcard({...newFlashcard, front: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="Digite a pergunta"
+                  placeholder="Digite a frente do flashcard"
                   rows={3}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Resposta *
+                  Verso *
                 </label>
                 <textarea
-                  value={newFlashcard.answer}
-                  onChange={(e) => setNewFlashcard({...newFlashcard, answer: e.target.value})}
+                  value={newFlashcard.back}
+                  onChange={(e) => setNewFlashcard({...newFlashcard, back: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="Digite a resposta"
+                  placeholder="Digite o verso do flashcard"
                   rows={3}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tópico *
+                  Subtópico *
                 </label>
                 <select
-                  value={newFlashcard.topicId}
-                  onChange={(e) => setNewFlashcard({...newFlashcard, topicId: e.target.value})}
+                  value={newFlashcard.subTopicId}
+                  onChange={(e) => setNewFlashcard({...newFlashcard, subTopicId: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
-                  <option value="">Selecione um tópico</option>
-                  {topics.map((topic) => (
-                    <option key={topic.id} value={topic.id}>
-                      {topic.name}
+                  <option value="">Selecione um subtópico</option>
+                  {subTopics.map((subTopic) => (
+                    <option key={subTopic.id} value={subTopic.id}>
+                      {subTopic.name}
                     </option>
                   ))}
                 </select>
@@ -300,11 +300,11 @@ export default function ModeratorFlashcardsPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Pergunta
+                  Frente
                 </label>
                 <textarea
-                  value={editFlashcard.question}
-                  onChange={(e) => setEditFlashcard({...editFlashcard, question: e.target.value})}
+                  value={editFlashcard.front}
+                  onChange={(e) => setEditFlashcard({...editFlashcard, front: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                   rows={3}
                 />
@@ -312,11 +312,11 @@ export default function ModeratorFlashcardsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Resposta
+                  Verso
                 </label>
                 <textarea
-                  value={editFlashcard.answer}
-                  onChange={(e) => setEditFlashcard({...editFlashcard, answer: e.target.value})}
+                  value={editFlashcard.back}
+                  onChange={(e) => setEditFlashcard({...editFlashcard, back: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                   rows={3}
                 />
@@ -324,17 +324,17 @@ export default function ModeratorFlashcardsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tópico
+                  Subtópico
                 </label>
                 <select
-                  value={editFlashcard.topicId}
-                  onChange={(e) => setEditFlashcard({...editFlashcard, topicId: e.target.value})}
+                  value={editFlashcard.subTopicId}
+                  onChange={(e) => setEditFlashcard({...editFlashcard, subTopicId: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
-                  <option value="">Selecione um tópico</option>
-                  {topics.map((topic) => (
-                    <option key={topic.id} value={topic.id}>
-                      {topic.name}
+                  <option value="">Selecione um subtópico</option>
+                  {subTopics.map((subTopic) => (
+                    <option key={subTopic.id} value={subTopic.id}>
+                      {subTopic.name}
                     </option>
                   ))}
                 </select>
