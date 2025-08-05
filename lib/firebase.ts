@@ -963,7 +963,6 @@ export const createDeepening = async (deepeningData: any) => {
   try {
     const deepeningDoc = {
       topicId: deepeningData.topicId,
-      subTopicId: deepeningData.subTopicId,
       content: deepeningData.content,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),

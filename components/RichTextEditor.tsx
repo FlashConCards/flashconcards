@@ -1,12 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 
 // Importação dinâmica do React Quill para evitar problemas de SSR
 const ReactQuill = dynamic(() => import('react-quill'), {
   ssr: false,
-  loading: () => <div className="h-48 bg-gray-100 animate-pulse rounded border border-gray-300">Carregando editor...</div>
+  loading: () => <div className="h-48 bg-gray-100 animate-pulse rounded border border-gray-300 p-4">Carregando editor...</div>
 });
 
 import 'react-quill/dist/quill.snow.css';
@@ -24,6 +24,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   placeholder = "Digite o conteúdo aqui...",
   className = ""
 }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    console.log('RichTextEditor mounted');
+    setIsLoaded(true);
+  }, []);
+
   const modules = {
     toolbar: [
       [{ 'header': [1, 2, 3, false] }],
@@ -47,17 +54,25 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     'link', 'image'
   ];
 
+  console.log('RichTextEditor rendering, isLoaded:', isLoaded);
+
   return (
     <div className={className}>
-      <ReactQuill
-        theme="snow"
-        value={value}
-        onChange={onChange}
-        modules={modules}
-        formats={formats}
-        placeholder={placeholder}
-        style={{ height: '300px' }}
-      />
+      {isLoaded ? (
+        <ReactQuill
+          theme="snow"
+          value={value}
+          onChange={onChange}
+          modules={modules}
+          formats={formats}
+          placeholder={placeholder}
+          style={{ height: '300px' }}
+        />
+      ) : (
+        <div className="h-48 bg-gray-100 animate-pulse rounded border border-gray-300 p-4">
+          Carregando editor...
+        </div>
+      )}
     </div>
   );
 };
