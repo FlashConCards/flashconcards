@@ -55,36 +55,8 @@ export default function FeedPage() {
   const loadPosts = async () => {
     try {
       setLoading(true);
-      // Mock data for now - will be replaced with Firebase
-      const mockPosts: Post[] = [
-        {
-          id: '1',
-          content: '🎉 Novos flashcards de Português disponíveis! Aproveitem para estudar.',
-          authorId: 'admin',
-          authorName: 'Admin FlashConCards',
-          createdAt: new Date(),
-          likes: [],
-          comments: []
-        },
-        {
-          id: '2',
-          content: '📚 Dica de estudo: Façam pausas regulares durante os estudos. O cérebro precisa de descanso para assimilar melhor o conteúdo!',
-          authorId: 'admin',
-          authorName: 'Admin FlashConCards',
-          createdAt: new Date(Date.now() - 86400000),
-          likes: ['user1'],
-          comments: [
-            {
-              id: '1',
-              content: 'Ótima dica! Estou seguindo e já vejo diferença.',
-              authorId: 'user1',
-              authorName: 'João Silva',
-              createdAt: new Date(Date.now() - 3600000)
-            }
-          ]
-        }
-      ];
-      setPosts(mockPosts);
+      // Por enquanto, feed vazio até implementar posts reais no Firebase
+      setPosts([]);
       setLoading(false);
     } catch (error) {
       console.error('Error loading posts:', error);

@@ -284,14 +284,18 @@ export default function StudyAreaPage() {
 
   const getProgressForTopic = async (topicId: string): Promise<StudyProgress> => {
     try {
-      // Mock progress for now - implement real progress tracking later
+      // Buscar flashcards reais do tópico
+      const flashcards = await getFlashcards(topicId);
+      const totalCards = flashcards.length;
+      
+      // Por enquanto, retornar dados reais mas sem progresso (usuário ainda não estudou)
       return {
-        totalCards: Math.floor(Math.random() * 20) + 5,
-        studiedCards: Math.floor(Math.random() * 15),
-        correctCards: Math.floor(Math.random() * 10),
-        wrongCards: Math.floor(Math.random() * 5),
-        accuracy: Math.floor(Math.random() * 100),
-        lastStudied: Math.random() > 0.5 ? new Date() : undefined
+        totalCards,
+        studiedCards: 0,
+        correctCards: 0,
+        wrongCards: 0,
+        accuracy: 0,
+        lastStudied: undefined
       };
     } catch (error) {
       console.error('Error getting progress:', error);
