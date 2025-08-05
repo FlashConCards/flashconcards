@@ -469,9 +469,7 @@ export const getSubjects = async (courseId?: string) => {
     let q: Query | CollectionReference = collection(db, 'subjects')
     
     if (courseId) {
-      q = query(q, where('courseId', '==', courseId), orderBy('createdAt', 'asc'))
-    } else {
-      q = query(q, orderBy('createdAt', 'asc'))
+      q = query(q, where('courseId', '==', courseId))
     }
     
     const querySnapshot = await getDocs(q)
