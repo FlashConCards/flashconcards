@@ -530,20 +530,31 @@ export const updateSubject = async (subjectId: string, subjectData: any) => {
 // ===== TÓPICOS (/topics) =====
 export const getTopics = async (subjectId?: string) => {
   try {
+    console.log('getTopics called with subjectId:', subjectId)
     let q: Query | CollectionReference = collection(db, 'topics')
     
     if (subjectId) {
       q = query(q, where('subjectId', '==', subjectId), orderBy('createdAt', 'asc'))
+      console.log('Query created with filter for subjectId:', subjectId)
     } else {
       q = query(q, orderBy('createdAt', 'asc'))
+      console.log('Query created without filter')
     }
     
     const querySnapshot = await getDocs(q)
-    const topics = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as any[]
+    console.log('Query snapshot size:', querySnapshot.size)
+    
+    const topics = querySnapshot.docs.map(doc => {
+      const data = doc.data()
+      console.log('Topic document:', doc.id, data)
+      return {
+        id: doc.id,
+        ...data
+      }
+    }) as any[]
+    
     console.log('Topics loaded:', topics.length)
+    console.log('Topics data:', topics)
     return topics
   } catch (error: any) {
     console.error('Error getting topics:', error)

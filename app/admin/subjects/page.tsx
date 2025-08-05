@@ -138,7 +138,9 @@ export default function SubjectsPage() {
 
   const loadTopics = async (subjectId: string) => {
     try {
+      console.log('Carregando tópicos para subjectId:', subjectId);
       const topicsData = await getTopics(subjectId);
+      console.log('Tópicos carregados:', topicsData);
       setTopics(topicsData || []);
     } catch (error) {
       console.error('Erro ao carregar tópicos:', error);
@@ -201,13 +203,19 @@ export default function SubjectsPage() {
         return;
       }
 
+      console.log('Criando tópico com dados:', newTopic);
+      console.log('Matéria selecionada:', selectedSubject);
+
       // Garantir que o subjectId seja definido
       const topicData = {
         ...newTopic,
         subjectId: selectedSubject?.id || newTopic.subjectId
       };
 
+      console.log('Dados do tópico a serem salvos:', topicData);
+
       await createTopic(topicData);
+      console.log('Tópico criado, recarregando lista...');
       await loadTopics(selectedSubject?.id || '');
       setNewTopic({
         name: '',
