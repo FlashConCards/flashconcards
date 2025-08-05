@@ -656,14 +656,14 @@ export const deleteSubTopic = async (subTopicId: string) => {
 }
 
 // ===== FLASHCARDS (/flashcards) =====
-export const getFlashcards = async (subTopicId?: string) => {
+export const getFlashcards = async (topicId?: string) => {
   try {
-    console.log('Getting flashcards for subTopicId:', subTopicId)
+    console.log('Getting flashcards for topicId:', topicId)
     let q: Query | CollectionReference = collection(db, 'flashcards')
     
-    if (subTopicId) {
-      q = query(q, where('subTopicId', '==', subTopicId), orderBy('createdAt', 'asc'))
-      console.log('Query created with filter for subTopicId:', subTopicId)
+    if (topicId) {
+      q = query(q, where('topicId', '==', topicId), orderBy('createdAt', 'asc'))
+      console.log('Query created with filter for topicId:', topicId)
     } else {
       q = query(q, orderBy('createdAt', 'asc'))
     }
@@ -788,7 +788,7 @@ export const createFlashcard = async (flashcardData: any) => {
       front: flashcardData.front,
       back: flashcardData.back,
       explanation: flashcardData.explanation,
-      subTopicId: flashcardData.subTopicId,
+      topicId: flashcardData.topicId,
       order: flashcardData.order,
       isActive: flashcardData.isActive
     })
@@ -808,7 +808,7 @@ export const createFlashcard = async (flashcardData: any) => {
       front: flashcardData.front || '',
       back: flashcardData.back || '',
       explanation: flashcardData.explanation || '',
-      subTopicId: flashcardData.subTopicId,
+      topicId: flashcardData.topicId,
       order: flashcardData.order || 1,
       isActive: flashcardData.isActive !== false,
       createdAt: serverTimestamp(),
@@ -820,7 +820,7 @@ export const createFlashcard = async (flashcardData: any) => {
       front: flashcardDoc.front,
       back: flashcardDoc.back,
       explanation: flashcardDoc.explanation,
-      subTopicId: flashcardDoc.subTopicId,
+      topicId: flashcardDoc.topicId,
       order: flashcardDoc.order,
       isActive: flashcardDoc.isActive,
       frontLength: flashcardDoc.front.length,
@@ -836,7 +836,7 @@ export const createFlashcard = async (flashcardData: any) => {
       docNull: flashcardDoc === null,
       docUndefined: flashcardDoc === undefined,
       docEmpty: Object.keys(flashcardDoc).length === 0,
-      docHasSubTopicId: !!flashcardDoc.subTopicId,
+      docHasTopicId: !!flashcardDoc.topicId,
       docHasFront: !!flashcardDoc.front,
       docHasBack: !!flashcardDoc.back,
       docFrontEmpty: flashcardDoc.front === '',
