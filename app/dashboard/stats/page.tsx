@@ -43,8 +43,10 @@ interface UserProgress {
   cardsStudied: number;
   cardsCorrect: number;
   cardsWrong: number;
-  accuracy: number;
-  sessionsCount: number;
+  isPaid: boolean;
+  isActive: boolean;
+  accuracy?: number;
+  sessionsCount?: number;
 }
 
 export default function StatsPage() {
@@ -75,8 +77,20 @@ export default function StatsPage() {
         getCoursesWithAccess(user?.uid || '')
       ]);
 
-      setUserProgress(progress);
-      setStudySessions(sessions || []);
+      // Calcular propriedades adicionais se progress existir
+      if (progress) {
+        const accuracy = progress.cardsStudied > 0 ? (progress.cardsCorrect / progress.cardsStudied) * 100 : 0;
+        const enhancedProgress = {
+          ...progress,
+          accuracy,
+          sessionsCount: sessions?.length || 0
+        };
+        setUserProgress(enhancedProgress);
+      } else {
+        setUserProgress(null);
+      }
+      
+      setStudySessions(sessions as StudySession[] || []);
       setCourses(userCourses || []);
 
       setLoading(false);
@@ -420,7 +434,7 @@ export default function StatsPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Assertividade Geral</span>
-                  <span className="font-bold text-green-600">{userProgress.accuracy.toFixed(1)}%</span>
+                  <span className="font-bold text-green-600">{userProgress.accuracy?.toFixed(1)}%</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Último Estudo</span>
