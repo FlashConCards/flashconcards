@@ -38,7 +38,7 @@ const features = [
   {
     icon: LightBulbIcon,
     title: 'Aprofundamento Detalhado',
-    description: 'Conteúdo rico com imagens, vídeos e PDFs para estudo completo'
+    description: 'Conteúdo rico com textos explicativos para estudo completo'
   },
   {
     icon: ShieldCheckIcon,
@@ -52,6 +52,7 @@ export default function HomePage() {
   const router = useRouter()
   const [activeTestimonial, setActiveTestimonial] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
+  const [scrollPosition, setScrollPosition] = useState(0)
   
   // Estados para dados reais
   const [courses, setCourses] = useState<any[]>([])
@@ -73,6 +74,33 @@ export default function HomePage() {
   
   // Estado para cursos acessíveis do usuário
   const [accessibleCourses, setAccessibleCourses] = useState<string[]>([])
+
+  // Animação automática do scroll horizontal
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setScrollPosition(prev => {
+        const container = document.querySelector('.features-scroll');
+        if (container) {
+          const maxScroll = container.scrollWidth - container.clientWidth;
+          if (prev >= maxScroll) {
+            return 0; // Volta ao início
+          }
+          return prev + 1; // Move 1px por vez
+        }
+        return prev;
+      });
+    }, 50); // Velocidade da animação
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Aplicar scroll position
+  useEffect(() => {
+    const container = document.querySelector('.features-scroll');
+    if (container) {
+      container.scrollLeft = scrollPosition;
+    }
+  }, [scrollPosition]);
 
   // Carregar dados reais do Firebase
   const loadData = async () => {
@@ -497,7 +525,7 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          <div className="flex overflow-x-auto pb-4 space-x-6 sm:space-x-8 scrollbar-hide">
+          <div className="features-scroll flex overflow-x-auto pb-4 space-x-6 sm:space-x-8 scrollbar-hide">
             {(features || []).map((feature, index) => (
               <motion.div
                 key={index}
@@ -505,13 +533,13 @@ export default function HomePage() {
                 animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
                 transition={{ duration: 0.8, delay: 1 + index * 0.1 }}
                 whileHover={{ y: -5 }}
-                className="text-center p-4 sm:p-6 rounded-lg hover:bg-gray-50 transition-colors min-w-[280px] sm:min-w-[300px] flex-shrink-0"
+                className="text-center p-3 sm:p-4 rounded-lg hover:bg-gray-50 transition-colors min-w-[240px] sm:min-w-[260px] flex-shrink-0"
               >
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <feature.icon className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <feature.icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" />
                 </div>
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-sm sm:text-base text-gray-600">{feature.description}</p>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">{feature.description}</p>
               </motion.div>
             ))}
           </div>
