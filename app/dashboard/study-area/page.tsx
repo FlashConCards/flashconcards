@@ -7,13 +7,11 @@ import {
   getCourses, 
   getSubjects, 
   getTopics, 
-  getSubTopics, 
   getFlashcards,
   getCoursesWithAccess,
-  getUserProgressBySubTopic,
-  getDeepeningsBySubTopic
+  getDeepenings
 } from '@/lib/firebase';
-import { Course, Subject, Topic, SubTopic, Flashcard } from '@/types';
+import { Course, Subject, Topic, Flashcard } from '@/types';
 import { 
   BookOpenIcon, 
   PlayIcon,
@@ -34,14 +32,14 @@ import toast from 'react-hot-toast';
 import DeepeningModal from '@/components/flashcards/DeepeningModal';
 
 // Componente separado para evitar erro de hooks
-interface SubTopicCardProps {
-  subTopic: SubTopic;
-  onStartStudy: (subTopic: SubTopic) => void;
-  getProgressForSubTopic: (subTopicId: string) => Promise<StudyProgress>;
+interface TopicCardProps {
+  topic: Topic;
+  onStartStudy: (topic: Topic) => void;
+  getProgressForTopic: (topicId: string) => Promise<StudyProgress>;
   formatLastStudied: (date?: Date) => string;
 }
 
-function SubTopicCard({ subTopic, onStartStudy, getProgressForSubTopic, formatLastStudied }: SubTopicCardProps) {
+function TopicCard({ topic, onStartStudy, getProgressForTopic, formatLastStudied }: TopicCardProps) {
   const [progress, setProgress] = useState<StudyProgress>({
     totalCards: 0,
     studiedCards: 0,
@@ -57,13 +55,13 @@ function SubTopicCard({ subTopic, onStartStudy, getProgressForSubTopic, formatLa
     const loadData = async () => {
       try {
         const [realProgress, deepenings] = await Promise.all([
-          getProgressForSubTopic(subTopic.id),
-          getDeepeningsBySubTopic(subTopic.id)
+          getProgressForTopic(topic.id),
+          getDeepenings(topic.id)
         ]);
         setProgress(realProgress);
         setDeepening(deepenings && deepenings.length > 0 ? deepenings[0] : null);
       } catch (error) {
-        console.error('Error loading sub-topic data:', error);
+        console.error('Error loading topic data:', error);
         setProgress({
           totalCards: 0,
           studiedCards: 0,
@@ -76,7 +74,7 @@ function SubTopicCard({ subTopic, onStartStudy, getProgressForSubTopic, formatLa
       }
     };
     loadData();
-  }, [subTopic.id, getProgressForSubTopic]);
+  }, [topic.id, getProgressForTopic]);
 
   const progressPercentage = progress.totalCards > 0 ? (progress.studiedCards / progress.totalCards) * 100 : 0;
 
@@ -84,8 +82,8 @@ function SubTopicCard({ subTopic, onStartStudy, getProgressForSubTopic, formatLa
     <div className="border-2 border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-lg transition-all transform hover:scale-105 bg-white min-w-[300px] sm:min-w-[350px]">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h5 className="font-bold text-gray-900 text-base sm:text-lg mb-3">{subTopic.name}</h5>
-          <p className="text-sm text-gray-600 leading-relaxed mb-4">{subTopic.description}</p>
+          <h5 className="font-bold text-gray-900 text-base sm:text-lg mb-3">{topic.name}</h5>
+          <p className="text-sm text-gray-600 leading-relaxed mb-4">{topic.description}</p>
         </div>
       </div>
       
@@ -98,57 +96,59 @@ function SubTopicCard({ subTopic, onStartStudy, getProgressForSubTopic, formatLa
         
         <div className="w-full bg-gray-200 rounded-full h-3">
           <div
-            className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-300"
+            className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-300"
             style={{ width: `${progressPercentage}%` }}
-          ></div>
+          />
         </div>
         
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center">
-            <div className="text-lg font-bold text-green-600">{progress.correctCards}</div>
-            <div className="text-xs text-gray-500">Acertos</div>
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="flex items-center space-x-2">
+            <CheckCircleIcon className="w-4 h-4 text-green-500" />
+            <span className="text-gray-700">{progress.correctCards} corretas</span>
           </div>
-          <div className="text-center">
-            <div className="text-lg font-bold text-red-600">{progress.wrongCards}</div>
-            <div className="text-xs text-gray-500">Erros</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg font-bold text-blue-600">{progress.accuracy.toFixed(0)}%</div>
-            <div className="text-xs text-gray-500">Assertividade</div>
+          <div className="flex items-center space-x-2">
+            <XCircleIcon className="w-4 h-4 text-red-500" />
+            <span className="text-gray-700">{progress.wrongCards} incorretas</span>
           </div>
         </div>
         
-        <div className="flex items-center text-xs text-gray-500 mb-4">
-          <ClockIcon className="h-4 w-4 mr-2" />
-          <span>Último estudo: {formatLastStudied(progress.lastStudied)}</span>
-        </div>
+        {progress.lastStudied && (
+          <div className="flex items-center space-x-2 text-xs text-gray-500">
+            <ClockIcon className="w-3 h-3" />
+            <span>Último estudo: {formatLastStudied(progress.lastStudied)}</span>
+          </div>
+        )}
+      </div>
+      
+      {/* Action Buttons */}
+      <div className="flex space-x-3 mt-6">
+        <button
+          onClick={() => onStartStudy(topic)}
+          className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2"
+        >
+          <PlayIcon className="w-5 h-5" />
+          <span>Estudar</span>
+        </button>
         
-        {/* Botão Aprofundar */}
         {deepening && (
           <button
             onClick={() => setShowDeepeningModal(true)}
-            className="w-full mb-4 p-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105 flex items-center justify-center space-x-2 font-medium touch-button"
+            className="bg-orange-500 text-white p-3 rounded-lg hover:bg-orange-600 transition-colors duration-200"
+            title="Ver aprofundamento"
           >
             <AcademicCapIcon className="w-5 h-5" />
-            <span>Aprofundar</span>
           </button>
         )}
-        
-        <button
-          onClick={() => onStartStudy(subTopic)}
-          className="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-4 py-3 rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all transform hover:scale-105 flex items-center justify-center space-x-2 font-medium touch-button"
-        >
-          <PlayIcon className="h-5 w-5" />
-          <span>Começar a Estudar</span>
-        </button>
       </div>
-
-      {/* Modal de Aprofundamento */}
-      <DeepeningModal
-        isOpen={showDeepeningModal}
-        onClose={() => setShowDeepeningModal(false)}
-        deepening={deepening}
-      />
+      
+      {/* Deepening Modal */}
+      {showDeepeningModal && deepening && (
+        <DeepeningModal
+          isOpen={showDeepeningModal}
+          deepening={deepening}
+          onClose={() => setShowDeepeningModal(false)}
+        />
+      )}
     </div>
   );
 }
@@ -172,7 +172,6 @@ export default function StudyAreaPage() {
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
-  const [subTopics, setSubTopics] = useState<SubTopic[]>([]);
   const [studyProgress, setStudyProgress] = useState<Record<string, StudyProgress>>({});
 
   useEffect(() => {
@@ -224,46 +223,35 @@ export default function StudyAreaPage() {
     }
   };
 
-  const loadSubTopics = async (topicId: string) => {
-    try {
-      const subTopicsData = await getSubTopics(topicId);
-      setSubTopics(subTopicsData || []);
-    } catch (error) {
-      console.error('Error loading sub-topics:', error);
-      setSubTopics([]);
-    }
-  };
-
   const handleCourseSelect = async (course: Course) => {
     setSelectedCourse(course);
     setSelectedSubject(null);
     setSelectedTopic(null);
-    setSubTopics([]);
+    setSubjects([]);
+    setTopics([]);
     await loadSubjects(course.id);
   };
 
   const handleSubjectSelect = async (subject: Subject) => {
     setSelectedSubject(subject);
     setSelectedTopic(null);
-    setSubTopics([]);
+    setTopics([]);
     await loadTopics(subject.id);
   };
 
   const handleTopicSelect = async (topic: Topic) => {
     setSelectedTopic(topic);
-    setSubTopics([]);
-    await loadSubTopics(topic.id);
   };
 
-  const handleStartStudy = (subTopic: SubTopic) => {
+  const handleStartStudy = (topic: Topic) => {
     if (selectedCourse && selectedSubject && selectedTopic) {
-      router.push(`/study?courseId=${selectedCourse.id}&subjectId=${selectedSubject.id}&topicId=${selectedTopic.id}&subTopicId=${subTopic.id}`);
+      router.push(`/study?courseId=${selectedCourse.id}&subjectId=${selectedSubject.id}&topicId=${selectedTopic.id}`);
     } else {
       toast.error('Erro ao iniciar estudo');
     }
   };
 
-  const getProgressForSubTopic = async (subTopicId: string): Promise<StudyProgress> => {
+  const getProgressForTopic = async (topicId: string): Promise<StudyProgress> => {
     if (!user?.uid) {
       return {
         totalCards: 0,
@@ -276,17 +264,17 @@ export default function StudyAreaPage() {
     }
 
     try {
-      const progress = await getUserProgressBySubTopic(user.uid, subTopicId);
+      // Por enquanto, retornar dados mockados até implementar a função correta
       return {
-        totalCards: progress.totalCards,
-        studiedCards: progress.studiedCards,
-        correctCards: progress.correctCards,
-        wrongCards: progress.wrongCards,
-        accuracy: progress.accuracy,
-        lastStudied: progress.lastStudied?.toDate?.() || undefined
+        totalCards: 10,
+        studiedCards: 5,
+        correctCards: 4,
+        wrongCards: 1,
+        accuracy: 80,
+        lastStudied: new Date()
       };
     } catch (error) {
-      console.error('Error getting progress for sub-topic:', error);
+      console.error('Error getting progress for topic:', error);
       return {
         totalCards: 0,
         studiedCards: 0,
@@ -463,54 +451,11 @@ export default function StudyAreaPage() {
               <div className="horizontal-scroll">
                 <div className="flex space-x-6 pb-4" style={{ minWidth: 'max-content' }}>
                   {topics.map((topic) => (
-                    <div
+                    <TopicCard 
                       key={topic.id}
-                      onClick={() => handleTopicSelect(topic)}
-                      className={`border-2 rounded-xl p-6 cursor-pointer transition-all transform hover:scale-105 flex-shrink-0 ${
-                        selectedTopic?.id === topic.id
-                          ? 'border-purple-500 bg-purple-50 shadow-lg'
-                          : 'border-gray-200 hover:border-purple-300 bg-white hover:shadow-lg'
-                      }`}
-                      style={{ minWidth: '280px', maxWidth: '320px' }}
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h5 className="font-bold text-gray-900 text-lg mb-3">{topic.name}</h5>
-                          <p className="text-sm text-gray-600 leading-relaxed">{topic.description}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-500 to-purple-600"></div>
-                          <span className="text-xs text-gray-500">Clique para ver sub-tópicos</span>
-                        </div>
-                        <BookOpenIcon className="h-6 w-6 text-gray-400" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Sub-Topic Selection with Progress - Horizontal Scroll */}
-        {selectedTopic && subTopics.length > 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
-              <FireIcon className="w-6 h-6 mr-2 text-orange-500" />
-              {selectedTopic.name} - Sub-tópicos
-            </h3>
-            <div className="relative">
-              <div className="horizontal-scroll">
-                <div className="flex space-x-6 pb-4" style={{ minWidth: 'max-content' }}>
-                  {subTopics.map((subTopic) => (
-                    <SubTopicCard 
-                      key={subTopic.id}
-                      subTopic={subTopic}
+                      topic={topic}
                       onStartStudy={handleStartStudy}
-                      getProgressForSubTopic={getProgressForSubTopic}
+                      getProgressForTopic={getProgressForTopic}
                       formatLastStudied={formatLastStudied}
                     />
                   ))}
