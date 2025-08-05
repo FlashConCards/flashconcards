@@ -4,74 +4,58 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { 
-  LineChart, 
-  Line, 
-  AreaChart, 
-  Area, 
-  BarChart, 
-  Bar, 
-  PieChart, 
-  Pie, 
-  Cell,
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer 
-} from 'recharts';
-import { 
-  getUserStudySessions, 
-  getFlashcards, 
-  getSubTopics, 
-  getTopics, 
-  getSubjects,
-  getUserProgress 
+  getUserProgress,
+  getStudySessions,
+  getCoursesWithAccess
 } from '@/lib/firebase';
 import { 
-  BookOpenIcon, 
-  CheckCircleIcon, 
-  XCircleIcon,
+  ChartBarIcon,
   ClockIcon,
-  UserCircleIcon,
-  ArrowLeftIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  FireIcon,
+  TrophyIcon,
   CalendarIcon,
-  ChartBarIcon
+  TrendingUpIcon,
+  ArrowLeftIcon,
+  AcademicCapIcon,
+  BookOpenIcon
 } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 interface StudySession {
   id: string;
-  date: string;
-  cardsStudied: number;
+  courseId: string;
+  subjectId: string;
+  topicId: string;
+  subTopicId: string;
+  flashcardsCount: number;
   correctCards: number;
   wrongCards: number;
   studyTime: number;
-  subTopicId?: string;
-  subjectId?: string;
+  startTime: Date;
+  endTime: Date;
 }
 
-interface SubjectProgress {
-  name: string;
-  totalCards: number;
-  studiedCards: number;
-  correctRate: number;
-  subjectId: string;
+interface UserProgress {
+  lastStudiedAt?: Date;
+  studyTime: number;
+  cardsStudied: number;
+  cardsCorrect: number;
+  cardsWrong: number;
+  accuracy: number;
+  sessionsCount: number;
 }
 
 export default function StatsPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
   const [studySessions, setStudySessions] = useState<StudySession[]>([]);
-  const [subjectProgress, setSubjectProgress] = useState<SubjectProgress[]>([]);
-  const [totalStats, setTotalStats] = useState({
-    totalCards: 0,
-    studiedCards: 0,
-    correctCards: 0,
-    wrongCards: 0,
-    totalStudyTime: 0,
-    averageAccuracy: 0
-  });
+  const [courses, setCourses] = useState<any[]>([]);
+  const [selectedTimeframe, setSelectedTimeframe] = useState<'week' | 'month' | 'all'>('week');
 
   useEffect(() => {
     if (!user) {
@@ -80,105 +64,26 @@ export default function StatsPage() {
     }
 
     loadStats();
-  }, [user]);
+  }, [user, selectedTimeframe]);
 
   const loadStats = async () => {
     try {
       setLoading(true);
       
-      if (!user?.uid) {
-        setLoading(false);
-        return;
-      }
+      const [progress, sessions, userCourses] = await Promise.all([
+        getUserProgress(user?.uid || ''),
+        getStudySessions(user?.uid || ''),
+        getCoursesWithAccess(user?.uid || '')
+      ]);
 
-      // Get real study sessions from Firebase
-      const realSessions = await getUserStudySessions(user.uid);
-      
-      // Transform sessions for charts
-      const sessionsForCharts: StudySession[] = realSessions.map((session: any) => ({
-        id: session.id,
-        date: session.createdAt?.toDate?.()?.toLocaleDateString() || new Date().toLocaleDateString(),
-        cardsStudied: session.flashcardsCount || 0,
-        correctCards: session.correctCards || 0,
-        wrongCards: session.wrongCards || 0,
-        studyTime: session.studyTime || 0,
-        subTopicId: session.subTopicId,
-        subjectId: session.subjectId
-      }));
-
-      // Calculate total stats from real sessions
-      const totalCorrect = sessionsForCharts.reduce((sum, session) => sum + session.correctCards, 0);
-      const totalWrong = sessionsForCharts.reduce((sum, session) => sum + session.wrongCards, 0);
-      const totalStudyTime = sessionsForCharts.reduce((sum, session) => sum + session.studyTime, 0);
-      const totalStudied = sessionsForCharts.reduce((sum, session) => sum + session.cardsStudied, 0);
-      const averageAccuracy = totalCorrect + totalWrong > 0 ? (totalCorrect / (totalCorrect + totalWrong)) * 100 : 0;
-
-      // Get all subjects and their flashcards for accurate progress calculation
-      const subjects = await getSubjects();
-      const subjectProgressData: SubjectProgress[] = [];
-
-      for (const subject of subjects) {
-        const topics = await getTopics(subject.id);
-        let subjectTotalCards = 0;
-        let subjectStudiedCards = 0;
-        let subjectCorrectCards = 0;
-
-        for (const topic of topics) {
-          const subTopics = await getSubTopics(topic.id);
-          
-          for (const subTopic of subTopics) {
-            const flashcards = await getFlashcards(subTopic.id);
-            subjectTotalCards += flashcards.length;
-
-            // Count studied cards for this sub-topic from sessions
-            const subTopicSessions = sessionsForCharts.filter(session => 
-              session.subTopicId === subTopic.id
-            );
-            
-            const subTopicStudied = subTopicSessions.reduce((sum, session) => 
-              sum + session.cardsStudied, 0
-            );
-            const subTopicCorrect = subTopicSessions.reduce((sum, session) => 
-              sum + session.correctCards, 0
-            );
-            
-            subjectStudiedCards += subTopicStudied;
-            subjectCorrectCards += subTopicCorrect;
-          }
-        }
-
-        // Only include subjects that have flashcards
-        if (subjectTotalCards > 0) {
-          const correctRate = subjectStudiedCards > 0 ? (subjectCorrectCards / subjectStudiedCards) * 100 : 0;
-          
-          subjectProgressData.push({
-            name: subject.name,
-            totalCards: subjectTotalCards,
-            studiedCards: subjectStudiedCards,
-            correctRate,
-            subjectId: subject.id
-          });
-        }
-      }
-
-      setStudySessions(sessionsForCharts);
-      setSubjectProgress(subjectProgressData);
-
-      // Calculate total cards across all subjects
-      const totalCards = subjectProgressData.reduce((sum, subject) => sum + subject.totalCards, 0);
-
-      setTotalStats({
-        totalCards,
-        studiedCards: totalStudied,
-        correctCards: totalCorrect,
-        wrongCards: totalWrong,
-        totalStudyTime,
-        averageAccuracy
-      });
+      setUserProgress(progress);
+      setStudySessions(sessions || []);
+      setCourses(userCourses || []);
 
       setLoading(false);
     } catch (error) {
       console.error('Error loading stats:', error);
+      toast.error('Erro ao carregar estatísticas');
       setLoading(false);
     }
   };
@@ -186,26 +91,102 @@ export default function StatsPage() {
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${minutes}m`;
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
   };
 
-  const calculateWeeklyStudyTime = () => {
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  };
+
+  const getFilteredSessions = () => {
+    if (!studySessions.length) return [];
     
-    const weeklySessions = studySessions.filter(session => {
-      const sessionDate = new Date(session.date);
-      return sessionDate >= oneWeekAgo;
+    const now = new Date();
+    const filtered = studySessions.filter(session => {
+      const sessionDate = session.startTime instanceof Date ? session.startTime : new Date(session.startTime);
+      
+      switch (selectedTimeframe) {
+        case 'week':
+          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          return sessionDate >= weekAgo;
+        case 'month':
+          const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          return sessionDate >= monthAgo;
+        default:
+          return true;
+      }
     });
     
-    return weeklySessions.reduce((total, session) => total + session.studyTime, 0);
+    return filtered.sort((a, b) => {
+      const dateA = a.startTime instanceof Date ? a.startTime : new Date(a.startTime);
+      const dateB = b.startTime instanceof Date ? b.startTime : new Date(b.startTime);
+      return dateB.getTime() - dateA.getTime();
+    });
   };
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+  const getStatsForTimeframe = () => {
+    const filteredSessions = getFilteredSessions();
+    
+    const totalCards = filteredSessions.reduce((sum, session) => sum + session.flashcardsCount, 0);
+    const totalCorrect = filteredSessions.reduce((sum, session) => sum + session.correctCards, 0);
+    const totalWrong = filteredSessions.reduce((sum, session) => sum + session.wrongCards, 0);
+    const totalTime = filteredSessions.reduce((sum, session) => sum + session.studyTime, 0);
+    const accuracy = totalCards > 0 ? (totalCorrect / totalCards) * 100 : 0;
+    
+    return {
+      totalCards,
+      totalCorrect,
+      totalWrong,
+      totalTime,
+      accuracy,
+      sessionsCount: filteredSessions.length
+    };
+  };
+
+  const getRecentActivity = () => {
+    return getFilteredSessions().slice(0, 5);
+  };
+
+  const getProgressTimeline = () => {
+    const sessions = getFilteredSessions();
+    const timeline = [];
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+      
+      const daySessions = sessions.filter(session => {
+        const sessionDate = session.startTime instanceof Date ? session.startTime : new Date(session.startTime);
+        return sessionDate.toDateString() === date.toDateString();
+      });
+      
+      const dayStats = {
+        date: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+        cards: daySessions.reduce((sum, session) => sum + session.flashcardsCount, 0),
+        correct: daySessions.reduce((sum, session) => sum + session.correctCards, 0),
+        wrong: daySessions.reduce((sum, session) => sum + session.wrongCards, 0),
+        time: daySessions.reduce((sum, session) => sum + session.studyTime, 0)
+      };
+      
+      timeline.unshift(dayStats);
+    }
+    
+    return timeline;
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Carregando estatísticas...</p>
@@ -214,226 +195,251 @@ export default function StatsPage() {
     );
   }
 
+  const timeframeStats = getStatsForTimeframe();
+  const recentActivity = getRecentActivity();
+  const progressTimeline = getProgressTimeline();
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white shadow-lg border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <button
               onClick={() => router.push('/dashboard')}
-              className="flex items-center text-gray-600 hover:text-gray-900"
+              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors touch-button"
             >
               <ArrowLeftIcon className="w-5 h-5 mr-2" />
-              Voltar ao Dashboard
+              <span className="hidden sm:inline">Voltar ao Dashboard</span>
             </button>
             
-            <h1 className="text-xl font-semibold text-gray-900">Estatísticas de Estudo</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center">
+              <ChartBarIcon className="w-6 h-6 mr-2 text-indigo-500" />
+              Estatísticas de Estudo
+            </h1>
             
             <div className="flex items-center space-x-2">
-              <UserCircleIcon className="w-6 h-6 text-gray-400" />
-              <span className="text-sm text-gray-600">{user?.displayName || user?.email}</span>
+              <TrophyIcon className="w-6 h-6 text-yellow-500" />
+              <span className="text-sm text-gray-600 hidden sm:inline">Progresso</span>
             </div>
           </div>
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <BookOpenIcon className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total de Cards</p>
-                <p className="text-2xl font-bold text-gray-900">{totalStats.totalCards}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircleIcon className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Cards Estudados</p>
-                <p className="text-2xl font-bold text-gray-900">{totalStats.studiedCards}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <ChartBarIcon className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Assertividade</p>
-                <p className="text-2xl font-bold text-gray-900">{totalStats.averageAccuracy.toFixed(1)}%</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <ClockIcon className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Tempo Total</p>
-                <p className="text-2xl font-bold text-gray-900">{formatTime(totalStats.totalStudyTime)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-indigo-100 rounded-lg">
-                <CalendarIcon className="w-6 h-6 text-indigo-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Tempo/Semana</p>
-                <p className="text-2xl font-bold text-gray-900">{formatTime(calculateWeeklyStudyTime())}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Progress Over Time */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Progresso ao Longo do Tempo</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={studySessions}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="cardsStudied" stroke="#8884d8" name="Cards Estudados" />
-                <Line type="monotone" dataKey="correctCards" stroke="#82ca9d" name="Acertos" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Subject Progress */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Progresso por Matéria</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={subjectProgress}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="studiedCards" fill="#8884d8" name="Cards Estudados" />
-                <Bar dataKey="totalCards" fill="#82ca9d" name="Total de Cards" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Accuracy Distribution */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribuição de Acertos/Erros</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={[
-                    { name: 'Acertos', value: totalStats.correctCards },
-                    { name: 'Erros', value: totalStats.wrongCards }
-                  ]}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
+        {/* Timeframe Selector */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-bold text-gray-900">Período de Análise</h2>
+            <div className="flex space-x-2">
+              {[
+                { key: 'week', label: '7 dias' },
+                { key: 'month', label: '30 dias' },
+                { key: 'all', label: 'Total' }
+              ].map((timeframe) => (
+                <button
+                  key={timeframe.key}
+                  onClick={() => setSelectedTimeframe(timeframe.key as any)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedTimeframe === timeframe.key
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
-                  {COLORS.map((color, index) => (
-                    <Cell key={`cell-${index}`} fill={color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+                  {timeframe.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Study Time Distribution */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Tempo de Estudo por Sessão</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={studySessions}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Area type="monotone" dataKey="studyTime" stroke="#8884d8" fill="#8884d8" name="Tempo (min)" />
-              </AreaChart>
-            </ResponsiveContainer>
+          {/* Main Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <motion.div 
+              className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <CheckCircleIcon className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-green-600">{timeframeStats.totalCorrect}</div>
+              <div className="text-sm text-gray-600">Acertos</div>
+            </motion.div>
+
+            <motion.div 
+              className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              <XCircleIcon className="w-8 h-8 text-red-600 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-red-600">{timeframeStats.totalWrong}</div>
+              <div className="text-sm text-gray-600">Erros</div>
+            </motion.div>
+
+            <motion.div 
+              className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <ClockIcon className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-blue-600">{formatTime(timeframeStats.totalTime)}</div>
+              <div className="text-sm text-gray-600">Tempo Total</div>
+            </motion.div>
+
+            <motion.div 
+              className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              <TrendingUpIcon className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-purple-600">{timeframeStats.accuracy.toFixed(1)}%</div>
+              <div className="text-sm text-gray-600">Assertividade</div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Progress Timeline */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+            <CalendarIcon className="w-6 h-6 mr-2 text-indigo-500" />
+            Linha do Tempo de Progresso (7 dias)
+          </h2>
+          
+          <div className="space-y-4">
+            {progressTimeline.map((day, index) => (
+              <motion.div 
+                key={day.date}
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="text-sm font-medium text-gray-900">{day.date}</div>
+                  <div className="flex items-center space-x-2 text-xs text-gray-600">
+                    <span className="text-green-600">✓ {day.correct}</span>
+                    <span className="text-red-600">✗ {day.wrong}</span>
+                    <span className="text-blue-600">⏱ {formatTime(day.time)}</span>
+                  </div>
+                </div>
+                
+                <div className="w-32 bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${day.cards > 0 ? (day.correct / day.cards) * 100 : 0}%` 
+                    }}
+                  />
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Atividade Recente</h3>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Data
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Cards Estudados
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Acertos
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Erros
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Assertividade
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tempo
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {studySessions.map((session) => (
-                  <tr key={session.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(session.date).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {session.cardsStudied}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">
-                      {session.correctCards}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">
-                      {session.wrongCards}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {session.cardsStudied > 0 ? ((session.correctCards / session.cardsStudied) * 100).toFixed(1) : 0}%
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatTime(session.studyTime)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+            <FireIcon className="w-6 h-6 mr-2 text-orange-500" />
+            Atividades Recentes
+          </h2>
+          
+          {recentActivity.length === 0 ? (
+            <div className="text-center py-8">
+              <BookOpenIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">Nenhuma atividade recente encontrada.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {recentActivity.map((session, index) => (
+                <motion.div 
+                  key={session.id}
+                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                      <AcademicCapIcon className="w-5 h-5 text-indigo-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">
+                        Sessão de Estudo
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {formatDate(session.startTime instanceof Date ? session.startTime : new Date(session.startTime))}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-4 text-sm">
+                    <div className="text-center">
+                      <div className="font-bold text-green-600">{session.correctCards}</div>
+                      <div className="text-gray-500">Acertos</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-bold text-red-600">{session.wrongCards}</div>
+                      <div className="text-gray-500">Erros</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-bold text-blue-600">{formatTime(session.studyTime)}</div>
+                      <div className="text-gray-500">Tempo</div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* Overall Progress */}
+        {userProgress && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+              <TrophyIcon className="w-6 h-6 mr-2 text-yellow-500" />
+              Progresso Geral
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Tempo Total de Estudo</span>
+                  <span className="font-bold text-gray-900">{formatTime(userProgress.studyTime)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Cards Estudados</span>
+                  <span className="font-bold text-gray-900">{userProgress.cardsStudied}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Sessões Realizadas</span>
+                  <span className="font-bold text-gray-900">{userProgress.sessionsCount || studySessions.length}</span>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Assertividade Geral</span>
+                  <span className="font-bold text-green-600">{userProgress.accuracy.toFixed(1)}%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Último Estudo</span>
+                  <span className="font-bold text-gray-900">
+                    {userProgress.lastStudiedAt 
+                      ? formatDate(userProgress.lastStudiedAt instanceof Date ? userProgress.lastStudiedAt : new Date(userProgress.lastStudiedAt))
+                      : 'Nunca'
+                    }
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Cursos Ativos</span>
+                  <span className="font-bold text-gray-900">{courses.length}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -14,12 +14,19 @@
  * 8. Clique em "Deploy"
  * 9. Copie a URL gerada
  * 10. Adicione como GOOGLE_APPS_SCRIPT_URL no Vercel
+ * 
+ * FUNÇÃO DE TESTE:
+ * - Execute a função testEmail() para testar o envio
  */
 
 function doPost(e) {
   try {
+    // Log para debug
+    console.log('Recebendo requisição:', new Date().toISOString());
+    
     // Verificar se recebeu dados
     if (!e.postData || !e.postData.contents) {
+      console.log('Erro: Nenhum dado recebido');
       return ContentService.createTextOutput(JSON.stringify({
         error: 'Nenhum dado recebido'
       })).setMimeType(ContentService.MimeType.JSON);
@@ -28,9 +35,12 @@ function doPost(e) {
     // Parsear dados recebidos
     const data = JSON.parse(e.postData.contents);
     const { type, to, subject, userName, courseName, expiryText, appUrl, userEmail, userPassword } = data;
+    
+    console.log('Dados recebidos:', { type, to, subject, userName, courseName });
 
     // Validar dados obrigatórios
     if (!to || !subject || !userName || !courseName) {
+      console.log('Erro: Dados obrigatórios faltando');
       return ContentService.createTextOutput(JSON.stringify({
         error: 'Dados obrigatórios faltando'
       })).setMimeType(ContentService.MimeType.JSON);
@@ -40,8 +50,10 @@ function doPost(e) {
     let htmlContent;
     if (type === 'admin') {
       htmlContent = createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassword);
+      console.log('Criando email admin para:', to);
     } else {
       htmlContent = createWelcomeEmailHTML(userName, courseName, expiryText, appUrl, userEmail, userPassword);
+      console.log('Criando email welcome para:', to);
     }
 
     // Enviar email
@@ -50,6 +62,8 @@ function doPost(e) {
       name: 'FlashConCards',
       replyTo: 'flashconcards@gmail.com'
     });
+    
+    console.log('Email enviado com sucesso para:', to);
 
     return ContentService.createTextOutput(JSON.stringify({
       success: true,
@@ -59,6 +73,7 @@ function doPost(e) {
     })).setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
+    console.log('Erro ao processar requisição:', error.toString());
     return ContentService.createTextOutput(JSON.stringify({
       error: 'Erro ao processar requisição',
       details: error.toString()
@@ -675,4 +690,40 @@ function createAdminEmailHTML(userName, courseName, appUrl, userEmail, userPassw
     </body>
     </html>
   `;
+} 
+
+// Função para testar o envio de email
+function testEmail() {
+  const testData = {
+    type: 'welcome',
+    to: 'flashconcards@gmail.com', // Seu email para teste
+    subject: 'Teste - FlashConCards',
+    userName: 'Usuário Teste',
+    courseName: 'Curso de Teste',
+    expiryText: '6 meses de acesso',
+    appUrl: 'https://flashconcards.vercel.app',
+    userEmail: 'teste@exemplo.com',
+    userPassword: '123456'
+  };
+  
+  try {
+    const htmlContent = createWelcomeEmailHTML(
+      testData.userName,
+      testData.courseName,
+      testData.expiryText,
+      testData.appUrl,
+      testData.userEmail,
+      testData.userPassword
+    );
+    
+    GmailApp.sendEmail(testData.to, testData.subject, '', {
+      htmlBody: htmlContent,
+      name: 'FlashConCards',
+      replyTo: 'flashconcards@gmail.com'
+    });
+    
+    console.log('Email de teste enviado com sucesso!');
+  } catch (error) {
+    console.log('Erro no teste:', error.toString());
+  }
 } 

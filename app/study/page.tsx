@@ -486,15 +486,15 @@ export default function StudyPage() {
             <div className="space-y-3">
               <button
                 onClick={handleRestart}
-                className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700"
+                className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 touch-button"
               >
                 Estudar Novamente
               </button>
               <button
-                onClick={() => router.push('/dashboard')}
-                className="w-full bg-gray-300 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-400"
+                onClick={() => router.push('/dashboard/study-area')}
+                className="w-full bg-gray-300 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-400 touch-button"
               >
-                Voltar ao Dashboard
+                Voltar para Área de Estudos
               </button>
             </div>
           </div>
@@ -530,8 +530,8 @@ export default function StudyPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
             <button
-              onClick={() => router.push('/dashboard')}
-              className="flex items-center text-gray-600 hover:text-gray-900 text-sm sm:text-base"
+              onClick={() => router.push('/dashboard/study-area')}
+              className="flex items-center text-gray-600 hover:text-gray-900 text-sm sm:text-base touch-button"
             >
               <ArrowLeftIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Voltar</span>
@@ -549,9 +549,9 @@ export default function StudyPage() {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Progress Bar */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <div className="flex justify-between text-sm text-gray-600 mb-2">
             <span>Progresso da Sessão</span>
             <span>{Math.round(progressPercentage)}%</span>
@@ -579,7 +579,7 @@ export default function StudyPage() {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
-              <div className="text-2xl font-bold text-green-600">{sessionStats.correctCards}</div>
+              <div className="text-xl sm:text-2xl font-bold text-green-600">{sessionStats.correctCards}</div>
               <div className="text-xs text-gray-600">Acertos</div>
             </motion.div>
             <motion.div 
@@ -589,7 +589,7 @@ export default function StudyPage() {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
-              <div className="text-2xl font-bold text-red-600">{sessionStats.wrongCards}</div>
+              <div className="text-xl sm:text-2xl font-bold text-red-600">{sessionStats.wrongCards}</div>
               <div className="text-xs text-gray-600">Erros</div>
             </motion.div>
             <motion.div 
@@ -599,7 +599,7 @@ export default function StudyPage() {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
-              <div className="text-2xl font-bold text-blue-600">{remainingCards}</div>
+              <div className="text-xl sm:text-2xl font-bold text-blue-600">{remainingCards}</div>
               <div className="text-xs text-gray-600">Restantes</div>
             </motion.div>
           </div>
@@ -608,7 +608,7 @@ export default function StudyPage() {
         {/* Flashcard */}
         {currentCard && studyQueue.length > 0 ? (
           <motion.div 
-            className="mb-8"
+            className="mb-6 sm:mb-8"
             key={`${currentCard.id}-${currentIndex}`}
             initial={{ 
               opacity: 0, 
@@ -646,10 +646,10 @@ export default function StudyPage() {
             />
           </motion.div>
         ) : (
-          <div className="mb-8 text-center">
-            <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="mb-6 sm:mb-8 text-center">
+            <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
               <CheckCircleIcon className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Sessão Concluída!</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Sessão Concluída!</h2>
               <p className="text-gray-600 mb-6">Todos os cards foram estudados corretamente.</p>
               <div className="mb-6 text-sm text-gray-500">
                 <p>Cards acertados: {sessionStats.correctCards}</p>
@@ -658,7 +658,7 @@ export default function StudyPage() {
               </div>
               <button
                 onClick={handleRestart}
-                className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+                className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors touch-button"
               >
                 Reiniciar Sessão
               </button>
@@ -668,53 +668,53 @@ export default function StudyPage() {
 
         {/* Navigation Buttons */}
         {currentCard && studyQueue.length > 0 && (
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
             <button
               onClick={handlePrevious}
               disabled={currentIndex === 0}
-              className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+              className={`flex items-center px-4 py-2 rounded-lg transition-colors touch-button ${
                 currentIndex === 0
                   ? 'text-gray-400 cursor-not-allowed'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               <ChevronLeftIcon className="w-5 h-5 mr-1" />
-              Anterior
+              <span className="hidden sm:inline">Anterior</span>
             </button>
 
-            <div className="flex space-x-4">
+            <div className="flex space-x-2 sm:space-x-4">
               <motion.button
                 onClick={() => handleCardResponse(false)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="flex items-center space-x-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
+                className="flex items-center space-x-2 bg-red-600 text-white px-4 sm:px-6 py-3 rounded-lg hover:bg-red-700 transition-colors touch-button"
                 disabled={isTransitioning}
               >
-                <XCircleIcon className="w-5 h-5" />
-                <span>Errei (1)</span>
+                <XCircleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="text-sm sm:text-base">Errei (1)</span>
               </motion.button>
               <motion.button
                 onClick={() => handleCardResponse(true)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+                className="flex items-center space-x-2 bg-green-600 text-white px-4 sm:px-6 py-3 rounded-lg hover:bg-green-700 transition-colors touch-button"
                 disabled={isTransitioning}
               >
-                <CheckCircleIcon className="w-5 h-5" />
-                <span>Acertei (2)</span>
+                <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="text-sm sm:text-base">Acertei (2)</span>
               </motion.button>
             </div>
 
             <button
               onClick={handleNext}
               disabled={currentIndex >= studyQueue.length - 1}
-              className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+              className={`flex items-center px-4 py-2 rounded-lg transition-colors touch-button ${
                 currentIndex >= studyQueue.length - 1
                   ? 'text-gray-400 cursor-not-allowed'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Próximo
+              <span className="hidden sm:inline">Próximo</span>
               <ChevronRightIcon className="w-5 h-5 ml-1" />
             </button>
           </div>

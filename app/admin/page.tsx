@@ -11,8 +11,19 @@ import {
   updatePaymentStatus,
   updateUser,
   createUserByAdmin,
-  deleteUserByAdmin
+  deleteUserByAdmin,
+  updateTestimonialStatus,
+  deleteTestimonial
 } from '@/lib/firebase';
+import { 
+  PencilIcon, 
+  TrashIcon, 
+  ArrowRightOnRectangleIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  CheckIcon,
+  XMarkIcon
+} from '@heroicons/react/24/outline';
 
 interface User {
   uid: string;
@@ -51,7 +62,7 @@ interface Course {
 }
 
 export default function AdminPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -59,14 +70,21 @@ export default function AdminPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showTestimonialModal, setShowTestimonialModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedTestimonial, setSelectedTestimonial] = useState<Testimonial | null>(null);
   const [newUser, setNewUser] = useState({
     email: '',
     displayName: '',
     selectedCourse: '',
     password: ''
   });
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [editUser, setEditUser] = useState({
+    displayName: '',
+    selectedCourse: '',
+    isPaid: false
+  });
   const [financialMetrics, setFinancialMetrics] = useState({
     totalRevenue: 0,
     monthlyRevenue: 0,
@@ -99,12 +117,12 @@ export default function AdminPage() {
       setTestimonials(testimonialsData || []);
       setCourses(coursesData || []);
 
-             // Carregar pagamentos de todos os usuários
-       const allPayments: Payment[] = [];
-       for (const user of usersData || []) {
-         const userPayments = await getUserPayments(user.uid);
-         allPayments.push(...userPayments);
-       }
+      // Carregar pagamentos de todos os usuários
+      const allPayments: Payment[] = [];
+      for (const user of usersData || []) {
+        const userPayments = await getUserPayments(user.uid);
+        allPayments.push(...userPayments);
+      }
       setPayments(allPayments);
 
       // Calcular métricas financeiras
@@ -174,8 +192,8 @@ export default function AdminPage() {
         displayName: newUser.displayName,
         password: newUser.password,
         selectedCourse: newUser.selectedCourse,
-    isPaid: false,
-    isAdmin: false
+        isPaid: false,
+        isAdmin: false
       });
       
       await loadData();
@@ -191,6 +209,31 @@ export default function AdminPage() {
     } catch (error: any) {
       console.error('Erro ao adicionar usuário:', error);
       alert(`Erro ao adicionar usuário: ${error.message}`);
+    }
+  };
+
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user);
+    setEditUser({
+      displayName: user.displayName,
+      selectedCourse: user.selectedCourse,
+      isPaid: user.isPaid
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateUser = async () => {
+    if (!selectedUser) return;
+
+    try {
+      await updateUser(selectedUser.uid, editUser);
+      await loadData();
+      setShowEditModal(false);
+      setSelectedUser(null);
+      alert('Usuário atualizado com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao atualizar usuário:', error);
+      alert(`Erro ao atualizar usuário: ${error.message}`);
     }
   };
 
@@ -228,6 +271,24 @@ export default function AdminPage() {
     }
   };
 
+  const handleTestimonialAction = async (testimonialId: string, action: 'approve' | 'reject' | 'delete') => {
+    try {
+      if (action === 'delete') {
+        if (confirm('Tem certeza que deseja excluir este depoimento?')) {
+          await deleteTestimonial(testimonialId);
+        }
+      } else {
+        await updateTestimonialStatus(testimonialId, action === 'approve' ? 'approved' : 'rejected');
+      }
+      
+      await loadData();
+      alert(`Depoimento ${action === 'approve' ? 'aprovado' : action === 'reject' ? 'rejeitado' : 'excluído'} com sucesso!`);
+    } catch (error: any) {
+      console.error('Erro ao processar depoimento:', error);
+      alert(`Erro ao processar depoimento: ${error.message}`);
+    }
+  };
+
   const handleCheckEmail = async () => {
     try {
       const email = prompt('Digite o email para verificar:');
@@ -243,6 +304,15 @@ export default function AdminPage() {
   const handleRefreshData = async () => {
     await loadData();
     alert('Dados atualizados!');
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push('/login');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
   };
 
   if (loading) {
@@ -276,10 +346,17 @@ export default function AdminPage() {
               Gerenciar Cursos
             </button>
             <button
-              onClick={() => router.push('/admin/deepening')}
+              onClick={() => router.push('/admin/subjects')}
               className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
             >
-              Aprofundamentos
+              Gerenciar Matérias
+            </button>
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-2"
+            >
+              <ArrowRightOnRectangleIcon className="w-5 h-5" />
+              <span>Sair</span>
             </button>
           </div>
         </div>
@@ -291,46 +368,46 @@ export default function AdminPage() {
             <p className="text-3xl font-bold text-green-600">
               R$ {financialMetrics.totalRevenue.toFixed(2).replace('.', ',')}
             </p>
-                  </div>
+          </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Receita do Mês</h3>
             <p className="text-3xl font-bold text-blue-600">
               R$ {financialMetrics.monthlyRevenue.toFixed(2).replace('.', ',')}
             </p>
-                </div>
+          </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Total de Pagamentos</h3>
             <p className="text-3xl font-bold text-purple-600">{financialMetrics.totalPayments}</p>
-              </div>
+          </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Pagamentos Pendentes</h3>
             <p className="text-3xl font-bold text-yellow-600">{financialMetrics.pendingPayments}</p>
-                  </div>
+          </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Reembolsos</h3>
             <p className="text-3xl font-bold text-red-600">{financialMetrics.refundedPayments}</p>
-                </div>
-              </div>
+          </div>
+        </div>
 
         {/* Resumo */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Total de Usuários</h3>
             <p className="text-3xl font-bold text-blue-600">{users.length}</p>
-                  </div>
+          </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Usuários Pagantes</h3>
             <p className="text-3xl font-bold text-green-600">{paidUsers.length}</p>
-                </div>
+          </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Total de Depoimentos</h3>
             <p className="text-3xl font-bold text-purple-600">{testimonials.length}</p>
-              </div>
+          </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Aguardando Aprovação</h3>
             <p className="text-3xl font-bold text-yellow-600">{pendingTestimonials.length}</p>
-              </div>
-            </div>
+          </div>
+        </div>
 
         {/* Usuários */}
         <div className="bg-white rounded-lg shadow mb-8">
@@ -350,12 +427,12 @@ export default function AdminPage() {
                 >
                   Verificar Email
                 </button>
-                  <button
+                <button
                   onClick={() => setShowAddModal(true)}
                   className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
-                  >
+                >
                   Adicionar Usuário
-                  </button>
+                </button>
               </div>
             </div>
           </div>
@@ -364,68 +441,140 @@ export default function AdminPage() {
               <p className="text-gray-500 text-center py-8">Nenhum usuário registrado ainda.</p>
             ) : (
               <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         USUÁRIO
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         STATUS
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         CURSO
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         AÇÕES
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {users.map((user) => (
-                       <tr key={user.uid}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {users.map((user) => (
+                      <tr key={user.uid}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
                             <div className="text-sm font-medium text-gray-900">{user.displayName}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">{user.email}</div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             user.isPaid 
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-red-100 text-red-800'
                           }`}>
                             {user.isPaid ? 'Pago' : 'Não Pago'}
-                            </span>
-                      </td>
+                          </span>
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {user.selectedCourse || 'Nenhum'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
-                                                         <button
-                               onClick={() => handleRefundUser(user.uid)}
-                               className="text-orange-600 hover:text-orange-900"
-                             >
-                               Reembolsar
-                        </button>
-                             <button
-                               onClick={() => handleDeleteUser(user.uid)}
-                               className="text-red-600 hover:text-red-900"
-                             >
-                               Excluir
-                        </button>
+                            <button
+                              onClick={() => handleEditUser(user)}
+                              className="text-blue-600 hover:text-blue-900"
+                            >
+                              <PencilIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleRefundUser(user.uid)}
+                              className="text-orange-600 hover:text-orange-900"
+                            >
+                              Reembolsar
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(user.uid)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
                           </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
-            </div>
+        </div>
+
+        {/* Depoimentos */}
+        <div className="bg-white rounded-lg shadow mb-8">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-800">Depoimentos ({testimonials.length})</h2>
+          </div>
+          <div className="p-6">
+            {testimonials.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">Nenhum depoimento registrado ainda.</p>
+            ) : (
+              <div className="space-y-4">
+                {testimonials.map((testimonial) => (
+                  <div key={testimonial.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <span className="font-medium text-gray-900">{testimonial.name}</span>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            testimonial.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            testimonial.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {testimonial.status === 'approved' ? 'Aprovado' :
+                             testimonial.status === 'rejected' ? 'Rejeitado' : 'Pendente'}
+                          </span>
+                        </div>
+                        <p className="text-gray-700 text-sm">{testimonial.content}</p>
+                        <div className="flex items-center mt-2">
+                          {[...Array(5)].map((_, i) => (
+                            <span key={i} className={`text-sm ${i < testimonial.rating ? 'text-yellow-400' : 'text-gray-300'}`}>
+                              ★
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex space-x-2 ml-4">
+                        {testimonial.status === 'pending' && (
+                          <>
+                            <button
+                              onClick={() => handleTestimonialAction(testimonial.id, 'approve')}
+                              className="text-green-600 hover:text-green-900"
+                            >
+                              <CheckIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleTestimonialAction(testimonial.id, 'reject')}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              <XMarkIcon className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                        <button
+                          onClick={() => handleTestimonialAction(testimonial.id, 'delete')}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Pagamentos */}
         <div className="bg-white rounded-lg shadow mb-8">
@@ -458,9 +607,9 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                                         {payments.map((payment) => {
-                       const user = users.find(u => u.uid === payment.userId);
-                       const course = courses.find(c => c.id === payment.courseId);
+                    {payments.map((payment) => {
+                      const user = users.find(u => u.uid === payment.userId);
+                      const course = courses.find(c => c.id === payment.courseId);
                       
                       return (
                         <tr key={payment.id}>
@@ -498,9 +647,9 @@ export default function AdminPage() {
               </div>
             )}
           </div>
-      </div>
+        </div>
 
-      {/* Add User Modal */}
+        {/* Add User Modal */}
         {showAddModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -586,7 +735,75 @@ export default function AdminPage() {
             </div>
           </div>
         )}
-        </div>
+
+        {/* Edit User Modal */}
+        {showEditModal && selectedUser && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">Editar Usuário</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nome
+                  </label>
+                  <input
+                    type="text"
+                    value={editUser.displayName}
+                    onChange={(e) => setEditUser({...editUser, displayName: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Curso
+                  </label>
+                  <select
+                    value={editUser.selectedCourse}
+                    onChange={(e) => setEditUser({...editUser, selectedCourse: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Selecione um curso</option>
+                    {courses.map((course) => (
+                      <option key={course.id} value={course.id}>
+                        {course.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={editUser.isPaid}
+                      onChange={(e) => setEditUser({...editUser, isPaid: e.target.checked})}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Usuário pago</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleUpdateUser}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Atualizar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 } 

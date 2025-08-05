@@ -2,43 +2,118 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { getCourses, getSubjects, createSubject, deleteSubject } from '@/lib/firebase';
-
-interface Course {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  createdAt: any;
-}
+import { useRouter } from 'next/navigation';
+import {
+  getSubjects,
+  getTopics,
+  getSubTopics,
+  getFlashcards,
+  createSubject,
+  updateSubject,
+  deleteSubject,
+  createTopic,
+  updateTopic,
+  deleteTopic,
+  createSubTopic,
+  updateSubTopic,
+  deleteSubTopic,
+  createFlashcard,
+  updateFlashcard,
+  deleteFlashcard
+} from '@/lib/firebase';
+import { 
+  PlusIcon, 
+  PencilIcon, 
+  TrashIcon, 
+  ArrowLeftIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  BookOpenIcon,
+  AcademicCapIcon,
+  FireIcon
+} from '@heroicons/react/24/outline';
 
 interface Subject {
   id: string;
-  courseId: string;
   name: string;
   description: string;
+  courseId: string;
   order: number;
   isActive: boolean;
-  createdAt: any;
-  updatedAt: any;
+}
+
+interface Topic {
+  id: string;
+  name: string;
+  description: string;
+  subjectId: string;
+  order: number;
+  isActive: boolean;
+}
+
+interface SubTopic {
+  id: string;
+  name: string;
+  description: string;
+  topicId: string;
+  order: number;
+  isActive: boolean;
+}
+
+interface Flashcard {
+  id: string;
+  front: string;
+  back: string;
+  explanation?: string;
+  subTopicId: string;
+  order: number;
+  isActive: boolean;
 }
 
 export default function SubjectsPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const courseId = searchParams.get('courseId');
-  
-  const [courses, setCourses] = useState<Course[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [subTopics, setSubTopics] = useState<SubTopic[]>([]);
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
+  const [selectedSubTopic, setSelectedSubTopic] = useState<SubTopic | null>(null);
+  const [showSubjectModal, setShowSubjectModal] = useState(false);
+  const [showTopicModal, setShowTopicModal] = useState(false);
+  const [showSubTopicModal, setShowSubTopicModal] = useState(false);
+  const [showFlashcardModal, setShowFlashcardModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
   const [newSubject, setNewSubject] = useState({
     name: '',
     description: '',
-    order: 1
+    courseId: '',
+    order: 1,
+    isActive: true
+  });
+  const [newTopic, setNewTopic] = useState({
+    name: '',
+    description: '',
+    subjectId: '',
+    order: 1,
+    isActive: true
+  });
+  const [newSubTopic, setNewSubTopic] = useState({
+    name: '',
+    description: '',
+    topicId: '',
+    order: 1,
+    isActive: true
+  });
+  const [newFlashcard, setNewFlashcard] = useState({
+    front: '',
+    back: '',
+    explanation: '',
+    subTopicId: '',
+    order: 1,
+    isActive: true
   });
 
   // Check if user is admin
@@ -52,21 +127,14 @@ export default function SubjectsPage() {
 
   const loadData = async () => {
     try {
-      const coursesData = await getCourses();
-      setCourses(coursesData || []);
+      setLoading(true);
       
-      if (courseId) {
-        const course = coursesData?.find(c => c.id === courseId);
-        setSelectedCourse(course || null);
-        
-        if (course) {
-          const subjectsData = await getSubjects(courseId);
-          setSubjects(subjectsData || []);
-        }
-      }
+      const subjectsData = await getSubjects();
+      setSubjects(subjectsData || []);
+      
+      setLoading(false);
     } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
+      console.error('Erro ao carregar dados:', error);
       setLoading(false);
     }
   };
@@ -75,43 +143,272 @@ export default function SubjectsPage() {
     if (user?.isAdmin) {
       loadData();
     }
-  }, [user, courseId]);
+  }, [user]);
 
-  const handleAddSubject = async () => {
+  const loadTopics = async (subjectId: string) => {
     try {
-      if (!selectedCourse || !newSubject.name || !newSubject.description) {
+      const topicsData = await getTopics(subjectId);
+      setTopics(topicsData || []);
+    } catch (error) {
+      console.error('Erro ao carregar tópicos:', error);
+      setTopics([]);
+    }
+  };
+
+  const loadSubTopics = async (topicId: string) => {
+    try {
+      const subTopicsData = await getSubTopics(topicId);
+      setSubTopics(subTopicsData || []);
+    } catch (error) {
+      console.error('Erro ao carregar sub-tópicos:', error);
+      setSubTopics([]);
+    }
+  };
+
+  const loadFlashcards = async (subTopicId: string) => {
+    try {
+      const flashcardsData = await getFlashcards(subTopicId);
+      setFlashcards(flashcardsData || []);
+    } catch (error) {
+      console.error('Erro ao carregar flashcards:', error);
+      setFlashcards([]);
+    }
+  };
+
+  const handleSubjectSelect = async (subject: Subject) => {
+    setSelectedSubject(subject);
+    setSelectedTopic(null);
+    setSelectedSubTopic(null);
+    setTopics([]);
+    setSubTopics([]);
+    setFlashcards([]);
+    await loadTopics(subject.id);
+  };
+
+  const handleTopicSelect = async (topic: Topic) => {
+    setSelectedTopic(topic);
+    setSelectedSubTopic(null);
+    setSubTopics([]);
+    setFlashcards([]);
+    await loadSubTopics(topic.id);
+  };
+
+  const handleSubTopicSelect = async (subTopic: SubTopic) => {
+    setSelectedSubTopic(subTopic);
+    setFlashcards([]);
+    await loadFlashcards(subTopic.id);
+  };
+
+  const handleCreateSubject = async () => {
+    try {
+      if (!newSubject.name || !newSubject.description) {
         alert('Preencha todos os campos obrigatórios');
         return;
       }
 
-      const subjectData = {
-        ...newSubject,
-        courseId: selectedCourse.id,
-        isActive: true
-      };
-
-      await createSubject(subjectData);
+      await createSubject(newSubject);
       await loadData();
-      
-      setNewSubject({ name: '', description: '', order: 1 });
-      setShowAddModal(false);
+      setNewSubject({
+        name: '',
+        description: '',
+        courseId: '',
+        order: 1,
+        isActive: true
+      });
+      setShowSubjectModal(false);
       alert('Matéria criada com sucesso!');
     } catch (error: any) {
-      console.error('Error creating subject:', error);
+      console.error('Erro ao criar matéria:', error);
       alert(`Erro ao criar matéria: ${error.message}`);
     }
   };
 
-  const handleDeleteSubject = async (subjectId: string) => {
-    if (confirm('Tem certeza que deseja excluir esta matéria?')) {
-      try {
-        await deleteSubject(subjectId);
-        await loadData();
-        alert('Matéria excluída com sucesso!');
-      } catch (error: any) {
-        console.error('Error deleting subject:', error);
-        alert(`Erro ao excluir matéria: ${error.message}`);
+  const handleCreateTopic = async () => {
+    try {
+      if (!newTopic.name || !newTopic.description || !selectedSubject) {
+        alert('Preencha todos os campos obrigatórios');
+        return;
       }
+
+      newTopic.subjectId = selectedSubject.id;
+      await createTopic(newTopic);
+      await loadTopics(selectedSubject.id);
+      setNewTopic({
+        name: '',
+        description: '',
+        subjectId: '',
+        order: 1,
+        isActive: true
+      });
+      setShowTopicModal(false);
+      alert('Tópico criado com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao criar tópico:', error);
+      alert(`Erro ao criar tópico: ${error.message}`);
+    }
+  };
+
+  const handleCreateSubTopic = async () => {
+    try {
+      if (!newSubTopic.name || !newSubTopic.description || !selectedTopic) {
+        alert('Preencha todos os campos obrigatórios');
+        return;
+      }
+
+      newSubTopic.topicId = selectedTopic.id;
+      await createSubTopic(newSubTopic);
+      await loadSubTopics(selectedTopic.id);
+      setNewSubTopic({
+        name: '',
+        description: '',
+        topicId: '',
+        order: 1,
+        isActive: true
+      });
+      setShowSubTopicModal(false);
+      alert('Sub-tópico criado com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao criar sub-tópico:', error);
+      alert(`Erro ao criar sub-tópico: ${error.message}`);
+    }
+  };
+
+  const handleCreateFlashcard = async () => {
+    try {
+      if (!newFlashcard.front || !newFlashcard.back || !selectedSubTopic) {
+        alert('Preencha todos os campos obrigatórios');
+        return;
+      }
+
+      newFlashcard.subTopicId = selectedSubTopic.id;
+      await createFlashcard(newFlashcard);
+      await loadFlashcards(selectedSubTopic.id);
+      setNewFlashcard({
+        front: '',
+        back: '',
+        explanation: '',
+        subTopicId: '',
+        order: 1,
+        isActive: true
+      });
+      setShowFlashcardModal(false);
+      alert('Flashcard criado com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao criar flashcard:', error);
+      alert(`Erro ao criar flashcard: ${error.message}`);
+    }
+  };
+
+  const handleEdit = (item: any, type: 'subject' | 'topic' | 'subtopic' | 'flashcard') => {
+    setEditingItem({ ...item, type });
+    
+    switch (type) {
+      case 'subject':
+        setNewSubject({
+          name: item.name,
+          description: item.description,
+          courseId: item.courseId,
+          order: item.order,
+          isActive: item.isActive
+        });
+        setShowSubjectModal(true);
+        break;
+      case 'topic':
+        setNewTopic({
+          name: item.name,
+          description: item.description,
+          subjectId: item.subjectId,
+          order: item.order,
+          isActive: item.isActive
+        });
+        setShowTopicModal(true);
+        break;
+      case 'subtopic':
+        setNewSubTopic({
+          name: item.name,
+          description: item.description,
+          topicId: item.topicId,
+          order: item.order,
+          isActive: item.isActive
+        });
+        setShowSubTopicModal(true);
+        break;
+      case 'flashcard':
+        setNewFlashcard({
+          front: item.front,
+          back: item.back,
+          explanation: item.explanation || '',
+          subTopicId: item.subTopicId,
+          order: item.order,
+          isActive: item.isActive
+        });
+        setShowFlashcardModal(true);
+        break;
+    }
+  };
+
+  const handleUpdate = async () => {
+    try {
+      if (!editingItem) return;
+
+      switch (editingItem.type) {
+        case 'subject':
+          await updateSubject(editingItem.id, newSubject);
+          await loadData();
+          break;
+        case 'topic':
+          await updateTopic(editingItem.id, newTopic);
+          if (selectedSubject) await loadTopics(selectedSubject.id);
+          break;
+        case 'subtopic':
+          await updateSubTopic(editingItem.id, newSubTopic);
+          if (selectedTopic) await loadSubTopics(selectedTopic.id);
+          break;
+        case 'flashcard':
+          await updateFlashcard(editingItem.id, newFlashcard);
+          if (selectedSubTopic) await loadFlashcards(selectedSubTopic.id);
+          break;
+      }
+
+      setEditingItem(null);
+      setShowSubjectModal(false);
+      setShowTopicModal(false);
+      setShowSubTopicModal(false);
+      setShowFlashcardModal(false);
+      alert('Item atualizado com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao atualizar item:', error);
+      alert(`Erro ao atualizar item: ${error.message}`);
+    }
+  };
+
+  const handleDelete = async (id: string, type: 'subject' | 'topic' | 'subtopic' | 'flashcard') => {
+    if (!confirm('Tem certeza que deseja excluir este item?')) return;
+
+    try {
+      switch (type) {
+        case 'subject':
+          await deleteSubject(id);
+          await loadData();
+          break;
+        case 'topic':
+          await deleteTopic(id);
+          if (selectedSubject) await loadTopics(selectedSubject.id);
+          break;
+        case 'subtopic':
+          await deleteSubTopic(id);
+          if (selectedTopic) await loadSubTopics(selectedTopic.id);
+          break;
+        case 'flashcard':
+          await deleteFlashcard(id);
+          if (selectedSubTopic) await loadFlashcards(selectedSubTopic.id);
+          break;
+      }
+
+      alert('Item excluído com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao excluir item:', error);
+      alert(`Erro ao excluir item: ${error.message}`);
     }
   };
 
@@ -120,7 +417,7 @@ export default function SubjectsPage() {
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando matérias...</p>
+          <p className="mt-4 text-gray-600">Carregando dados...</p>
         </div>
       </div>
     );
@@ -134,110 +431,327 @@ export default function SubjectsPage() {
     <div className="min-h-screen bg-gray-100">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">Gerenciar Matérias</h1>
-            {selectedCourse && (
-              <p className="text-gray-600 mt-2">Curso: {selectedCourse.name}</p>
-            )}
-          </div>
-          <div className="flex space-x-4">
+          <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/admin')}
-              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+              className="flex items-center text-gray-600 hover:text-gray-900"
             >
-              Voltar ao Admin
+              <ArrowLeftIcon className="w-5 h-5 mr-2" />
+              Voltar
             </button>
-            {selectedCourse && (
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Adicionar Matéria
-              </button>
-            )}
+            <h1 className="text-3xl font-bold text-gray-800">Banco de Matérias</h1>
           </div>
         </div>
 
-        {/* Course Selection */}
-        {!selectedCourse && (
-          <div className="bg-white rounded-lg shadow mb-8">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-800">Selecionar Curso</h2>
-            </div>
-            <div className="p-6">
-              {courses.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">Nenhum curso disponível.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {courses.map((course) => (
-                    <div key={course.id} className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50" onClick={() => router.push(`/admin/subjects?courseId=${course.id}`)}>
-                      <h3 className="font-semibold text-gray-800">{course.name}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{course.description}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Subjects List */}
-        {selectedCourse && (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Matérias */}
           <div className="bg-white rounded-lg shadow">
             <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-800">Matérias ({subjects.length})</h2>
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                  <AcademicCapIcon className="w-6 h-6 mr-2" />
+                  Matérias ({subjects.length})
+                </h2>
+                <button
+                  onClick={() => {
+                    setEditingItem(null);
+                    setNewSubject({
+                      name: '',
+                      description: '',
+                      courseId: '',
+                      order: 1,
+                      isActive: true
+                    });
+                    setShowSubjectModal(true);
+                  }}
+                  className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700"
+                >
+                  <PlusIcon className="w-5 h-5" />
+                </button>
+              </div>
             </div>
             <div className="p-6">
-              {subjects.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">Nenhuma matéria cadastrada ainda.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {subjects.map((subject) => (
-                    <div key={subject.id} className="border border-gray-200 rounded-lg p-6">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-2">{subject.name}</h3>
-                      <p className="text-gray-600 mb-4">{subject.description}</p>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-500">Ordem: {subject.order}</span>
-                        <div className="flex space-x-2">
+              <div className="space-y-2">
+                {subjects.map((subject) => (
+                  <div
+                    key={subject.id}
+                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                      selectedSubject?.id === subject.id
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:border-blue-300'
+                    }`}
+                    onClick={() => handleSubjectSelect(subject)}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900">{subject.name}</h3>
+                        <p className="text-sm text-gray-600">{subject.description}</p>
+                      </div>
+                      <div className="flex space-x-1 ml-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(subject, 'subject');
+                          }}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          <PencilIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(subject.id, 'subject');
+                          }}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Tópicos */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                  <BookOpenIcon className="w-6 h-6 mr-2" />
+                  Tópicos ({topics.length})
+                </h2>
+                {selectedSubject && (
+                  <button
+                    onClick={() => {
+                      setEditingItem(null);
+                      setNewTopic({
+                        name: '',
+                        description: '',
+                        subjectId: selectedSubject.id,
+                        order: 1,
+                        isActive: true
+                      });
+                      setShowTopicModal(true);
+                    }}
+                    className="bg-green-600 text-white p-2 rounded-lg hover:bg-green-700"
+                  >
+                    <PlusIcon className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="p-6">
+              {selectedSubject ? (
+                <div className="space-y-2">
+                  {topics.map((topic) => (
+                    <div
+                      key={topic.id}
+                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                        selectedTopic?.id === topic.id
+                          ? 'border-green-500 bg-green-50'
+                          : 'border-gray-200 hover:border-green-300'
+                      }`}
+                      onClick={() => handleTopicSelect(topic)}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h3 className="font-medium text-gray-900">{topic.name}</h3>
+                          <p className="text-sm text-gray-600">{topic.description}</p>
+                        </div>
+                        <div className="flex space-x-1 ml-2">
                           <button
-                            onClick={() => router.push(`/admin/topics?subjectId=${subject.id}&courseId=${selectedCourse.id}`)}
-                            className="text-xs bg-green-100 text-green-800 px-3 py-1 rounded hover:bg-green-200"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(topic, 'topic');
+                            }}
+                            className="text-blue-600 hover:text-blue-900"
                           >
-                            Tópicos
+                            <PencilIcon className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteSubject(subject.id)}
-                            className="text-xs bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(topic.id, 'topic');
+                            }}
+                            className="text-red-600 hover:text-red-900"
                           >
-                            Excluir
+                            <TrashIcon className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
+              ) : (
+                <p className="text-gray-500 text-center">Selecione uma matéria</p>
               )}
             </div>
           </div>
-        )}
 
-        {/* Add Subject Modal */}
-        {showAddModal && selectedCourse && (
+          {/* Sub-tópicos */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                  <FireIcon className="w-6 h-6 mr-2" />
+                  Sub-tópicos ({subTopics.length})
+                </h2>
+                {selectedTopic && (
+                  <button
+                    onClick={() => {
+                      setEditingItem(null);
+                      setNewSubTopic({
+                        name: '',
+                        description: '',
+                        topicId: selectedTopic.id,
+                        order: 1,
+                        isActive: true
+                      });
+                      setShowSubTopicModal(true);
+                    }}
+                    className="bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700"
+                  >
+                    <PlusIcon className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="p-6">
+              {selectedTopic ? (
+                <div className="space-y-2">
+                  {subTopics.map((subTopic) => (
+                    <div
+                      key={subTopic.id}
+                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                        selectedSubTopic?.id === subTopic.id
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                      onClick={() => handleSubTopicSelect(subTopic)}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h3 className="font-medium text-gray-900">{subTopic.name}</h3>
+                          <p className="text-sm text-gray-600">{subTopic.description}</p>
+                        </div>
+                        <div className="flex space-x-1 ml-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(subTopic, 'subtopic');
+                            }}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            <PencilIcon className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(subTopic.id, 'subtopic');
+                            }}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center">Selecione um tópico</p>
+              )}
+            </div>
+          </div>
+
+          {/* Flashcards */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                  <BookOpenIcon className="w-6 h-6 mr-2" />
+                  Flashcards ({flashcards.length})
+                </h2>
+                {selectedSubTopic && (
+                  <button
+                    onClick={() => {
+                      setEditingItem(null);
+                      setNewFlashcard({
+                        front: '',
+                        back: '',
+                        explanation: '',
+                        subTopicId: selectedSubTopic.id,
+                        order: 1,
+                        isActive: true
+                      });
+                      setShowFlashcardModal(true);
+                    }}
+                    className="bg-orange-600 text-white p-2 rounded-lg hover:bg-orange-700"
+                  >
+                    <PlusIcon className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="p-6">
+              {selectedSubTopic ? (
+                <div className="space-y-2">
+                  {flashcards.map((flashcard) => (
+                    <div
+                      key={flashcard.id}
+                      className="p-3 border border-gray-200 rounded-lg"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h3 className="font-medium text-gray-900 text-sm">{flashcard.front}</h3>
+                          <p className="text-xs text-gray-600 mt-1">{flashcard.back}</p>
+                        </div>
+                        <div className="flex space-x-1 ml-2">
+                          <button
+                            onClick={() => handleEdit(flashcard, 'flashcard')}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            <PencilIcon className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(flashcard.id, 'flashcard')}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center">Selecione um sub-tópico</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Modals */}
+        {/* Subject Modal */}
+        {showSubjectModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h3 className="text-lg font-semibold mb-4">Adicionar Matéria</h3>
+              <h3 className="text-lg font-semibold mb-4">
+                {editingItem ? 'Editar Matéria' : 'Nova Matéria'}
+              </h3>
               
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nome da Matéria *
+                    Nome *
                   </label>
                   <input
                     type="text"
                     value={newSubject.name}
                     onChange={(e) => setNewSubject({...newSubject, name: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Nome da matéria"
                   />
                 </div>
                 
@@ -248,38 +762,240 @@ export default function SubjectsPage() {
                   <textarea
                     value={newSubject.description}
                     onChange={(e) => setNewSubject({...newSubject, description: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={3}
-                    placeholder="Descrição da matéria"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ordem
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={newSubject.isActive}
+                      onChange={(e) => setNewSubject({...newSubject, isActive: e.target.checked})}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Ativo</span>
                   </label>
-                  <input
-                    type="number"
-                    value={newSubject.order}
-                    onChange={(e) => setNewSubject({...newSubject, order: parseInt(e.target.value) || 1})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="1"
-                  />
                 </div>
               </div>
 
               <div className="flex justify-end space-x-3 mt-6">
                 <button
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => setShowSubjectModal(false)}
                   className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
                 >
                   Cancelar
                 </button>
                 <button
-                  onClick={handleAddSubject}
+                  onClick={editingItem ? handleUpdate : handleCreateSubject}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
-                  Adicionar
+                  {editingItem ? 'Atualizar' : 'Criar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Topic Modal */}
+        {showTopicModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">
+                {editingItem ? 'Editar Tópico' : 'Novo Tópico'}
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nome *
+                  </label>
+                  <input
+                    type="text"
+                    value={newTopic.name}
+                    onChange={(e) => setNewTopic({...newTopic, name: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Descrição *
+                  </label>
+                  <textarea
+                    value={newTopic.description}
+                    onChange={(e) => setNewTopic({...newTopic, description: e.target.value})}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={newTopic.isActive}
+                      onChange={(e) => setNewTopic({...newTopic, isActive: e.target.checked})}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Ativo</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowTopicModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={editingItem ? handleUpdate : handleCreateTopic}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                >
+                  {editingItem ? 'Atualizar' : 'Criar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SubTopic Modal */}
+        {showSubTopicModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">
+                {editingItem ? 'Editar Sub-tópico' : 'Novo Sub-tópico'}
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nome *
+                  </label>
+                  <input
+                    type="text"
+                    value={newSubTopic.name}
+                    onChange={(e) => setNewSubTopic({...newSubTopic, name: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Descrição *
+                  </label>
+                  <textarea
+                    value={newSubTopic.description}
+                    onChange={(e) => setNewSubTopic({...newSubTopic, description: e.target.value})}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={newSubTopic.isActive}
+                      onChange={(e) => setNewSubTopic({...newSubTopic, isActive: e.target.checked})}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Ativo</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowSubTopicModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={editingItem ? handleUpdate : handleCreateSubTopic}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                >
+                  {editingItem ? 'Atualizar' : 'Criar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Flashcard Modal */}
+        {showFlashcardModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">
+                {editingItem ? 'Editar Flashcard' : 'Novo Flashcard'}
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Pergunta *
+                  </label>
+                  <textarea
+                    value={newFlashcard.front}
+                    onChange={(e) => setNewFlashcard({...newFlashcard, front: e.target.value})}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Resposta *
+                  </label>
+                  <textarea
+                    value={newFlashcard.back}
+                    onChange={(e) => setNewFlashcard({...newFlashcard, back: e.target.value})}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Explicação (opcional)
+                  </label>
+                  <textarea
+                    value={newFlashcard.explanation}
+                    onChange={(e) => setNewFlashcard({...newFlashcard, explanation: e.target.value})}
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={newFlashcard.isActive}
+                      onChange={(e) => setNewFlashcard({...newFlashcard, isActive: e.target.checked})}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Ativo</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowFlashcardModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={editingItem ? handleUpdate : handleCreateFlashcard}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
+                >
+                  {editingItem ? 'Atualizar' : 'Criar'}
                 </button>
               </div>
             </div>

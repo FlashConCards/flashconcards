@@ -6,10 +6,28 @@
 @layer base {
   html {
     font-family: 'Inter', system-ui, sans-serif;
+    /* Melhorar performance de scroll em dispositivos móveis */
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
   }
   
   body {
     @apply bg-gray-50 text-gray-900;
+    /* Otimizar para dispositivos móveis */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Melhorar performance de animações */
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Otimizar para dispositivos móveis */
+  @media (max-width: 768px) {
+    html {
+      font-size: 14px;
+    }
   }
 }
 
@@ -36,6 +54,10 @@
   
   .flashcard {
     @apply bg-white rounded-xl shadow-lg border border-gray-200 p-6 cursor-pointer transition-all duration-300 hover:shadow-xl transform hover:scale-105;
+    /* Otimizar performance de animações */
+    will-change: transform;
+    backface-visibility: hidden;
+    transform: translateZ(0);
   }
   
   .progress-bar {
@@ -44,6 +66,61 @@
   
   .progress-fill {
     @apply bg-primary-600 h-2 rounded-full transition-all duration-300;
+  }
+
+  /* Melhorar responsividade para dispositivos móveis */
+  .mobile-container {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  .mobile-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6;
+  }
+
+  .mobile-flex {
+    @apply flex flex-col sm:flex-row;
+  }
+
+  .mobile-text {
+    @apply text-sm sm:text-base lg:text-lg;
+  }
+
+  .mobile-padding {
+    @apply p-4 sm:p-6 lg:p-8;
+  }
+
+  /* Otimizar animações para dispositivos móveis */
+  .mobile-animation {
+    @apply transition-all duration-200 ease-out;
+  }
+
+  /* Melhorar performance de scroll horizontal */
+  .horizontal-scroll {
+    @apply overflow-x-auto scrollbar-hide;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Esconder scrollbar mas manter funcionalidade */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Otimizar cards para dispositivos móveis */
+  .mobile-card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6;
+    min-height: 120px;
+  }
+
+  /* Melhorar botões para touch */
+  .touch-button {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+    touch-action: manipulation;
   }
 }
 
@@ -58,5 +135,33 @@
   
   .mobile-nav {
     @apply fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2;
+  }
+
+  /* Otimizações para dispositivos móveis */
+  .mobile-optimized {
+    @apply transform-gpu;
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+
+  /* Melhorar performance de animações */
+  .performance-optimized {
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+
+  /* Responsividade melhorada */
+  .responsive-text {
+    @apply text-xs sm:text-sm md:text-base lg:text-lg;
+  }
+
+  .responsive-spacing {
+    @apply space-y-2 sm:space-y-4 lg:space-y-6;
+  }
+
+  /* Melhorar acessibilidade em dispositivos móveis */
+  .mobile-accessible {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    touch-action: manipulation;
   }
 } 

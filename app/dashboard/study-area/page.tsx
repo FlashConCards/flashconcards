@@ -26,7 +26,9 @@ import {
   XCircleIcon,
   StarIcon,
   FireIcon,
-  TrophyIcon
+  TrophyIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import DeepeningModal from '@/components/flashcards/DeepeningModal';
@@ -79,10 +81,10 @@ function SubTopicCard({ subTopic, onStartStudy, getProgressForSubTopic, formatLa
   const progressPercentage = progress.totalCards > 0 ? (progress.studiedCards / progress.totalCards) * 100 : 0;
 
   return (
-    <div className="border-2 border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all transform hover:scale-105 bg-white">
+    <div className="border-2 border-gray-200 rounded-xl p-4 sm:p-6 hover:shadow-lg transition-all transform hover:scale-105 bg-white min-w-[300px] sm:min-w-[350px]">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h5 className="font-bold text-gray-900 text-lg mb-3">{subTopic.name}</h5>
+          <h5 className="font-bold text-gray-900 text-base sm:text-lg mb-3">{subTopic.name}</h5>
           <p className="text-sm text-gray-600 leading-relaxed mb-4">{subTopic.description}</p>
         </div>
       </div>
@@ -125,7 +127,7 @@ function SubTopicCard({ subTopic, onStartStudy, getProgressForSubTopic, formatLa
         {deepening && (
           <button
             onClick={() => setShowDeepeningModal(true)}
-            className="w-full mb-4 p-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105 flex items-center justify-center space-x-2 font-medium"
+            className="w-full mb-4 p-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105 flex items-center justify-center space-x-2 font-medium touch-button"
           >
             <AcademicCapIcon className="w-5 h-5" />
             <span>Aprofundar</span>
@@ -134,7 +136,7 @@ function SubTopicCard({ subTopic, onStartStudy, getProgressForSubTopic, formatLa
         
         <button
           onClick={() => onStartStudy(subTopic)}
-          className="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-4 py-3 rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all transform hover:scale-105 flex items-center justify-center space-x-2 font-medium"
+          className="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-4 py-3 rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all transform hover:scale-105 flex items-center justify-center space-x-2 font-medium touch-button"
         >
           <PlayIcon className="h-5 w-5" />
           <span>Começar a Estudar</span>
@@ -356,17 +358,17 @@ export default function StudyAreaPage() {
           <div className="flex justify-between items-center h-16">
             <button
               onClick={() => router.push('/dashboard')}
-              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors touch-button"
             >
               <ArrowLeftIcon className="w-5 h-5 mr-2" />
-              Voltar ao Dashboard
+              <span className="hidden sm:inline">Voltar ao Dashboard</span>
             </button>
             
-            <h1 className="text-xl font-bold text-gray-900">Área de Estudos</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900">Área de Estudos</h1>
             
             <div className="flex items-center space-x-2">
               <UserCircleIcon className="w-6 h-6 text-gray-400" />
-              <span className="text-sm text-gray-600">{user?.displayName || user?.email}</span>
+              <span className="text-sm text-gray-600 hidden sm:inline">{user?.displayName || user?.email}</span>
             </div>
           </div>
         </div>
@@ -404,102 +406,116 @@ export default function StudyAreaPage() {
           </div>
         )}
 
-        {/* Subject Selection */}
+        {/* Subject Selection - Horizontal Scroll */}
         {selectedCourse && subjects.length > 0 && (
           <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
             <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
               <AcademicCapIcon className="w-6 h-6 mr-2 text-indigo-500" />
               {selectedCourse.name} - Matérias
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {subjects.map((subject) => (
-                <div
-                  key={subject.id}
-                  onClick={() => handleSubjectSelect(subject)}
-                  className={`border-2 rounded-xl p-6 cursor-pointer transition-all transform hover:scale-105 ${
-                    selectedSubject?.id === subject.id
-                      ? 'border-green-500 bg-green-50 shadow-lg'
-                      : 'border-gray-200 hover:border-green-300 bg-white hover:shadow-lg'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center mb-3">
-                        <span className="text-3xl mr-3">{getSubjectIcon(subject.name)}</span>
-                        <h5 className="font-bold text-gray-900 text-lg">{subject.name}</h5>
+            <div className="relative">
+              <div className="horizontal-scroll">
+                <div className="flex space-x-6 pb-4" style={{ minWidth: 'max-content' }}>
+                  {subjects.map((subject) => (
+                    <div
+                      key={subject.id}
+                      onClick={() => handleSubjectSelect(subject)}
+                      className={`border-2 rounded-xl p-6 cursor-pointer transition-all transform hover:scale-105 flex-shrink-0 ${
+                        selectedSubject?.id === subject.id
+                          ? 'border-green-500 bg-green-50 shadow-lg'
+                          : 'border-gray-200 hover:border-green-300 bg-white hover:shadow-lg'
+                      }`}
+                      style={{ minWidth: '280px', maxWidth: '320px' }}
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center mb-3">
+                            <span className="text-3xl mr-3">{getSubjectIcon(subject.name)}</span>
+                            <h5 className="font-bold text-gray-900 text-lg">{subject.name}</h5>
+                          </div>
+                          <p className="text-sm text-gray-600 leading-relaxed">{subject.description}</p>
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-600 leading-relaxed">{subject.description}</p>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${getSubjectColor(subject.name)}`}></div>
+                          <span className="text-xs text-gray-500">Clique para ver tópicos</span>
+                        </div>
+                        <AcademicCapIcon className="h-6 w-6 text-gray-400" />
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${getSubjectColor(subject.name)}`}></div>
-                      <span className="text-xs text-gray-500">Clique para ver tópicos</span>
-                    </div>
-                    <AcademicCapIcon className="h-6 w-6 text-gray-400" />
-                  </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         )}
 
-        {/* Topic Selection */}
+        {/* Topic Selection - Horizontal Scroll */}
         {selectedSubject && topics.length > 0 && (
           <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
             <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
               <BookOpenIcon className="w-6 h-6 mr-2 text-purple-500" />
               {selectedSubject.name} - Tópicos
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {topics.map((topic) => (
-                <div
-                  key={topic.id}
-                  onClick={() => handleTopicSelect(topic)}
-                  className={`border-2 rounded-xl p-6 cursor-pointer transition-all transform hover:scale-105 ${
-                    selectedTopic?.id === topic.id
-                      ? 'border-purple-500 bg-purple-50 shadow-lg'
-                      : 'border-gray-200 hover:border-purple-300 bg-white hover:shadow-lg'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h5 className="font-bold text-gray-900 text-lg mb-3">{topic.name}</h5>
-                      <p className="text-sm text-gray-600 leading-relaxed">{topic.description}</p>
+            <div className="relative">
+              <div className="horizontal-scroll">
+                <div className="flex space-x-6 pb-4" style={{ minWidth: 'max-content' }}>
+                  {topics.map((topic) => (
+                    <div
+                      key={topic.id}
+                      onClick={() => handleTopicSelect(topic)}
+                      className={`border-2 rounded-xl p-6 cursor-pointer transition-all transform hover:scale-105 flex-shrink-0 ${
+                        selectedTopic?.id === topic.id
+                          ? 'border-purple-500 bg-purple-50 shadow-lg'
+                          : 'border-gray-200 hover:border-purple-300 bg-white hover:shadow-lg'
+                      }`}
+                      style={{ minWidth: '280px', maxWidth: '320px' }}
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <h5 className="font-bold text-gray-900 text-lg mb-3">{topic.name}</h5>
+                          <p className="text-sm text-gray-600 leading-relaxed">{topic.description}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-500 to-purple-600"></div>
+                          <span className="text-xs text-gray-500">Clique para ver sub-tópicos</span>
+                        </div>
+                        <BookOpenIcon className="h-6 w-6 text-gray-400" />
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-500 to-purple-600"></div>
-                      <span className="text-xs text-gray-500">Clique para ver sub-tópicos</span>
-                    </div>
-                    <BookOpenIcon className="h-6 w-6 text-gray-400" />
-                  </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         )}
 
-        {/* Sub-Topic Selection with Progress */}
+        {/* Sub-Topic Selection with Progress - Horizontal Scroll */}
         {selectedTopic && subTopics.length > 0 && (
           <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
             <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
               <FireIcon className="w-6 h-6 mr-2 text-orange-500" />
               {selectedTopic.name} - Sub-tópicos
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {subTopics.map((subTopic) => (
-                <SubTopicCard 
-                  key={subTopic.id}
-                  subTopic={subTopic}
-                  onStartStudy={handleStartStudy}
-                  getProgressForSubTopic={getProgressForSubTopic}
-                  formatLastStudied={formatLastStudied}
-                />
-              ))}
+            <div className="relative">
+              <div className="horizontal-scroll">
+                <div className="flex space-x-6 pb-4" style={{ minWidth: 'max-content' }}>
+                  {subTopics.map((subTopic) => (
+                    <SubTopicCard 
+                      key={subTopic.id}
+                      subTopic={subTopic}
+                      onStartStudy={handleStartStudy}
+                      getProgressForSubTopic={getProgressForSubTopic}
+                      formatLastStudied={formatLastStudied}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         )}
