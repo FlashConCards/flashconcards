@@ -199,35 +199,37 @@ export default function HomePage() {
       {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 sm:py-6 gap-4 sm:gap-0">
-            <div className="flex items-center space-x-2">
-              <BookOpenIcon className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600" />
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">FlashConCards</h1>
-            </div>
-            <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto">
-              {user ? (
-                <button
-                  onClick={() => router.push('/dashboard')}
-                  className="btn-primary text-sm sm:text-base px-4 sm:px-6 py-2"
-                >
-                  Dashboard
-                </button>
-              ) : (
-                <>
+          <div className="flex justify-center items-center py-4 sm:py-6">
+            <div className="flex items-center justify-between w-full max-w-4xl">
+              <div className="flex items-center space-x-2">
+                <BookOpenIcon className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600" />
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">FlashConCards</h1>
+              </div>
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                {user ? (
                   <button
-                    onClick={() => router.push('/login')}
-                    className="text-gray-600 hover:text-gray-900 font-medium text-sm sm:text-base"
-                  >
-                    Entrar
-                  </button>
-                  <button
-                    onClick={() => router.push('/register')}
+                    onClick={() => router.push('/dashboard')}
                     className="btn-primary text-sm sm:text-base px-4 sm:px-6 py-2"
                   >
-                    Cadastrar
+                    Dashboard
                   </button>
-                </>
-              )}
+                ) : (
+                  <>
+                    <button
+                      onClick={() => router.push('/login')}
+                      className="text-gray-600 hover:text-gray-900 font-medium text-sm sm:text-base transition-colors"
+                    >
+                      Entrar
+                    </button>
+                    <button
+                      onClick={() => router.push('/course-selection')}
+                      className="btn-primary text-sm sm:text-base px-4 sm:px-6 py-2"
+                    >
+                      Cadastrar
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -495,7 +497,7 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+          <div className="flex overflow-x-auto pb-4 space-x-6 sm:space-x-8 scrollbar-hide">
             {(features || []).map((feature, index) => (
               <motion.div
                 key={index}
@@ -503,7 +505,7 @@ export default function HomePage() {
                 animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
                 transition={{ duration: 0.8, delay: 1 + index * 0.1 }}
                 whileHover={{ y: -5 }}
-                className="text-center p-4 sm:p-6 rounded-lg hover:bg-gray-50 transition-colors"
+                className="text-center p-4 sm:p-6 rounded-lg hover:bg-gray-50 transition-colors min-w-[280px] sm:min-w-[300px] flex-shrink-0"
               >
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <feature.icon className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600" />

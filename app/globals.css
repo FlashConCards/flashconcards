@@ -22,13 +22,6 @@
   * {
     box-sizing: border-box;
   }
-
-  /* Otimizar para dispositivos móveis */
-  @media (max-width: 768px) {
-    html {
-      font-size: 14px;
-    }
-  }
 }
 
 @layer components {

@@ -259,29 +259,29 @@ export default function DashboardPage() {
               <h1 className="ml-2 text-xl sm:text-2xl font-bold text-gray-900">Dashboard</h1>
             </div>
             
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
               <button
                 onClick={() => router.push('/dashboard/study-area')}
-                className="flex items-center justify-center sm:justify-start space-x-2 bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm sm:text-base"
+                className="flex items-center justify-center space-x-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-3 rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl text-sm sm:text-base font-medium"
               >
-                <BookOpenIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                <BookOpenIcon className="h-5 w-5" />
                 <span>Área de Estudos</span>
               </button>
               
               <button
                 onClick={() => router.push('/dashboard/stats')}
-                className="flex items-center justify-center sm:justify-start space-x-2 bg-indigo-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base"
+                className="flex items-center justify-center space-x-2 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white px-4 py-3 rounded-xl hover:from-indigo-600 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl text-sm sm:text-base font-medium"
               >
-                <ChartBarIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                <ChartBarIcon className="h-5 w-5" />
                 <span>Estatísticas</span>
               </button>
               
               {(user?.isPaid || user?.isAdmin || user?.createdByAdmin) && (
                 <button
                   onClick={() => router.push('/dashboard/feed')}
-                  className="flex items-center justify-center sm:justify-start space-x-2 bg-purple-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm sm:text-base"
+                  className="flex items-center justify-center space-x-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-3 rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl text-sm sm:text-base font-medium"
                 >
-                  <PaperAirplaneIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <PaperAirplaneIcon className="h-5 w-5" />
                   <span>Feed Social</span>
                 </button>
               )}
@@ -289,9 +289,9 @@ export default function DashboardPage() {
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center justify-center sm:justify-start space-x-2 text-gray-700 hover:text-gray-900 w-full sm:w-auto px-3 py-2 rounded-lg hover:bg-gray-100"
+                  className="flex items-center justify-center space-x-2 text-gray-700 hover:text-gray-900 w-full sm:w-auto px-4 py-3 rounded-xl hover:bg-gray-100 transition-all duration-200 border border-gray-200 hover:border-gray-300"
                 >
-                  <UserCircleIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+                  <UserCircleIcon className="h-5 w-5" />
                   <span className="text-sm sm:text-base truncate">{user.displayName || user.email}</span>
                 </button>
                 
@@ -385,7 +385,7 @@ export default function DashboardPage() {
                 {selectedCourse.name} - Conteúdo
               </h3>
               <button
-                onClick={() => router.push('/study')}
+                onClick={() => router.push('/dashboard/study-area')}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 flex items-center space-x-2"
               >
                 <PlayIcon className="h-5 w-5" />

@@ -83,77 +83,14 @@ export default function FeedPage() {
     try {
       setLoading(true);
       
-      // Simular posts do feed (em produção, viria do Firebase)
-      const mockPosts: Post[] = [
-        {
-          id: '1',
-          title: 'Dica de Estudo: Técnica Pomodoro',
-          content: 'A técnica Pomodoro é uma excelente forma de manter o foco durante os estudos. Estude por 25 minutos, faça uma pausa de 5 minutos, e repita o ciclo. Isso ajuda a manter a concentração e evitar o cansaço mental.',
-          author: {
-            name: 'Equipe FlashConCards',
-            isAdmin: true
-          },
-          createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 horas atrás
-          likes: 24,
-          comments: [
-            {
-              id: '1',
-              content: 'Essa técnica realmente funciona! Uso há meses.',
-              author: { name: 'Maria Silva' },
-              createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000)
-            },
-            {
-              id: '2',
-              content: 'Vou testar hoje mesmo! Obrigado pela dica.',
-              author: { name: 'João Santos' },
-              createdAt: new Date(Date.now() - 30 * 60 * 1000)
-            }
-          ],
-          isLiked: false,
-          isSaved: false
-        },
-        {
-          id: '2',
-          title: 'Novo Conteúdo Disponível',
-          content: 'Acabamos de adicionar novos flashcards sobre Direito Constitucional! Agora você tem acesso a mais de 50 cards sobre princípios fundamentais e direitos constitucionais. Aproveite para revisar e testar seus conhecimentos.',
-          author: {
-            name: 'Equipe FlashConCards',
-            isAdmin: true
-          },
-          createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 horas atrás
-          likes: 18,
-          comments: [
-            {
-              id: '3',
-              content: 'Perfeito! Exatamente o que eu precisava.',
-              author: { name: 'Ana Costa' },
-              createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000)
-            }
-          ],
-          isLiked: true,
-          isSaved: false
-        },
-        {
-          id: '3',
-          title: 'Como Manter a Motivação nos Estudos',
-          content: 'Estudar para concursos pode ser desafiador, mas lembre-se: cada minuto de estudo te aproxima do seu objetivo. Estabeleça metas pequenas e comemore cada conquista. O sucesso é uma jornada, não um destino!',
-          author: {
-            name: 'Equipe FlashConCards',
-            isAdmin: true
-          },
-          createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 horas atrás
-          likes: 31,
-          comments: [],
-          isLiked: false,
-          isSaved: true
-        }
-      ];
-
+      // Feed vazio - será populado pelos administradores
+      const mockPosts: Post[] = [];
+      
       setPosts(mockPosts);
       setLoading(false);
     } catch (error) {
       console.error('Error loading posts:', error);
-      toast.error('Erro ao carregar o feed');
+      toast.error('Erro ao carregar posts');
       setLoading(false);
     }
   };
