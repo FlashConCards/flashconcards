@@ -6,7 +6,10 @@ import dynamic from 'next/dynamic';
 // Importação dinâmica do React Quill para evitar problemas de SSR
 const ReactQuill = dynamic(() => import('react-quill'), {
   ssr: false,
-  loading: () => <div className="h-48 bg-gray-100 animate-pulse rounded border border-gray-300 p-4">Carregando editor...</div>
+  loading: () => {
+    console.log('ReactQuill loading...');
+    return <div className="h-48 bg-gray-100 animate-pulse rounded border border-gray-300 p-4">Carregando editor...</div>
+  }
 });
 
 import 'react-quill/dist/quill.snow.css';
@@ -25,10 +28,24 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   className = ""
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [quillLoaded, setQuillLoaded] = useState(false);
 
   useEffect(() => {
     console.log('RichTextEditor mounted');
     setIsLoaded(true);
+    
+    // Verificar se o ReactQuill está disponível
+    const checkQuill = async () => {
+      try {
+        const Quill = await import('react-quill');
+        console.log('ReactQuill loaded successfully');
+        setQuillLoaded(true);
+      } catch (error) {
+        console.error('Error loading ReactQuill:', error);
+      }
+    };
+    
+    checkQuill();
   }, []);
 
   const modules = {
@@ -54,11 +71,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     'link', 'image'
   ];
 
-  console.log('RichTextEditor rendering, isLoaded:', isLoaded);
+  console.log('RichTextEditor rendering, isLoaded:', isLoaded, 'quillLoaded:', quillLoaded);
 
   return (
     <div className={className}>
-      {isLoaded ? (
+      {isLoaded && quillLoaded ? (
         <ReactQuill
           theme="snow"
           value={value}
@@ -70,7 +87,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         />
       ) : (
         <div className="h-48 bg-gray-100 animate-pulse rounded border border-gray-300 p-4">
-          Carregando editor...
+          {quillLoaded ? 'Editor carregado!' : 'Carregando editor...'}
         </div>
       )}
     </div>

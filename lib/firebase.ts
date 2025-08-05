@@ -673,10 +673,8 @@ export const getFlashcards = async (topicId?: string) => {
     let q: Query | CollectionReference = collection(db, 'flashcards')
     
     if (topicId) {
-      q = query(q, where('topicId', '==', topicId), orderBy('createdAt', 'asc'))
+      q = query(q, where('topicId', '==', topicId))
       console.log('Query created with filter for topicId:', topicId)
-    } else {
-      q = query(q, orderBy('createdAt', 'asc'))
     }
     
     const querySnapshot = await getDocs(q)
