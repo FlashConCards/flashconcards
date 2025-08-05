@@ -22,6 +22,17 @@
   * {
     box-sizing: border-box;
   }
+
+  /* Animação suave para features scroll */
+  .features-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+
+  .features-scroll > * {
+    scroll-snap-align: start;
+  }
 }
 
 @layer components {

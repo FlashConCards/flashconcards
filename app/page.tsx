@@ -85,19 +85,20 @@ export default function HomePage() {
           if (prev >= maxScroll) {
             return 0; // Volta ao início
           }
-          return prev + 1; // Move 1px por vez
+          return prev + 2; // Move 2px por vez para ser mais suave
         }
         return prev;
       });
-    }, 50); // Velocidade da animação
+    }, 30); // Velocidade mais rápida para movimento mais suave
 
     return () => clearInterval(interval);
   }, []);
 
-  // Aplicar scroll position
+  // Aplicar scroll position com transição suave
   useEffect(() => {
-    const container = document.querySelector('.features-scroll');
+    const container = document.querySelector('.features-scroll') as HTMLElement;
     if (container) {
+      container.style.scrollBehavior = 'smooth';
       container.scrollLeft = scrollPosition;
     }
   }, [scrollPosition]);
@@ -525,15 +526,15 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          <div className="features-scroll flex overflow-x-auto pb-4 space-x-6 sm:space-x-8 scrollbar-hide">
+          <div className="features-scroll flex overflow-x-auto pb-4 space-x-6 sm:space-x-8 scrollbar-hide transition-all duration-500 ease-in-out">
             {(features || []).map((feature, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
                 transition={{ duration: 0.8, delay: 1 + index * 0.1 }}
-                whileHover={{ y: -5 }}
-                className="text-center p-3 sm:p-4 rounded-lg hover:bg-gray-50 transition-colors min-w-[240px] sm:min-w-[260px] flex-shrink-0"
+                whileHover={{ y: -5, scale: 1.02 }}
+                className="text-center p-3 sm:p-4 rounded-lg hover:bg-gray-50 transition-all duration-300 ease-in-out min-w-[240px] sm:min-w-[260px] flex-shrink-0 transform hover:shadow-lg"
               >
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <feature.icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" />
