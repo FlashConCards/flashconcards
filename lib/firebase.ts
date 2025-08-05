@@ -299,6 +299,8 @@ export const createUserByAdmin = async (userData: any) => {
       displayName: userData.displayName,
       photoURL: '',
       isAdmin: userData.isAdmin || false,
+      isModerator: userData.isModerator || false,
+      isTeacher: userData.isTeacher || false,
       isPaid: userData.isPaid || false,
       isActive: userData.isActive || true,
       studyTime: userData.studyTime || 0,

@@ -46,19 +46,27 @@ export default function LoginPage() {
         const q = query(usersRef, where('email', '==', email));
         const querySnapshot = await getDocs(q);
         
-        if (!querySnapshot.empty) {
-          const userData = querySnapshot.docs[0].data();
-          if (userData?.isModerator) {
-            router.push('/moderator');
-          } else if (userData?.isTeacher) {
-            router.push('/teacher');
-          } else {
-            router.push('/dashboard');
-          }
-        } else {
-          // Se não encontrou, redirecionar para dashboard
-          router.push('/dashboard');
-        }
+                 if (!querySnapshot.empty) {
+           const userData = querySnapshot.docs[0].data();
+           console.log('User data found:', userData);
+           console.log('isModerator:', userData?.isModerator);
+           console.log('isTeacher:', userData?.isTeacher);
+           
+           if (userData?.isModerator) {
+             console.log('Redirecting to moderator page');
+             router.push('/moderator');
+           } else if (userData?.isTeacher) {
+             console.log('Redirecting to teacher page');
+             router.push('/teacher');
+           } else {
+             console.log('Redirecting to dashboard');
+             router.push('/dashboard');
+           }
+         } else {
+           console.log('No user data found, redirecting to dashboard');
+           // Se não encontrou, redirecionar para dashboard
+           router.push('/dashboard');
+         }
       }
     } catch (error: any) {
       console.error('Login error:', error);
