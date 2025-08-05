@@ -14,26 +14,7 @@ import {
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
 import { getPosts, likePost, commentPost } from '@/lib/firebase';
-
-interface Post {
-  id: string;
-  content: string;
-  authorId: string;
-  authorName: string;
-  createdAt: any;
-  likes: string[];
-  comments: Comment[];
-  image?: string;
-}
-
-interface Comment {
-  id: string;
-  content: string;
-  authorId: string;
-  authorName: string;
-  createdAt: any;
-  image?: string;
-}
+import { Post, Comment } from '@/types';
 
 export default function FeedPage() {
   const { user } = useAuth();

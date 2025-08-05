@@ -147,4 +147,26 @@ export interface Testimonial {
   status: 'pending' | 'approved' | 'rejected'
   createdAt: any
   updatedAt: any
+}
+
+export interface Post {
+  id: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  authorEmail?: string;
+  createdAt: any;
+  updatedAt?: any;
+  likes: string[];
+  comments: Comment[];
+  imageUrl?: string;
+}
+
+export interface Comment {
+  id: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  createdAt: any;
+  image?: string;
 } 

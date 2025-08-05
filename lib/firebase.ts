@@ -27,7 +27,7 @@ import {
   CollectionReference
 } from 'firebase/firestore'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { Course } from '@/types'
+import { Course, Post } from '@/types'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -1836,7 +1836,7 @@ export const createPost = async (postData: any) => {
   }
 }
 
-export const getPosts = async () => {
+export const getPosts = async (): Promise<Post[]> => {
   try {
     const postsQuery = query(
       collection(db, 'posts'),
@@ -1846,7 +1846,7 @@ export const getPosts = async () => {
     const posts = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }))
+    })) as Post[]
     return posts
   } catch (error) {
     console.error('Error getting posts:', error)
