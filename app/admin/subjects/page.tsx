@@ -35,6 +35,7 @@ import {
   AcademicCapIcon,
   FireIcon
 } from '@heroicons/react/24/outline';
+import RichTextEditor from '@/components/RichTextEditor';
 
 interface Subject {
   id: string;
@@ -687,7 +688,10 @@ export default function SubjectsPage() {
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <p className="text-sm text-gray-900 line-clamp-3">{deepening.content}</p>
+                          <div 
+                            className="text-sm text-gray-900 line-clamp-3"
+                            dangerouslySetInnerHTML={{ __html: deepening.content }}
+                          />
                         </div>
                         <div className="flex space-x-1 ml-2">
                           <button
@@ -925,7 +929,7 @@ export default function SubjectsPage() {
         {/* Deepening Modal */}
         {showDeepeningModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg font-semibold mb-4">
                 Novo Aprofundamento
               </h3>
@@ -935,12 +939,11 @@ export default function SubjectsPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Conteúdo do Aprofundamento *
                   </label>
-                  <textarea
+                  <RichTextEditor
                     value={newDeepening.content}
-                    onChange={(e) => setNewDeepening({...newDeepening, content: e.target.value})}
-                    rows={6}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(value) => setNewDeepening({...newDeepening, content: value})}
                     placeholder="Digite o conteúdo detalhado do aprofundamento..."
+                    className="min-h-[400px]"
                   />
                 </div>
               </div>
