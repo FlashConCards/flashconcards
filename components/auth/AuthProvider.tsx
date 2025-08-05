@@ -55,6 +55,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               displayName: userData.displayName || firebaseUser.displayName || '',
               photoURL: userData.photoURL || firebaseUser.photoURL || '',
               isAdmin: userData.isAdmin || isAdminEmail(userData.email || firebaseUser.email || ''),
+              isModerator: userData.isModerator || false,
+              isTeacher: userData.isTeacher || false,
               isPaid: userData.isPaid || false,
               isActive: userData.isActive || true,
               studyTime: userData.studyTime || 0,
@@ -79,6 +81,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               displayName: firebaseUser.displayName || '',
               photoURL: firebaseUser.photoURL || '',
               isAdmin: isAdmin, // Verificar se é admin pelo email
+              isModerator: false,
+              isTeacher: false,
               isPaid: false, // NÃO dar acesso automático - usuário precisa pagar
               isActive: true,
               studyTime: 0,

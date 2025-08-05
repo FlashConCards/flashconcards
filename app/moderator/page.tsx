@@ -49,16 +49,23 @@ export default function ModeratorPage() {
   const [selectedCourse, setSelectedCourse] = useState('');
 
   useEffect(() => {
+    console.log('Moderator page - User data:', user);
+    console.log('Moderator page - isModerator:', user?.isModerator);
+    console.log('Moderator page - isAdmin:', user?.isAdmin);
+    
     if (!user) {
+      console.log('Moderator page - No user, redirecting to login');
       router.push('/login');
       return;
     }
 
     if (!user.isModerator && !user.isAdmin) {
+      console.log('Moderator page - User is not moderator or admin, redirecting to dashboard');
       router.push('/dashboard');
       return;
     }
 
+    console.log('Moderator page - User is authorized, loading data');
     loadData();
   }, [user]);
 
