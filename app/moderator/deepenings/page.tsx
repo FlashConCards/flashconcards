@@ -15,9 +15,9 @@ import {
   createDeepening, 
   updateDeepening, 
   deleteDeepening,
-  getTopics
+  getFlashcards
 } from '@/lib/firebase';
-import { Deepening, Topic } from '@/types';
+import { Deepening, Flashcard } from '@/types';
 import toast from 'react-hot-toast';
 import RichTextEditor from '@/components/RichTextEditor';
 
@@ -25,7 +25,7 @@ export default function ModeratorDeepeningsPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [deepenings, setDeepenings] = useState<Deepening[]>([]);
-  const [topics, setTopics] = useState<Topic[]>([]);
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -33,12 +33,12 @@ export default function ModeratorDeepeningsPage() {
   const [newDeepening, setNewDeepening] = useState({
     title: '',
     content: '',
-    topicId: ''
+    flashcardId: ''
   });
   const [editDeepening, setEditDeepening] = useState({
     title: '',
     content: '',
-    topicId: ''
+    flashcardId: ''
   });
 
   useEffect(() => {
@@ -58,12 +58,12 @@ export default function ModeratorDeepeningsPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [deepeningsData, topicsData] = await Promise.all([
+      const [deepeningsData, flashcardsData] = await Promise.all([
         getDeepenings(),
-        getTopics()
+        getFlashcards()
       ]);
       setDeepenings(deepeningsData || []);
-      setTopics(topicsData || []);
+      setFlashcards(flashcardsData || []);
       setLoading(false);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -73,7 +73,7 @@ export default function ModeratorDeepeningsPage() {
 
   const handleAddDeepening = async () => {
     try {
-      if (!newDeepening.title || !newDeepening.content || !newDeepening.topicId) {
+      if (!newDeepening.title || !newDeepening.content || !newDeepening.flashcardId) {
         toast.error('Preencha todos os campos obrigatórios');
         return;
       }
@@ -81,11 +81,11 @@ export default function ModeratorDeepeningsPage() {
       await createDeepening({
         title: newDeepening.title,
         content: newDeepening.content,
-        topicId: newDeepening.topicId
+        flashcardId: newDeepening.flashcardId
       });
 
       await loadData();
-      setNewDeepening({ title: '', content: '', topicId: '' });
+      setNewDeepening({ title: '', content: '', flashcardId: '' });
       setShowAddModal(false);
       toast.success('Aprofundamento adicionado com sucesso!');
     } catch (error: any) {
@@ -99,7 +99,7 @@ export default function ModeratorDeepeningsPage() {
     setEditDeepening({
       title: deepening.title,
       content: deepening.content,
-      topicId: deepening.topicId
+      flashcardId: deepening.flashcardId
     });
     setShowEditModal(true);
   };
@@ -186,7 +186,7 @@ export default function ModeratorDeepeningsPage() {
           ) : (
             <div className="divide-y divide-gray-200">
               {deepenings.map((deepening) => {
-                const topic = topics.find(t => t.id === deepening.topicId);
+                const flashcard = flashcards.find(f => f.id === deepening.flashcardId);
                 return (
                   <div key={deepening.id} className="px-6 py-4 hover:bg-gray-50">
                     <div className="flex justify-between items-start">
@@ -197,7 +197,7 @@ export default function ModeratorDeepeningsPage() {
                           dangerouslySetInnerHTML={{ __html: deepening.content.substring(0, 200) + '...' }}
                         />
                         <p className="text-xs text-gray-500 mt-2">
-                          Tópico: {topic?.name || 'N/A'}
+                          Flashcard: {flashcard?.front || 'N/A'}
                         </p>
                       </div>
                       <div className="flex space-x-2 ml-4">
@@ -245,17 +245,17 @@ export default function ModeratorDeepeningsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tópico *
+                  Flashcard *
                 </label>
                 <select
-                  value={newDeepening.topicId}
-                  onChange={(e) => setNewDeepening({...newDeepening, topicId: e.target.value})}
+                  value={newDeepening.flashcardId}
+                  onChange={(e) => setNewDeepening({...newDeepening, flashcardId: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                 >
-                  <option value="">Selecione um tópico</option>
-                  {topics.map((topic) => (
-                    <option key={topic.id} value={topic.id}>
-                      {topic.name}
+                  <option value="">Selecione um flashcard</option>
+                  {flashcards.map((flashcard) => (
+                    <option key={flashcard.id} value={flashcard.id}>
+                      {flashcard.front}
                     </option>
                   ))}
                 </select>
@@ -311,17 +311,17 @@ export default function ModeratorDeepeningsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tópico
+                  Flashcard
                 </label>
                 <select
-                  value={editDeepening.topicId}
-                  onChange={(e) => setEditDeepening({...editDeepening, topicId: e.target.value})}
+                  value={editDeepening.flashcardId}
+                  onChange={(e) => setEditDeepening({...editDeepening, flashcardId: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                 >
-                  <option value="">Selecione um tópico</option>
-                  {topics.map((topic) => (
-                    <option key={topic.id} value={topic.id}>
-                      {topic.name}
+                  <option value="">Selecione um flashcard</option>
+                  {flashcards.map((flashcard) => (
+                    <option key={flashcard.id} value={flashcard.id}>
+                      {flashcard.front}
                     </option>
                   ))}
                 </select>
