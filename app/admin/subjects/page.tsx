@@ -51,21 +51,14 @@ interface Topic {
   isActive: boolean;
 }
 
-interface SubTopic {
-  id: string;
-  name: string;
-  description: string;
-  topicId: string;
-  order: number;
-  isActive: boolean;
-}
+
 
 interface Flashcard {
   id: string;
   front: string;
   back: string;
   explanation?: string;
-  subTopicId: string;
+  topicId: string;
   order: number;
   isActive: boolean;
 }
@@ -78,15 +71,12 @@ export default function SubjectsPage() {
   
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
-  const [subTopics, setSubTopics] = useState<SubTopic[]>([]);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
-  const [selectedSubTopic, setSelectedSubTopic] = useState<SubTopic | null>(null);
   const [showSubjectModal, setShowSubjectModal] = useState(false);
   const [showTopicModal, setShowTopicModal] = useState(false);
-  const [showSubTopicModal, setShowSubTopicModal] = useState(false);
   const [showFlashcardModal, setShowFlashcardModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [newSubject, setNewSubject] = useState({
@@ -112,7 +102,7 @@ export default function SubjectsPage() {
     front: '',
     back: '',
     explanation: '',
-    subTopicId: '',
+    topicId: '',
     order: 1,
     isActive: true
   });
@@ -156,19 +146,9 @@ export default function SubjectsPage() {
     }
   };
 
-  const loadSubTopics = async (topicId: string) => {
+  const loadFlashcards = async (topicId: string) => {
     try {
-      const subTopicsData = await getSubTopics(topicId);
-      setSubTopics(subTopicsData || []);
-    } catch (error) {
-      console.error('Erro ao carregar sub-tópicos:', error);
-      setSubTopics([]);
-    }
-  };
-
-  const loadFlashcards = async (subTopicId: string) => {
-    try {
-      const flashcardsData = await getFlashcards(subTopicId);
+      const flashcardsData = await getFlashcards(topicId);
       setFlashcards(flashcardsData || []);
     } catch (error) {
       console.error('Erro ao carregar flashcards:', error);
@@ -179,25 +159,15 @@ export default function SubjectsPage() {
   const handleSubjectSelect = async (subject: Subject) => {
     setSelectedSubject(subject);
     setSelectedTopic(null);
-    setSelectedSubTopic(null);
     setTopics([]);
-    setSubTopics([]);
     setFlashcards([]);
     await loadTopics(subject.id);
   };
 
   const handleTopicSelect = async (topic: Topic) => {
     setSelectedTopic(topic);
-    setSelectedSubTopic(null);
-    setSubTopics([]);
     setFlashcards([]);
-    await loadSubTopics(topic.id);
-  };
-
-  const handleSubTopicSelect = async (subTopic: SubTopic) => {
-    setSelectedSubTopic(subTopic);
-    setFlashcards([]);
-    await loadFlashcards(subTopic.id);
+    await loadFlashcards(topic.id);
   };
 
   const handleCreateSubject = async () => {
@@ -226,13 +196,18 @@ export default function SubjectsPage() {
 
   const handleCreateTopic = async () => {
     try {
-      if (!newTopic.name || !newTopic.subjectId) {
-        alert('Preencha todos os campos obrigatórios');
+      if (!newTopic.name) {
+        alert('Preencha o nome do tópico');
         return;
       }
 
-      newTopic.subjectId = selectedSubject?.id || ''; // Ensure subjectId is set if selectedSubject is null
-      await createTopic(newTopic);
+      // Garantir que o subjectId seja definido
+      const topicData = {
+        ...newTopic,
+        subjectId: selectedSubject?.id || newTopic.subjectId
+      };
+
+      await createTopic(topicData);
       await loadTopics(selectedSubject?.id || '');
       setNewTopic({
         name: '',
@@ -248,45 +223,21 @@ export default function SubjectsPage() {
     }
   };
 
-  const handleCreateSubTopic = async () => {
-    try {
-      if (!newSubTopic.name || !newSubTopic.topicId) {
-        alert('Preencha todos os campos obrigatórios');
-        return;
-      }
-
-      newSubTopic.topicId = selectedTopic?.id || ''; // Ensure topicId is set if selectedTopic is null
-      await createSubTopic(newSubTopic);
-      await loadSubTopics(selectedTopic?.id || '');
-      setNewSubTopic({
-        name: '',
-        topicId: '',
-        order: 1,
-        isActive: true
-      });
-      setShowSubTopicModal(false);
-      alert('Sub-tópico criado com sucesso!');
-    } catch (error: any) {
-      console.error('Erro ao criar sub-tópico:', error);
-      alert(`Erro ao criar sub-tópico: ${error.message}`);
-    }
-  };
-
   const handleCreateFlashcard = async () => {
     try {
-      if (!newFlashcard.front || !newFlashcard.back || !selectedSubTopic) {
+      if (!newFlashcard.front || !newFlashcard.back || !selectedTopic) {
         alert('Preencha todos os campos obrigatórios');
         return;
       }
 
-      newFlashcard.subTopicId = selectedSubTopic.id;
+      newFlashcard.topicId = selectedTopic.id;
       await createFlashcard(newFlashcard);
-      await loadFlashcards(selectedSubTopic.id);
+      await loadFlashcards(selectedTopic.id);
       setNewFlashcard({
         front: '',
         back: '',
         explanation: '',
-        subTopicId: '',
+        topicId: '',
         order: 1,
         isActive: true
       });
@@ -321,21 +272,12 @@ export default function SubjectsPage() {
         });
         setShowTopicModal(true);
         break;
-      case 'subtopic':
-        setNewSubTopic({
-          name: item.name,
-          topicId: item.topicId,
-          order: item.order,
-          isActive: item.isActive
-        });
-        setShowSubTopicModal(true);
-        break;
       case 'flashcard':
         setNewFlashcard({
           front: item.front,
           back: item.back,
           explanation: item.explanation || '',
-          subTopicId: item.subTopicId,
+          topicId: item.topicId,
           order: item.order,
           isActive: item.isActive
         });
@@ -357,20 +299,15 @@ export default function SubjectsPage() {
           await updateTopic(editingItem.id, newTopic);
           if (selectedSubject) await loadTopics(selectedSubject.id);
           break;
-        case 'subtopic':
-          await updateSubTopic(editingItem.id, newSubTopic);
-          if (selectedTopic) await loadSubTopics(selectedTopic.id);
-          break;
         case 'flashcard':
           await updateFlashcard(editingItem.id, newFlashcard);
-          if (selectedSubTopic) await loadFlashcards(selectedSubTopic.id);
+          if (selectedTopic) await loadFlashcards(selectedTopic.id);
           break;
       }
 
       setEditingItem(null);
       setShowSubjectModal(false);
       setShowTopicModal(false);
-      setShowSubTopicModal(false);
       setShowFlashcardModal(false);
       alert('Item atualizado com sucesso!');
       } catch (error: any) {
@@ -392,13 +329,9 @@ export default function SubjectsPage() {
           await deleteTopic(id);
           if (selectedSubject) await loadTopics(selectedSubject.id);
           break;
-        case 'subtopic':
-          await deleteSubTopic(id);
-          if (selectedTopic) await loadSubTopics(selectedTopic.id);
-          break;
         case 'flashcard':
           await deleteFlashcard(id);
-          if (selectedSubTopic) await loadFlashcards(selectedSubTopic.id);
+          if (selectedTopic) await loadFlashcards(selectedTopic.id);
           break;
       }
 
@@ -584,89 +517,15 @@ export default function SubjectsPage() {
             </div>
           </div>
 
-          {/* Sub-tópicos */}
+          {/* Flashcards */}
           <div className="bg-white rounded-lg shadow">
             <div className="p-6 border-b border-gray-200">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-                  <FireIcon className="w-6 h-6 mr-2" />
-                  Sub-tópicos ({subTopics.length})
-                </h2>
-                {selectedTopic && (
-                  <button
-                    onClick={() => {
-                      setEditingItem(null);
-                      setNewSubTopic({
-                        name: '',
-                        topicId: selectedTopic.id,
-                        order: 1,
-                        isActive: true
-                      });
-                      setShowSubTopicModal(true);
-                    }}
-                    className="bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700"
-                  >
-                    <PlusIcon className="w-5 h-5" />
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="p-6">
-              {selectedTopic ? (
-                <div className="space-y-2">
-                  {subTopics.map((subTopic) => (
-                    <div
-                      key={subTopic.id}
-                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                        selectedSubTopic?.id === subTopic.id
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-purple-300'
-                      }`}
-                      onClick={() => handleSubTopicSelect(subTopic)}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h3 className="font-medium text-gray-900">{subTopic.name}</h3>
-                        </div>
-                        <div className="flex space-x-1 ml-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEdit(subTopic, 'subtopic');
-                            }}
-                            className="text-blue-600 hover:text-blue-900"
-                          >
-                            <PencilIcon className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(subTopic.id, 'subtopic');
-                            }}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            <TrashIcon className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-center">Selecione um tópico</p>
-              )}
-            </div>
-          </div>
-
-          {/* Flashcards */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200">
-                      <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold text-gray-800 flex items-center">
                   <BookOpenIcon className="w-6 h-6 mr-2" />
                   Flashcards ({flashcards.length})
                 </h2>
-                {selectedSubTopic && (
+                {selectedTopic && (
                   <button
                     onClick={() => {
                       setEditingItem(null);
@@ -674,7 +533,7 @@ export default function SubjectsPage() {
                         front: '',
                         back: '',
                         explanation: '',
-                        subTopicId: selectedSubTopic.id,
+                        topicId: selectedTopic.id,
                         order: 1,
                         isActive: true
                       });
@@ -688,7 +547,7 @@ export default function SubjectsPage() {
               </div>
             </div>
             <div className="p-6">
-              {selectedSubTopic ? (
+              {selectedTopic ? (
                 <div className="space-y-2">
                   {flashcards.map((flashcard) => (
                     <div
@@ -861,75 +720,7 @@ export default function SubjectsPage() {
           </div>
         )}
 
-        {/* SubTopic Modal */}
-        {showSubTopicModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h3 className="text-lg font-semibold mb-4">
-                {editingItem ? 'Editar Sub-tópico' : 'Novo Sub-tópico'}
-              </h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nome *
-                  </label>
-                  <input
-                    type="text"
-                    value={newSubTopic.name}
-                    onChange={(e) => setNewSubTopic({...newSubTopic, name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tópico *
-                  </label>
-                  <select
-                    value={newSubTopic.topicId}
-                    onChange={(e) => setNewSubTopic({...newSubTopic, topicId: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Selecione um tópico</option>
-                    {topics.map((topic) => (
-                      <option key={topic.id} value={topic.id}>
-                        {topic.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
 
-                <div>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={newSubTopic.isActive}
-                      onChange={(e) => setNewSubTopic({...newSubTopic, isActive: e.target.checked})}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Ativo</span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  onClick={() => setShowSubTopicModal(false)}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={editingItem ? handleUpdate : handleCreateSubTopic}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
-                >
-                  {editingItem ? 'Atualizar' : 'Criar'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Flashcard Modal */}
         {showFlashcardModal && (
