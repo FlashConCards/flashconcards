@@ -8,6 +8,7 @@ import {
   getTopics,
   getSubTopics,
   getFlashcards,
+  getDeepenings,
   createSubject,
   updateSubject,
   deleteSubject,
@@ -19,7 +20,9 @@ import {
   deleteSubTopic,
   createFlashcard,
   updateFlashcard,
-  deleteFlashcard
+  deleteFlashcard,
+  createDeepening,
+  deleteDeepening
 } from '@/lib/firebase';
 import { 
   PlusIcon, 
@@ -63,6 +66,14 @@ interface Flashcard {
   isActive: boolean;
 }
 
+interface Deepening {
+  id: string;
+  content: string;
+  topicId: string;
+  createdAt: any;
+  updatedAt: any;
+}
+
 export default function SubjectsPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -72,12 +83,14 @@ export default function SubjectsPage() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [deepenings, setDeepenings] = useState<Deepening[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [showSubjectModal, setShowSubjectModal] = useState(false);
   const [showTopicModal, setShowTopicModal] = useState(false);
   const [showFlashcardModal, setShowFlashcardModal] = useState(false);
+  const [showDeepeningModal, setShowDeepeningModal] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [newSubject, setNewSubject] = useState({
     name: '',
@@ -105,6 +118,11 @@ export default function SubjectsPage() {
     topicId: '',
     order: 1,
     isActive: true
+  });
+
+  const [newDeepening, setNewDeepening] = useState({
+    content: '',
+    topicId: ''
   });
 
   // Check if user is admin
@@ -158,18 +176,31 @@ export default function SubjectsPage() {
     }
   };
 
+  const loadDeepenings = async (topicId: string) => {
+    try {
+      const deepeningsData = await getDeepenings(topicId);
+      setDeepenings(deepeningsData || []);
+    } catch (error) {
+      console.error('Erro ao carregar aprofundamentos:', error);
+      setDeepenings([]);
+    }
+  };
+
   const handleSubjectSelect = async (subject: Subject) => {
     setSelectedSubject(subject);
     setSelectedTopic(null);
     setTopics([]);
     setFlashcards([]);
+    setDeepenings([]);
     await loadTopics(subject.id);
   };
 
   const handleTopicSelect = async (topic: Topic) => {
     setSelectedTopic(topic);
     setFlashcards([]);
+    setDeepenings([]);
     await loadFlashcards(topic.id);
+    await loadDeepenings(topic.id);
   };
 
   const handleCreateSubject = async () => {
@@ -257,6 +288,32 @@ export default function SubjectsPage() {
     }
   };
 
+  const handleCreateDeepening = async () => {
+    try {
+      if (!newDeepening.content || !selectedTopic) {
+        alert('Preencha todos os campos obrigatórios');
+        return;
+      }
+
+      const deepeningData = {
+        ...newDeepening,
+        topicId: selectedTopic.id
+      };
+
+      await createDeepening(deepeningData);
+      await loadDeepenings(selectedTopic.id);
+      setNewDeepening({
+        content: '',
+        topicId: ''
+      });
+      setShowDeepeningModal(false);
+      alert('Aprofundamento criado com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao criar aprofundamento:', error);
+      alert(`Erro ao criar aprofundamento: ${error.message}`);
+    }
+  };
+
   const handleEdit = (item: any, type: 'subject' | 'topic' | 'subtopic' | 'flashcard') => {
     setEditingItem({ ...item, type });
     
@@ -324,7 +381,7 @@ export default function SubjectsPage() {
     }
   };
 
-  const handleDelete = async (id: string, type: 'subject' | 'topic' | 'subtopic' | 'flashcard') => {
+  const handleDelete = async (id: string, type: 'subject' | 'topic' | 'subtopic' | 'flashcard' | 'deepening') => {
     if (!confirm('Tem certeza que deseja excluir este item?')) return;
 
     try {
@@ -340,6 +397,10 @@ export default function SubjectsPage() {
         case 'flashcard':
           await deleteFlashcard(id);
           if (selectedTopic) await loadFlashcards(selectedTopic.id);
+          break;
+        case 'deepening':
+          await deleteDeepening(id);
+          if (selectedTopic) await loadDeepenings(selectedTopic.id);
           break;
       }
 
@@ -586,7 +647,62 @@ export default function SubjectsPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center">Selecione um sub-tópico</p>
+                <p className="text-gray-500 text-center">Selecione um tópico</p>
+              )}
+            </div>
+          </div>
+
+          {/* Aprofundamentos */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                  <FireIcon className="w-6 h-6 mr-2" />
+                  Aprofundamentos ({deepenings.length})
+                </h2>
+                {selectedTopic && (
+                  <button
+                    onClick={() => {
+                      setEditingItem(null);
+                      setNewDeepening({
+                        content: '',
+                        topicId: selectedTopic.id
+                      });
+                      setShowDeepeningModal(true);
+                    }}
+                    className="bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700"
+                  >
+                    <PlusIcon className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="p-6">
+              {selectedTopic ? (
+                <div className="space-y-2">
+                  {deepenings.map((deepening) => (
+                    <div
+                      key={deepening.id}
+                      className="p-3 border border-gray-200 rounded-lg"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="text-sm text-gray-900 line-clamp-3">{deepening.content}</p>
+                        </div>
+                        <div className="flex space-x-1 ml-2">
+                          <button
+                            onClick={() => handleDelete(deepening.id, 'deepening')}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center">Selecione um tópico</p>
               )}
             </div>
           </div>
@@ -800,6 +916,47 @@ export default function SubjectsPage() {
                   className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
                 >
                   {editingItem ? 'Atualizar' : 'Criar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Deepening Modal */}
+        {showDeepeningModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">
+                Novo Aprofundamento
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Conteúdo do Aprofundamento *
+                  </label>
+                  <textarea
+                    value={newDeepening.content}
+                    onChange={(e) => setNewDeepening({...newDeepening, content: e.target.value})}
+                    rows={6}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Digite o conteúdo detalhado do aprofundamento..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowDeepeningModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleCreateDeepening}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                >
+                  Criar
                 </button>
               </div>
             </div>
