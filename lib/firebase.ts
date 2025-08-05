@@ -1816,4 +1816,91 @@ export const getPaymentById = async (paymentId: string) => {
     console.error('Error getting payment:', error);
     return null;
   }
+}
+
+// ===== FEED SOCIAL FUNCTIONS =====
+
+export const createPost = async (postData: any) => {
+  try {
+    const postDoc = await addDoc(collection(db, 'posts'), {
+      ...postData,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      likes: [],
+      comments: []
+    })
+    return { id: postDoc.id, ...postData }
+  } catch (error) {
+    console.error('Error creating post:', error)
+    throw error
+  }
+}
+
+export const getPosts = async () => {
+  try {
+    const postsQuery = query(
+      collection(db, 'posts'),
+      orderBy('createdAt', 'desc')
+    )
+    const querySnapshot = await getDocs(postsQuery)
+    const posts = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }))
+    return posts
+  } catch (error) {
+    console.error('Error getting posts:', error)
+    return []
+  }
+}
+
+export const likePost = async (postId: string, userId: string) => {
+  try {
+    const postRef = doc(db, 'posts', postId)
+    const postDoc = await getDoc(postRef)
+    
+    if (postDoc.exists()) {
+      const post = postDoc.data()
+      const likes = post.likes || []
+      
+      if (likes.includes(userId)) {
+        // Unlike
+        const updatedLikes = likes.filter((id: string) => id !== userId)
+        await updateDoc(postRef, { likes: updatedLikes })
+      } else {
+        // Like
+        await updateDoc(postRef, { likes: [...likes, userId] })
+      }
+    }
+  } catch (error) {
+    console.error('Error liking post:', error)
+    throw error
+  }
+}
+
+export const commentPost = async (postId: string, commentData: any) => {
+  try {
+    const postRef = doc(db, 'posts', postId)
+    const postDoc = await getDoc(postRef)
+    
+    if (postDoc.exists()) {
+      const post = postDoc.data()
+      const comments = post.comments || []
+      
+      const newComment = {
+        id: Date.now().toString(),
+        ...commentData,
+        createdAt: serverTimestamp()
+      }
+      
+      await updateDoc(postRef, { 
+        comments: [...comments, newComment]
+      })
+      
+      return newComment
+    }
+  } catch (error) {
+    console.error('Error commenting post:', error)
+    throw error
+  }
 } 

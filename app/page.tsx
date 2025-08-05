@@ -123,7 +123,7 @@ export default function HomePage() {
       
       // Calcular estatísticas reais
       const totalStudents = usersData?.length || 0
-      const totalFlashcards = flashcardsData?.length || 0
+      const totalFlashcards = 0 // Por enquanto, não mostrar total de flashcards
       const totalCourses = coursesData?.length || 0
       
       setStats({

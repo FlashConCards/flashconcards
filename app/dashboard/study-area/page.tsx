@@ -32,6 +32,7 @@ import {
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import DeepeningModal from '@/components/flashcards/DeepeningModal';
+import { useDarkMode } from '@/components/DarkModeProvider';
 
 interface StudyProgress {
   totalCards: number;
@@ -195,6 +196,7 @@ function TopicCard({ topic, onStartStudy, getProgressForTopic, formatLastStudied
 export default function StudyAreaPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const { darkMode } = useDarkMode();
   const [courses, setCourses] = useState<Course[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -361,26 +363,26 @@ export default function StudyAreaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-50 to-indigo-100'}`}>
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
+      <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} shadow-sm border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => router.push('/dashboard')}
-                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+                className={`flex items-center transition-colors ${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
               >
                 <ArrowLeftIcon className="w-5 h-5 mr-2" />
                 <span className="hidden sm:inline">Voltar</span>
               </button>
-              <h1 className="text-xl font-bold text-gray-900">Área de Estudos</h1>
+              <h1 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Área de Estudos</h1>
             </div>
             
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <UserCircleIcon className="w-6 h-6 text-gray-400" />
-                <span className="text-sm text-gray-700 hidden sm:inline">
+                <span className={`text-sm hidden sm:inline ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   {user.displayName || user.email}
                 </span>
               </div>

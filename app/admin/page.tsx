@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
-import {
+import { 
   getAllUsers, 
   getTestimonials, 
   getCourses,
@@ -13,7 +13,8 @@ import {
   createUserByAdmin,
   deleteUserByAdmin,
   updateTestimonialStatus,
-  deleteTestimonial
+  deleteTestimonial,
+  createPost
 } from '@/lib/firebase';
 import { 
   PencilIcon, 
@@ -27,6 +28,8 @@ import {
 } from '@heroicons/react/24/outline';
 import CreatePostModal from '@/components/admin/CreatePostModal';
 import toast from 'react-hot-toast';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface User {
   uid: string;
@@ -321,9 +324,28 @@ export default function AdminPage() {
 
   const handleCreatePost = async (postData: { content: string; image?: File }) => {
     try {
-      // Por enquanto, apenas simular a criação do post
-      // Implementar integração com Firebase depois
-      console.log('Creating post:', postData);
+      if (!user) {
+        toast.error('Usuário não encontrado');
+        return;
+      }
+
+      let imageUrl = '';
+      if (postData.image) {
+        // Upload da imagem para o Firebase Storage
+        const imageRef = ref(storage, `posts/${Date.now()}_${postData.image.name}`);
+        await uploadBytes(imageRef, postData.image);
+        imageUrl = await getDownloadURL(imageRef);
+      }
+
+      // Criar post no Firebase
+      await createPost({
+        content: postData.content,
+        imageUrl,
+        authorId: user.uid,
+        authorName: user.displayName || user.email,
+        authorEmail: user.email
+      });
+
       toast.success('Post criado com sucesso!');
     } catch (error) {
       console.error('Error creating post:', error);

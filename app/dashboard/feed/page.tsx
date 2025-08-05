@@ -13,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
+import { getPosts, likePost, commentPost } from '@/lib/firebase';
 
 interface Post {
   id: string;
@@ -55,8 +56,8 @@ export default function FeedPage() {
   const loadPosts = async () => {
     try {
       setLoading(true);
-      // Por enquanto, feed vazio até implementar posts reais no Firebase
-      setPosts([]);
+      const postsData = await getPosts();
+      setPosts(postsData);
       setLoading(false);
     } catch (error) {
       console.error('Error loading posts:', error);
@@ -67,48 +68,69 @@ export default function FeedPage() {
   const handleLike = async (postId: string) => {
     if (!user?.uid) return;
 
-    setPosts(prev => prev.map(post => {
-      if (post.id === postId) {
-        const isLiked = post.likes.includes(user.uid);
-        return {
-          ...post,
-          likes: isLiked 
-            ? post.likes.filter(id => id !== user.uid)
-            : [...post.likes, user.uid]
-        };
-      }
-      return post;
-    }));
+    try {
+      await likePost(postId, user.uid);
+      
+      setPosts(prev => prev.map(post => {
+        if (post.id === postId) {
+          const isLiked = post.likes.includes(user.uid);
+          return {
+            ...post,
+            likes: isLiked 
+              ? post.likes.filter(id => id !== user.uid)
+              : [...post.likes, user.uid]
+          };
+        }
+        return post;
+      }));
 
-    toast.success('Reação registrada!');
+      toast.success('Reação registrada!');
+    } catch (error) {
+      console.error('Error liking post:', error);
+      toast.error('Erro ao registrar reação');
+    }
   };
 
   const handleComment = async (postId: string) => {
     if (!user?.uid || !newComment.trim()) return;
 
-    const comment: Comment = {
-      id: Date.now().toString(),
-      content: newComment,
-      authorId: user.uid,
-      authorName: user.displayName || user.email || 'Usuário',
-      createdAt: new Date(),
-      image: commentImage ? URL.createObjectURL(commentImage) : undefined
-    };
+    try {
+      const commentData = {
+        content: newComment,
+        authorId: user.uid,
+        authorName: user.displayName || user.email || 'Usuário',
+        image: commentImage ? URL.createObjectURL(commentImage) : undefined
+      };
 
-    setPosts(prev => prev.map(post => {
-      if (post.id === postId) {
-        return {
-          ...post,
-          comments: [...post.comments, comment]
-        };
-      }
-      return post;
-    }));
+      await commentPost(postId, commentData);
 
-    setNewComment('');
-    setCommentImage(null);
-    setSelectedPost(null);
-    toast.success('Comentário adicionado!');
+      const comment: Comment = {
+        id: Date.now().toString(),
+        content: newComment,
+        authorId: user.uid,
+        authorName: user.displayName || user.email || 'Usuário',
+        createdAt: new Date(),
+        image: commentImage ? URL.createObjectURL(commentImage) : undefined
+      };
+
+      setPosts(prev => prev.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            comments: [...post.comments, comment]
+          };
+        }
+        return post;
+      }));
+
+      setNewComment('');
+      setCommentImage(null);
+      setSelectedPost(null);
+      toast.success('Comentário adicionado!');
+    } catch (error) {
+      console.error('Error commenting post:', error);
+      toast.error('Erro ao adicionar comentário');
+    }
   };
 
   const formatDate = (date: any) => {

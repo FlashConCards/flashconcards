@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
+import { updateProfile, updatePassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { 
   getCourses, 
   getSubjects, 
@@ -217,9 +219,26 @@ export default function DashboardPage() {
 
   const handleUpdateProfile = async () => {
     try {
-      // Implementar atualização do perfil
+      if (!user) {
+        toast.error('Usuário não encontrado');
+        return;
+      }
+
+      // Atualizar displayName no Firebase Auth
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, {
+          displayName: profileData.displayName
+        });
+      }
+
+      // Atualizar no Firestore se necessário
+      // await updateUser(user.uid, { displayName: profileData.displayName });
+
       toast.success('Perfil atualizado com sucesso!');
       setShowProfileModal(false);
+      
+      // Recarregar a página para refletir as mudanças
+      window.location.reload();
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Erro ao atualizar perfil');
@@ -228,12 +247,40 @@ export default function DashboardPage() {
 
   const handleUpdatePassword = async () => {
     try {
-      // Implementar atualização de senha
+      if (!user) {
+        toast.error('Usuário não encontrado');
+        return;
+      }
+
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        toast.error('As senhas não coincidem');
+        return;
+      }
+
+      if (passwordData.newPassword.length < 6) {
+        toast.error('A senha deve ter pelo menos 6 caracteres');
+        return;
+      }
+
+      // Atualizar senha no Firebase Auth
+      if (auth.currentUser) {
+        await updatePassword(auth.currentUser, passwordData.newPassword);
+      }
+
       toast.success('Senha atualizada com sucesso!');
       setShowPasswordModal(false);
-    } catch (error) {
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    } catch (error: any) {
       console.error('Error updating password:', error);
-      toast.error('Erro ao atualizar senha');
+      if (error.code === 'auth/requires-recent-login') {
+        toast.error('Por favor, faça login novamente para alterar a senha');
+      } else {
+        toast.error('Erro ao atualizar senha: ' + error.message);
+      }
     }
   };
 
@@ -305,6 +352,14 @@ export default function DashboardPage() {
                   <span>Feed Social</span>
                 </button>
               )}
+              
+              <button
+                onClick={() => router.push('/testimonials')}
+                className="flex items-center justify-center space-x-2 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-4 py-3 rounded-xl hover:from-yellow-600 hover:to-yellow-700 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl text-sm sm:text-base font-medium"
+              >
+                <StarIcon className="h-5 w-5" />
+                <span>Deixar Depoimento</span>
+              </button>
               
               <div className="relative">
                 <button
