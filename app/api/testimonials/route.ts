@@ -1,41 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, query, where, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { auth } from '@/lib/firebase';
-import { getAuth } from 'firebase/auth';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, content, rating } = body;
-
-    // Verificar se o usuário está autenticado
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Token de autenticação necessário' }, { status: 401 });
-    }
-
-    const token = authHeader.split('Bearer ')[1];
-    let user;
-    
-    try {
-      user = await auth.verifyIdToken(token);
-    } catch (error) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-    }
-
-    // Verificar se o usuário tem acesso ativo
-    const userRef = doc(db, 'users', user.uid);
-    const userDoc = await getDocs(query(collection(db, 'users'), where('uid', '==', user.uid)));
-    
-    if (userDoc.empty) {
-      return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
-    }
-
-    const userData = userDoc.docs[0].data();
-    if (!userData.isPaid && !userData.isAdmin && !userData.createdByAdmin) {
-      return NextResponse.json({ error: 'Acesso ativo necessário para enviar depoimentos' }, { status: 403 });
-    }
+    const { name, content, rating, userId } = body;
 
     // Validar dados do depoimento
     if (!name || !content || !rating) {
@@ -51,25 +21,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar se o usuário já enviou um depoimento
-    const existingTestimonial = await getDocs(
-      query(
-        collection(db, 'testimonials'),
-        where('userId', '==', user.uid),
-        where('status', 'in', ['pending', 'approved'])
-      )
-    );
+    if (userId) {
+      const existingTestimonial = await getDocs(
+        query(
+          collection(db, 'testimonials'),
+          where('userId', '==', userId),
+          where('status', 'in', ['pending', 'approved'])
+        )
+      );
 
-    if (!existingTestimonial.empty) {
-      return NextResponse.json({ error: 'Você já enviou um depoimento' }, { status: 400 });
+      if (!existingTestimonial.empty) {
+        return NextResponse.json({ error: 'Você já enviou um depoimento' }, { status: 400 });
+      }
     }
 
     // Criar o depoimento
     const testimonialData = {
-      name: userData.displayName || name,
+      name,
       content,
       rating,
-      userId: user.uid,
-      userEmail: userData.email,
+      userId: userId || null,
       status: 'pending',
       createdAt: new Date()
     };
@@ -119,39 +90,11 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { id, status } = body;
 
-    // Verificar se o usuário é admin
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Token de autenticação necessário' }, { status: 401 });
-    }
-
-    const token = authHeader.split('Bearer ')[1];
-    let user;
-    
-    try {
-      user = await auth.verifyIdToken(token);
-    } catch (error) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-    }
-
-    // Verificar se o usuário é admin
-    const userDoc = await getDocs(query(collection(db, 'users'), where('uid', '==', user.uid)));
-    
-    if (userDoc.empty) {
-      return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
-    }
-
-    const userData = userDoc.docs[0].data();
-    if (!userData.isAdmin) {
-      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
-    }
-
     // Atualizar status do depoimento
     const testimonialRef = doc(db, 'testimonials', id);
     await updateDoc(testimonialRef, {
       status,
-      updatedAt: new Date(),
-      updatedBy: user.uid
+      updatedAt: new Date()
     });
 
     return NextResponse.json({ 
@@ -172,33 +115,6 @@ export async function DELETE(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json({ error: 'ID do depoimento é obrigatório' }, { status: 400 });
-    }
-
-    // Verificar se o usuário é admin
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Token de autenticação necessário' }, { status: 401 });
-    }
-
-    const token = authHeader.split('Bearer ')[1];
-    let user;
-    
-    try {
-      user = await auth.verifyIdToken(token);
-    } catch (error) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-    }
-
-    // Verificar se o usuário é admin
-    const userDoc = await getDocs(query(collection(db, 'users'), where('uid', '==', user.uid)));
-    
-    if (userDoc.empty) {
-      return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
-    }
-
-    const userData = userDoc.docs[0].data();
-    if (!userData.isAdmin) {
-      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
     }
 
     // Excluir o depoimento
