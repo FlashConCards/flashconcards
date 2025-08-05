@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { 
   ArrowLeftIcon, 
   BookOpenIcon, 
-  BrainIcon, 
+  CpuChipIcon, 
   ChartBarIcon,
   ClockIcon,
   AcademicCapIcon,
@@ -20,7 +20,7 @@ const tutorialSteps = [
     id: 1,
     title: 'Entenda o Método',
     description: 'Como funciona a repetição espaçada e por que é tão eficaz',
-    icon: BrainIcon,
+    icon: CpuChipIcon,
     content: `
       <h3 className="text-xl font-semibold mb-4">A Ciência por Trás dos Flashcards</h3>
       <p className="mb-4">A repetição espaçada é baseada na <strong>Curva do Esquecimento</strong> de Ebbinghaus, que mostra como nossa memória funciona:</p>
