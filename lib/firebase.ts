@@ -534,10 +534,10 @@ export const getTopics = async (subjectId?: string) => {
     let q: Query | CollectionReference = collection(db, 'topics')
     
     if (subjectId) {
-      q = query(q, where('subjectId', '==', subjectId), orderBy('createdAt', 'asc'))
+      q = query(q, where('subjectId', '==', subjectId))
       console.log('Query created with filter for subjectId:', subjectId)
     } else {
-      q = query(q, orderBy('createdAt', 'asc'))
+      q = query(q)
       console.log('Query created without filter')
     }
     
