@@ -177,17 +177,17 @@ export default function FeedPage() {
                 </div>
               </div>
 
-              {/* Post Content */}
-              <div className="mb-4">
-                <p className="text-gray-800 leading-relaxed">{post.content}</p>
-                {post.image && (
-                  <img 
-                    src={post.image} 
-                    alt="Post image" 
-                    className="mt-4 rounded-lg max-w-full h-auto"
-                  />
-                )}
-              </div>
+                             {/* Post Content */}
+               <div className="mb-4">
+                 <p className="text-gray-800 leading-relaxed">{post.content}</p>
+                 {post.imageUrl && (
+                   <img 
+                     src={post.imageUrl} 
+                     alt="Post image" 
+                     className="mt-4 rounded-lg max-w-full h-auto"
+                   />
+                 )}
+               </div>
 
               {/* Post Actions */}
               <div className="flex items-center justify-between pt-4 border-t border-gray-100">
