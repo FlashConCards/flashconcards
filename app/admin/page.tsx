@@ -329,21 +329,15 @@ export default function AdminPage() {
         return;
       }
 
-      let imageUrl = '';
-      if (postData.image) {
-        // Upload da imagem para o Firebase Storage
-        const imageRef = ref(storage, `posts/${Date.now()}_${postData.image.name}`);
-        await uploadBytes(imageRef, postData.image);
-        imageUrl = await getDownloadURL(imageRef);
-      }
-
-      // Criar post no Firebase
       await createPost({
         content: postData.content,
-        imageUrl,
+        image: postData.image,
         authorId: user.uid,
-        authorName: user.displayName || user.email,
-        authorEmail: user.email
+        authorName: user.displayName || 'FlashConCards Oficial',
+        authorEmail: user.email,
+        authorPhotoURL: user.photoURL,
+        authorRole: 'admin',
+        isOfficial: true
       });
 
       toast.success('Post criado com sucesso!');

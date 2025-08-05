@@ -4,6 +4,8 @@ export interface User {
   displayName: string;
   photoURL: string;
   isAdmin: boolean;
+  isModerator?: boolean;
+  isTeacher?: boolean;
   isPaid: boolean;
   isActive: boolean;
   studyTime: number;
@@ -155,6 +157,9 @@ export interface Post {
   authorId: string;
   authorName: string;
   authorEmail?: string;
+  authorPhotoURL?: string;
+  authorRole: 'admin' | 'moderator' | 'teacher' | 'user';
+  isOfficial?: boolean;
   createdAt: any;
   updatedAt?: any;
   likes: string[];
@@ -167,6 +172,8 @@ export interface Comment {
   content: string;
   authorId: string;
   authorName: string;
+  authorPhotoURL?: string;
+  authorRole: 'admin' | 'moderator' | 'teacher' | 'user';
   createdAt: any;
-  image?: string;
+  imageUrl?: string;
 } 

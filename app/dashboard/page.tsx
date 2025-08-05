@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { updateProfile, updatePassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, updateUserPhoto } from '@/lib/firebase';
 import { 
   getCourses, 
   getSubjects, 
@@ -32,7 +32,8 @@ import {
   ChartBarIcon,
   PaperAirplaneIcon,
   SunIcon,
-  MoonIcon
+  MoonIcon,
+  PhotoIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import { useDarkMode } from '@/components/DarkModeProvider';
@@ -284,6 +285,19 @@ export default function DashboardPage() {
     }
   };
 
+  const handleUpdatePhoto = async (file: File) => {
+    try {
+      if (!user?.uid) return;
+      
+      await updateUserPhoto(user.uid, file);
+      toast.success('Foto de perfil atualizada!');
+      window.location.reload();
+    } catch (error) {
+      console.error('Error updating photo:', error);
+      toast.error('Erro ao atualizar foto');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -389,6 +403,14 @@ export default function DashboardPage() {
                       }`}
                     >
                       Alterar Senha
+                    </button>
+                    <button
+                      onClick={() => document.getElementById('photo-upload')?.click()}
+                      className={`block w-full text-left px-4 py-2 text-sm ${
+                        darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      Alterar Foto
                     </button>
                     <button
                       onClick={handleLogout}
@@ -711,6 +733,20 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Hidden file input for photo upload */}
+      <input
+        id="photo-upload"
+        type="file"
+        accept="image/*"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            handleUpdatePhoto(file);
+          }
+        }}
+        className="hidden"
+      />
     </div>
   );
 } 

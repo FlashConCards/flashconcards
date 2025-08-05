@@ -1822,14 +1822,28 @@ export const getPaymentById = async (paymentId: string) => {
 
 export const createPost = async (postData: any) => {
   try {
+    let imageUrl = '';
+    if (postData.image) {
+      const imageRef = ref(storage, `posts/${Date.now()}_${postData.image.name}`);
+      await uploadBytes(imageRef, postData.image);
+      imageUrl = await getDownloadURL(imageRef);
+    }
+
     const postDoc = await addDoc(collection(db, 'posts'), {
-      ...postData,
+      content: postData.content,
+      authorId: postData.authorId,
+      authorName: postData.authorName,
+      authorEmail: postData.authorEmail,
+      authorPhotoURL: postData.authorPhotoURL,
+      authorRole: postData.authorRole,
+      isOfficial: postData.isOfficial || false,
+      imageUrl,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       likes: [],
       comments: []
     })
-    return { id: postDoc.id, ...postData }
+    return { id: postDoc.id, ...postData, imageUrl }
   } catch (error) {
     console.error('Error creating post:', error)
     throw error
@@ -1880,6 +1894,13 @@ export const likePost = async (postId: string, userId: string) => {
 
 export const commentPost = async (postId: string, commentData: any) => {
   try {
+    let imageUrl = '';
+    if (commentData.image) {
+      const imageRef = ref(storage, `comments/${Date.now()}_${commentData.image.name}`);
+      await uploadBytes(imageRef, commentData.image);
+      imageUrl = await getDownloadURL(imageRef);
+    }
+
     const postRef = doc(db, 'posts', postId)
     const postDoc = await getDoc(postRef)
     
@@ -1889,7 +1910,12 @@ export const commentPost = async (postId: string, commentData: any) => {
       
       const newComment = {
         id: Date.now().toString(),
-        ...commentData,
+        content: commentData.content,
+        authorId: commentData.authorId,
+        authorName: commentData.authorName,
+        authorPhotoURL: commentData.authorPhotoURL,
+        authorRole: commentData.authorRole,
+        imageUrl,
         createdAt: serverTimestamp()
       }
       
@@ -1901,6 +1927,42 @@ export const commentPost = async (postId: string, commentData: any) => {
     }
   } catch (error) {
     console.error('Error commenting post:', error)
+    throw error
+  }
+} 
+
+// ===== USER MANAGEMENT FUNCTIONS =====
+
+export const updateUserRole = async (uid: string, role: 'admin' | 'moderator' | 'teacher' | 'user') => {
+  try {
+    const userRef = doc(db, 'users', uid)
+    await updateDoc(userRef, {
+      isAdmin: role === 'admin',
+      isModerator: role === 'moderator',
+      isTeacher: role === 'teacher',
+      updatedAt: serverTimestamp()
+    })
+  } catch (error) {
+    console.error('Error updating user role:', error)
+    throw error
+  }
+}
+
+export const updateUserPhoto = async (uid: string, photoFile: File) => {
+  try {
+    const photoRef = ref(storage, `profiles/${uid}_${Date.now()}_${photoFile.name}`);
+    await uploadBytes(photoRef, photoFile);
+    const photoURL = await getDownloadURL(photoRef);
+    
+    const userRef = doc(db, 'users', uid)
+    await updateDoc(userRef, {
+      photoURL,
+      updatedAt: serverTimestamp()
+    })
+    
+    return photoURL
+  } catch (error) {
+    console.error('Error updating user photo:', error)
     throw error
   }
 } 

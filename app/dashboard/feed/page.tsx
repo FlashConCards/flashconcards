@@ -80,7 +80,9 @@ export default function FeedPage() {
         content: newComment,
         authorId: user.uid,
         authorName: user.displayName || user.email || 'Usuário',
-        image: commentImage ? URL.createObjectURL(commentImage) : undefined
+        authorPhotoURL: user.photoURL,
+        authorRole: user.isAdmin ? 'admin' : user.isModerator ? 'moderator' : user.isTeacher ? 'teacher' : 'user',
+        image: commentImage || undefined
       };
 
       await commentPost(postId, commentData);
@@ -90,8 +92,10 @@ export default function FeedPage() {
         content: newComment,
         authorId: user.uid,
         authorName: user.displayName || user.email || 'Usuário',
+        authorPhotoURL: user.photoURL,
+        authorRole: user.isAdmin ? 'admin' : user.isModerator ? 'moderator' : user.isTeacher ? 'teacher' : 'user',
         createdAt: new Date(),
-        image: commentImage ? URL.createObjectURL(commentImage) : undefined
+        imageUrl: commentImage ? URL.createObjectURL(commentImage) : undefined
       };
 
       setPosts(prev => prev.map(post => {
@@ -164,18 +168,46 @@ export default function FeedPage() {
         <div className="space-y-6">
           {posts.map((post) => (
             <div key={post.id} className="bg-white rounded-xl shadow-lg p-6">
-              {/* Post Header */}
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">
-                    {post.authorName.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">{post.authorName}</h3>
-                  <p className="text-sm text-gray-500">{formatDate(post.createdAt)}</p>
-                </div>
-              </div>
+                             {/* Post Header */}
+               <div className="flex items-center space-x-3 mb-4">
+                 <div className="w-10 h-10 rounded-full overflow-hidden">
+                   {post.authorPhotoURL ? (
+                     <img 
+                       src={post.authorPhotoURL} 
+                       alt={post.authorName}
+                       className="w-full h-full object-cover"
+                     />
+                   ) : (
+                     <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                       <span className="text-white font-bold text-sm">
+                         {post.authorName.charAt(0).toUpperCase()}
+                       </span>
+                     </div>
+                   )}
+                 </div>
+                 <div className="flex-1">
+                   <div className="flex items-center space-x-2">
+                     <h3 className="font-semibold text-gray-900">{post.authorName}</h3>
+                     {post.isOfficial && (
+                       <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full font-medium">
+                         Oficial
+                       </span>
+                     )}
+                     {post.authorRole !== 'user' && (
+                       <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                         post.authorRole === 'admin' ? 'bg-red-600 text-white' :
+                         post.authorRole === 'moderator' ? 'bg-orange-600 text-white' :
+                         'bg-green-600 text-white'
+                       }`}>
+                         {post.authorRole === 'admin' ? 'Admin' :
+                          post.authorRole === 'moderator' ? 'Moderador' :
+                          'Professor'}
+                       </span>
+                     )}
+                   </div>
+                   <p className="text-sm text-gray-500">{formatDate(post.createdAt)}</p>
+                 </div>
+               </div>
 
                              {/* Post Content */}
                <div className="mb-4">
@@ -259,34 +291,55 @@ export default function FeedPage() {
                     )}
                   </div>
 
-                  {/* Comments List */}
-                  <div className="space-y-3">
-                    {post.comments.map((comment) => (
-                      <div key={comment.id} className="flex space-x-3">
-                        <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center">
-                          <span className="text-white font-bold text-xs">
-                            {comment.authorName.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <span className="font-semibold text-sm text-gray-900">{comment.authorName}</span>
-                              <span className="text-xs text-gray-500">{formatDate(comment.createdAt)}</span>
-                            </div>
-                            <p className="text-sm text-gray-800">{comment.content}</p>
-                            {comment.image && (
-                              <img 
-                                src={comment.image} 
-                                alt="Comment image" 
-                                className="mt-2 rounded max-w-xs h-auto"
-                              />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                                     {/* Comments List */}
+                   <div className="space-y-3">
+                     {post.comments.map((comment) => (
+                       <div key={comment.id} className="flex space-x-3">
+                         <div className="w-8 h-8 rounded-full overflow-hidden">
+                           {comment.authorPhotoURL ? (
+                             <img 
+                               src={comment.authorPhotoURL} 
+                               alt={comment.authorName}
+                               className="w-full h-full object-cover"
+                             />
+                           ) : (
+                             <div className="w-full h-full bg-gradient-to-r from-green-500 to-blue-600 flex items-center justify-center">
+                               <span className="text-white font-bold text-xs">
+                                 {comment.authorName.charAt(0).toUpperCase()}
+                               </span>
+                             </div>
+                           )}
+                         </div>
+                         <div className="flex-1">
+                           <div className="bg-gray-50 rounded-lg p-3">
+                             <div className="flex items-center space-x-2 mb-1">
+                               <span className="font-semibold text-sm text-gray-900">{comment.authorName}</span>
+                               {comment.authorRole !== 'user' && (
+                                 <span className={`px-1 py-0.5 text-xs rounded-full font-medium ${
+                                   comment.authorRole === 'admin' ? 'bg-red-600 text-white' :
+                                   comment.authorRole === 'moderator' ? 'bg-orange-600 text-white' :
+                                   'bg-green-600 text-white'
+                                 }`}>
+                                   {comment.authorRole === 'admin' ? 'Admin' :
+                                    comment.authorRole === 'moderator' ? 'Moderador' :
+                                    'Professor'}
+                                 </span>
+                               )}
+                               <span className="text-xs text-gray-500">{formatDate(comment.createdAt)}</span>
+                             </div>
+                             <p className="text-sm text-gray-800">{comment.content}</p>
+                             {comment.imageUrl && (
+                               <img 
+                                 src={comment.imageUrl} 
+                                 alt="Comment image" 
+                                 className="mt-2 rounded max-w-xs h-auto"
+                               />
+                             )}
+                           </div>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
                 </div>
               )}
             </div>

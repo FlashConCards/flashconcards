@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { EyeIcon, EyeSlashIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { getUserData } from '@/lib/firebase';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -28,7 +29,7 @@ export default function LoginPage() {
       await login(email, password);
       toast.success('Login realizado com sucesso!');
       
-      // Verificar se é admin e redirecionar adequadamente
+      // Verificar o tipo de usuário e redirecionar adequadamente
       const adminEmails = [
         'claudioghabryel.cg@gmail.com',
         'natalhia775@gmail.com',
@@ -38,7 +39,15 @@ export default function LoginPage() {
       if (adminEmails.includes(email)) {
         router.push('/admin');
       } else {
-        router.push('/dashboard');
+        // Verificar se o usuário é moderador ou professor
+        const userData = await getUserData(email);
+        if (userData?.isModerator) {
+          router.push('/moderator');
+        } else if (userData?.isTeacher) {
+          router.push('/teacher');
+        } else {
+          router.push('/dashboard');
+        }
       }
     } catch (error: any) {
       console.error('Login error:', error);
