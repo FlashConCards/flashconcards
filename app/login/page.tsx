@@ -37,9 +37,11 @@ export default function LoginPage() {
         'claudioghabryel7@gmail.com'
       ];
       
-      if (adminEmails.includes(email)) {
-        router.push('/admin');
-      } else {
+             if (adminEmails.includes(email)) {
+         setTimeout(() => {
+           router.replace('/admin');
+         }, 100);
+       } else {
         // Verificar se o usuário é moderador ou professor
         // Buscar usuário por email no Firestore
         const usersRef = collection(db, 'users');
@@ -52,20 +54,28 @@ export default function LoginPage() {
            console.log('isModerator:', userData?.isModerator);
            console.log('isTeacher:', userData?.isTeacher);
            
-           if (userData?.isModerator) {
-             console.log('Redirecting to moderator page');
-             router.push('/moderator');
-           } else if (userData?.isTeacher) {
-             console.log('Redirecting to teacher page');
-             router.push('/teacher');
-           } else {
-             console.log('Redirecting to dashboard');
-             router.push('/dashboard');
-           }
+                       if (userData?.isModerator) {
+              console.log('Redirecting to moderator page');
+              setTimeout(() => {
+                router.replace('/moderator');
+              }, 100);
+            } else if (userData?.isTeacher) {
+              console.log('Redirecting to teacher page');
+              setTimeout(() => {
+                router.replace('/teacher');
+              }, 100);
+            } else {
+              console.log('Redirecting to dashboard');
+              setTimeout(() => {
+                router.replace('/dashboard');
+              }, 100);
+            }
          } else {
            console.log('No user data found, redirecting to dashboard');
            // Se não encontrou, redirecionar para dashboard
-           router.push('/dashboard');
+           setTimeout(() => {
+             router.replace('/dashboard');
+           }, 100);
          }
       }
     } catch (error: any) {
