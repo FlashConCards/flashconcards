@@ -728,7 +728,7 @@ export default function StudyPage() {
           onClose={() => setShowDeepening(false)}
           deepening={{
             id: '1',
-            flashcardId: currentCard.id,
+            subTopicId: currentCard.subTopicId,
             title: 'Aprofundamento',
             content: selectedDeepening,
             images: [],
