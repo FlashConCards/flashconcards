@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 // Importação dinâmica do React Quill para evitar problemas de SSR
 const ReactQuill = dynamic(() => import('react-quill'), {
   ssr: false,
-  loading: () => <div className="h-48 bg-gray-100 animate-pulse rounded"></div>
+  loading: () => <div className="h-48 bg-gray-100 animate-pulse rounded border border-gray-300">Carregando editor...</div>
 });
 
 import 'react-quill/dist/quill.snow.css';
@@ -56,7 +56,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         modules={modules}
         formats={formats}
         placeholder={placeholder}
-        className="rich-text-editor"
+        style={{ height: '300px' }}
       />
     </div>
   );
