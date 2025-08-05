@@ -511,6 +511,20 @@ export const deleteSubject = async (subjectId: string) => {
   }
 }
 
+export const updateSubject = async (subjectId: string, subjectData: any) => {
+  try {
+    console.log('Updating subject:', subjectId, subjectData)
+    await updateDoc(doc(db, 'subjects', subjectId), {
+      ...subjectData,
+      updatedAt: serverTimestamp()
+    })
+    console.log('Subject updated successfully:', subjectId)
+  } catch (error) {
+    console.error('Error updating subject:', error)
+    throw error
+  }
+}
+
 // ===== TÓPICOS (/topics) =====
 export const getTopics = async (subjectId?: string) => {
   try {
@@ -545,6 +559,20 @@ export const createTopic = async (topicData: any) => {
     return docRef.id
   } catch (error) {
     console.error('Error creating topic:', error)
+    throw error
+  }
+}
+
+export const updateTopic = async (topicId: string, topicData: any) => {
+  try {
+    console.log('Updating topic:', topicId, topicData)
+    await updateDoc(doc(db, 'topics', topicId), {
+      ...topicData,
+      updatedAt: serverTimestamp()
+    })
+    console.log('Topic updated successfully:', topicId)
+  } catch (error) {
+    console.error('Error updating topic:', error)
     throw error
   }
 }
@@ -593,6 +621,20 @@ export const createSubTopic = async (subTopicData: any) => {
     return docRef.id
   } catch (error) {
     console.error('Error creating subTopic:', error)
+    throw error
+  }
+}
+
+export const updateSubTopic = async (subTopicId: string, subTopicData: any) => {
+  try {
+    console.log('Updating subTopic:', subTopicId, subTopicData)
+    await updateDoc(doc(db, 'subtopics', subTopicId), {
+      ...subTopicData,
+      updatedAt: serverTimestamp()
+    })
+    console.log('SubTopic updated successfully:', subTopicId)
+  } catch (error) {
+    console.error('Error updating subTopic:', error)
     throw error
   }
 }
@@ -831,6 +873,20 @@ export const createFlashcard = async (flashcardData: any) => {
   }
 }
 
+export const updateFlashcard = async (flashcardId: string, flashcardData: any) => {
+  try {
+    console.log('Updating flashcard:', flashcardId, flashcardData)
+    await updateDoc(doc(db, 'flashcards', flashcardId), {
+      ...flashcardData,
+      updatedAt: serverTimestamp()
+    })
+    console.log('Flashcard updated successfully:', flashcardId)
+  } catch (error) {
+    console.error('Error updating flashcard:', error)
+    throw error
+  }
+}
+
 export const deleteFlashcard = async (flashcardId: string) => {
   try {
     await deleteDoc(doc(db, 'flashcards', flashcardId))
@@ -946,6 +1002,17 @@ export const updateTestimonialStatus = async (testimonialId: string, status: 'pe
     console.log('Testimonial status updated successfully')
   } catch (error) {
     console.error('Error updating testimonial status:', error)
+    throw error
+  }
+}
+
+export const deleteTestimonial = async (testimonialId: string) => {
+  try {
+    console.log('Deleting testimonial:', testimonialId)
+    await deleteDoc(doc(db, 'testimonials', testimonialId))
+    console.log('Testimonial deleted successfully:', testimonialId)
+  } catch (error) {
+    console.error('Error deleting testimonial:', error)
     throw error
   }
 }
@@ -1550,93 +1617,21 @@ export const getUserStudySessions = async (uid: string) => {
   }
 }
 
-export const getUserProgressBySubTopic = async (uid: string, subTopicId: string) => {
+export const getStudySessions = async (uid: string) => {
   try {
-    console.log('Getting progress for user:', uid, 'subTopic:', subTopicId);
-    
-    // Buscar flashcards do sub-tópico
-    const flashcards = await getFlashcards(subTopicId);
-    const totalCards = flashcards.length;
-    console.log('Total flashcards found:', totalCards);
-    
-    // Buscar sessões de estudo do usuário para este sub-tópico
     const q = query(
       collection(db, 'study-sessions'),
       where('uid', '==', uid),
-      where('subTopicId', '==', subTopicId)
+      orderBy('createdAt', 'desc')
     )
     const querySnapshot = await getDocs(q)
-    const sessions = querySnapshot.docs.map(doc => ({
+    return querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    })) as any[]
-    
-    console.log('Study sessions found:', sessions.length);
-    console.log('Sessions data:', sessions);
-    
-    // Calcular progresso baseado em cards únicos estudados
-    let studiedCards = 0;
-    let correctCards = 0;
-    let wrongCards = 0;
-    let studyTime = 0;
-    
-    if (sessions.length > 0) {
-      // Usar a sessão mais recente para o progresso atual
-      const latestSession = sessions[0]; // Já ordenado por createdAt desc
-      
-      // Calcular total de cards estudados nesta sessão
-      const sessionStudiedCards = (latestSession.correctCards || 0) + (latestSession.wrongCards || 0);
-      
-      // O progresso deve ser baseado no número de cards únicos estudados
-      // Se o usuário estudou todos os cards disponíveis, mostrar como completo
-      if (sessionStudiedCards >= totalCards) {
-        studiedCards = totalCards;
-        correctCards = Math.min(latestSession.correctCards || 0, totalCards);
-        wrongCards = Math.min(latestSession.wrongCards || 0, totalCards);
-      } else {
-        // Se não estudou todos, mostrar o progresso real
-        studiedCards = Math.min(sessionStudiedCards, totalCards);
-        correctCards = Math.min(latestSession.correctCards || 0, studiedCards);
-        wrongCards = Math.min(latestSession.wrongCards || 0, studiedCards);
-      }
-      
-      studyTime = latestSession.studyTime || 0;
-      
-      console.log('Progress calculation:', {
-        sessionId: latestSession.id,
-        sessionCorrectCards: latestSession.correctCards,
-        sessionWrongCards: latestSession.wrongCards,
-        sessionStudiedCards,
-        totalCards,
-        finalStudiedCards: studiedCards,
-        finalCorrectCards: correctCards,
-        finalWrongCards: wrongCards
-      });
-    }
-    
-    const result = {
-      totalCards,
-      studiedCards,
-      correctCards,
-      wrongCards,
-      studyTime,
-      accuracy: studiedCards > 0 ? (correctCards / studiedCards) * 100 : 0,
-      lastStudied: sessions.length > 0 ? sessions[0].createdAt : null
-    };
-    
-    console.log('Progress result:', result);
-    return result;
+    }))
   } catch (error: any) {
-    console.error('Error getting user progress by sub-topic:', error)
-    return {
-      totalCards: 0,
-      studiedCards: 0,
-      correctCards: 0,
-      wrongCards: 0,
-      studyTime: 0,
-      accuracy: 0,
-      lastStudied: null
-    }
+    console.error('Error getting study sessions:', error)
+    return []
   }
 }
 

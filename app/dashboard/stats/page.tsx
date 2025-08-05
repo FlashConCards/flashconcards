@@ -16,7 +16,6 @@ import {
   FireIcon,
   TrophyIcon,
   CalendarIcon,
-  TrendingUpIcon,
   ArrowLeftIcon,
   AcademicCapIcon,
   BookOpenIcon
@@ -293,7 +292,7 @@ export default function StatsPage() {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              <TrendingUpIcon className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+              <TrophyIcon className="w-8 h-8 text-purple-600 mx-auto mb-2" />
               <div className="text-2xl font-bold text-purple-600">{timeframeStats.accuracy.toFixed(1)}%</div>
               <div className="text-sm text-gray-600">Assertividade</div>
             </motion.div>
