@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { EyeIcon, EyeSlashIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { getUserData } from '@/lib/firebase';
+import { getUserData, db } from '@/lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -40,12 +41,22 @@ export default function LoginPage() {
         router.push('/admin');
       } else {
         // Verificar se o usuário é moderador ou professor
-        const userData = await getUserData(email);
-        if (userData?.isModerator) {
-          router.push('/moderator');
-        } else if (userData?.isTeacher) {
-          router.push('/teacher');
+        // Buscar usuário por email no Firestore
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', email));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const userData = querySnapshot.docs[0].data();
+          if (userData?.isModerator) {
+            router.push('/moderator');
+          } else if (userData?.isTeacher) {
+            router.push('/teacher');
+          } else {
+            router.push('/dashboard');
+          }
         } else {
+          // Se não encontrou, redirecionar para dashboard
           router.push('/dashboard');
         }
       }
