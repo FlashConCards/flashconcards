@@ -14,7 +14,8 @@ import {
   deleteUserByAdmin,
   updateTestimonialStatus,
   deleteTestimonial,
-  createPost
+  createPost,
+  updateUserRole
 } from '@/lib/firebase';
 import { 
   PencilIcon, 
@@ -37,6 +38,9 @@ interface User {
   email: string;
   isPaid: boolean;
   selectedCourse: string;
+  isAdmin?: boolean;
+  isModerator?: boolean;
+  isTeacher?: boolean;
   createdAt: any;
   lastLoginAt: any;
 }
@@ -79,6 +83,7 @@ export default function AdminPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showTestimonialModal, setShowTestimonialModal] = useState(false);
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedTestimonial, setSelectedTestimonial] = useState<Testimonial | null>(null);
   const [newUser, setNewUser] = useState({
@@ -91,6 +96,12 @@ export default function AdminPage() {
     displayName: '',
     selectedCourse: '',
     isPaid: false
+  });
+  const [roleUser, setRoleUser] = useState({
+    uid: '',
+    displayName: '',
+    email: '',
+    role: 'user' as 'admin' | 'moderator' | 'teacher' | 'user'
   });
   const [financialMetrics, setFinancialMetrics] = useState({
     totalRevenue: 0,
@@ -347,6 +358,28 @@ export default function AdminPage() {
     }
   };
 
+  const handleEditRole = (user: User) => {
+    setRoleUser({
+      uid: user.uid,
+      displayName: user.displayName,
+      email: user.email,
+      role: user.isAdmin ? 'admin' : user.isModerator ? 'moderator' : user.isTeacher ? 'teacher' : 'user'
+    });
+    setShowRoleModal(true);
+  };
+
+  const handleUpdateRole = async () => {
+    try {
+      await updateUserRole(roleUser.uid, roleUser.role);
+      toast.success('Função do usuário atualizada com sucesso!');
+      setShowRoleModal(false);
+      loadData(); // Recarregar dados
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      toast.error('Erro ao atualizar função do usuário');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -490,6 +523,9 @@ export default function AdminPage() {
                         STATUS
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        FUNÇÃO
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         CURSO
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -515,6 +551,19 @@ export default function AdminPage() {
                             {user.isPaid ? 'Pago' : 'Não Pago'}
                           </span>
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            user.isAdmin 
+                              ? 'bg-purple-100 text-purple-800' 
+                              : user.isModerator
+                              ? 'bg-blue-100 text-blue-800'
+                              : user.isTeacher
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {user.isAdmin ? 'Admin' : user.isModerator ? 'Moderador' : user.isTeacher ? 'Professor' : 'Usuário'}
+                          </span>
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {user.selectedCourse || 'Nenhum'}
                         </td>
@@ -523,8 +572,16 @@ export default function AdminPage() {
                             <button
                               onClick={() => handleEditUser(user)}
                               className="text-blue-600 hover:text-blue-900"
+                              title="Editar usuário"
                             >
                               <PencilIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleEditRole(user)}
+                              className="text-purple-600 hover:text-purple-900"
+                              title="Editar função"
+                            >
+                              Função
                             </button>
                             <button
                               onClick={() => handleRefundUser(user.uid)}
@@ -849,6 +906,72 @@ export default function AdminPage() {
           onClose={() => setShowCreatePostModal(false)}
           onSubmit={handleCreatePost}
         />
+
+        {/* Role Edit Modal */}
+        {showRoleModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">Editar Função do Usuário</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nome
+                  </label>
+                  <input
+                    type="text"
+                    value={roleUser.displayName}
+                    disabled
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={roleUser.email}
+                    disabled
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Função
+                  </label>
+                  <select
+                    value={roleUser.role}
+                    onChange={(e) => setRoleUser({...roleUser, role: e.target.value as 'admin' | 'moderator' | 'teacher' | 'user'})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="user">Usuário</option>
+                    <option value="teacher">Professor</option>
+                    <option value="moderator">Moderador</option>
+                    <option value="admin">Administrador</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowRoleModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleUpdateRole}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                >
+                  Atualizar Função
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
