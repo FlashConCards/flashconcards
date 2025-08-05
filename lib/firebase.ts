@@ -1558,10 +1558,28 @@ export const uploadFile = async (file: File, path: string) => {
     console.log('Path:', path);
     console.log('Storage bucket:', storage.app.options.storageBucket);
     
+    // Validar tipo de arquivo
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error('Tipo de arquivo não suportado. Use apenas imagens (JPEG, PNG, GIF, WebP).');
+    }
+    
+    // Validar tamanho (máximo 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      throw new Error('Arquivo muito grande. Tamanho máximo: 5MB.');
+    }
+    
     const storageRef = ref(storage, path);
     console.log('Storage reference created');
     
-    const snapshot = await uploadBytes(storageRef, file);
+    // Adicionar metadata para melhor compatibilidade
+    const metadata = {
+      contentType: file.type,
+      cacheControl: 'public, max-age=31536000',
+    };
+    
+    const snapshot = await uploadBytes(storageRef, file, metadata);
     console.log('Upload completed, getting download URL...');
     
     const downloadURL = await getDownloadURL(snapshot.ref);
@@ -1841,9 +1859,7 @@ export const createPost = async (postData: any) => {
   try {
     let imageUrl = '';
     if (postData.image) {
-      const imageRef = ref(storage, `posts/${Date.now()}_${postData.image.name}`);
-      await uploadBytes(imageRef, postData.image);
-      imageUrl = await getDownloadURL(imageRef);
+      imageUrl = await uploadFile(postData.image, `posts/${Date.now()}_${postData.image.name}`);
     }
 
     const postDoc = await addDoc(collection(db, 'posts'), {
@@ -1913,9 +1929,7 @@ export const commentPost = async (postId: string, commentData: any) => {
   try {
     let imageUrl = '';
     if (commentData.image) {
-      const imageRef = ref(storage, `comments/${Date.now()}_${commentData.image.name}`);
-      await uploadBytes(imageRef, commentData.image);
-      imageUrl = await getDownloadURL(imageRef);
+      imageUrl = await uploadFile(commentData.image, `comments/${Date.now()}_${commentData.image.name}`);
     }
 
     const postRef = doc(db, 'posts', postId)
@@ -1967,9 +1981,7 @@ export const updateUserRole = async (uid: string, role: 'admin' | 'moderator' | 
 
 export const updateUserPhoto = async (uid: string, photoFile: File) => {
   try {
-    const photoRef = ref(storage, `profiles/${uid}_${Date.now()}_${photoFile.name}`);
-    await uploadBytes(photoRef, photoFile);
-    const photoURL = await getDownloadURL(photoRef);
+    const photoURL = await uploadFile(photoFile, `profiles/${uid}_${Date.now()}_${photoFile.name}`);
     
     const userRef = doc(db, 'users', uid)
     await updateDoc(userRef, {
@@ -1982,4 +1994,20 @@ export const updateUserPhoto = async (uid: string, photoFile: File) => {
     console.error('Error updating user photo:', error)
     throw error
   }
+}
+
+// Função para verificar se o usuário pode editar/excluir um item
+export const canUserEditItem = async (userId: string, itemAuthorId: string, userRole: string) => {
+  // Admin e moderadores podem editar tudo
+  if (userRole === 'admin' || userRole === 'moderator') {
+    return true;
+  }
+  
+  // Professores só podem editar o que eles criaram
+  if (userRole === 'teacher') {
+    return userId === itemAuthorId;
+  }
+  
+  // Usuários comuns não podem editar nada
+  return false;
 } 
