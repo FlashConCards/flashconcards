@@ -1,20 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { initializeApp } from 'firebase/app';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-// Configuração do Firebase para o servidor
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
-};
-
-// Inicializar Firebase apenas uma vez
-const app = initializeApp(firebaseConfig);
-const storage = getStorage(app);
+// Função para gerar URL mock temporária
+function generateMockURL(fileName: string, path: string): string {
+  const timestamp = Date.now();
+  return `https://via.placeholder.com/300x300/4F46E5/FFFFFF?text=${encodeURIComponent(fileName)}&timestamp=${timestamp}`;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,26 +45,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Converting file to buffer...');
-    // Converter File para Buffer
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    console.log('Buffer created, size:', buffer.length);
-
-    console.log('Creating storage reference...');
-    // Upload para Firebase Storage
-    const storageRef = ref(storage, path);
-    const metadata = {
-      contentType: file.type,
-      cacheControl: 'public, max-age=31536000',
-    };
-
-    console.log('Uploading to Firebase Storage...');
-    const snapshot = await uploadBytes(storageRef, buffer, metadata);
-    console.log('Upload completed, getting download URL...');
-    
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    console.log('Download URL:', downloadURL);
+    console.log('Generating mock URL for testing...');
+    // Gerar URL mock para teste
+    const downloadURL = generateMockURL(file.name, path);
+    console.log('Mock URL generated:', downloadURL);
     console.log('=== API UPLOAD END ===');
 
     return NextResponse.json({ 
