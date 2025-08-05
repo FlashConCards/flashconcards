@@ -90,7 +90,8 @@ export default function AdminPage() {
     email: '',
     displayName: '',
     selectedCourse: '',
-    password: ''
+    password: '',
+    role: 'user' as 'admin' | 'moderator' | 'teacher' | 'user'
   });
   const [editUser, setEditUser] = useState({
     displayName: '',
@@ -211,7 +212,9 @@ export default function AdminPage() {
         password: newUser.password,
         selectedCourse: newUser.selectedCourse,
         isPaid: false,
-        isAdmin: false
+        isAdmin: newUser.role === 'admin',
+        isModerator: newUser.role === 'moderator',
+        isTeacher: newUser.role === 'teacher'
       });
       
       await loadData();
@@ -220,7 +223,8 @@ export default function AdminPage() {
         email: '',
         displayName: '',
         selectedCourse: '',
-        password: ''
+        password: '',
+        role: 'user'
       });
       setShowAddModal(false);
       alert('Usuário adicionado com sucesso!');
@@ -810,6 +814,25 @@ export default function AdminPage() {
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Senha mínima de 6 caracteres (padrão: 123456)
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Função *
+                  </label>
+                  <select
+                    value={newUser.role}
+                    onChange={(e) => setNewUser({...newUser, role: e.target.value as 'admin' | 'moderator' | 'teacher' | 'user'})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="user">Usuário</option>
+                    <option value="teacher">Professor</option>
+                    <option value="moderator">Moderador</option>
+                    <option value="admin">Administrador</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Define as permissões e acesso do usuário
                   </p>
                 </div>
               </div>
