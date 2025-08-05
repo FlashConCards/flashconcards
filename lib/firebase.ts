@@ -983,6 +983,21 @@ export const deleteDeepening = async (deepeningId: string) => {
   }
 }
 
+export const updateDeepening = async (deepeningId: string, deepeningData: any) => {
+  try {
+    console.log('Updating deepening:', deepeningId, deepeningData)
+    const deepeningRef = doc(db, 'deepenings', deepeningId)
+    await updateDoc(deepeningRef, {
+      ...deepeningData,
+      updatedAt: serverTimestamp()
+    })
+    console.log('Deepening updated successfully')
+  } catch (error) {
+    console.error('Error updating deepening:', error)
+    throw error
+  }
+}
+
 // ===== DEPOIMENTOS (/testimonials) =====
 export const getTestimonials = async (status?: 'pending' | 'approved' | 'rejected' | 'all') => {
   try {
