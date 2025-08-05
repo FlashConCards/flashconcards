@@ -469,7 +469,9 @@ export const getSubjects = async (courseId?: string) => {
     let q: Query | CollectionReference = collection(db, 'subjects')
     
     if (courseId) {
-      q = query(q, where('courseId', '==', courseId))
+      q = query(q, where('courseId', '==', courseId), orderBy('createdAt', 'asc'))
+    } else {
+      q = query(q, orderBy('createdAt', 'asc'))
     }
     
     const querySnapshot = await getDocs(q)
@@ -531,7 +533,9 @@ export const getTopics = async (subjectId?: string) => {
     let q: Query | CollectionReference = collection(db, 'topics')
     
     if (subjectId) {
-      q = query(q, where('subjectId', '==', subjectId))
+      q = query(q, where('subjectId', '==', subjectId), orderBy('createdAt', 'asc'))
+    } else {
+      q = query(q, orderBy('createdAt', 'asc'))
     }
     
     const querySnapshot = await getDocs(q)
@@ -593,7 +597,9 @@ export const getSubTopics = async (topicId?: string) => {
     let q: Query | CollectionReference = collection(db, 'subtopics')
     
     if (topicId) {
-      q = query(q, where('topicId', '==', topicId))
+      q = query(q, where('topicId', '==', topicId), orderBy('createdAt', 'asc'))
+    } else {
+      q = query(q, orderBy('createdAt', 'asc'))
     }
     
     const querySnapshot = await getDocs(q)
@@ -656,8 +662,10 @@ export const getFlashcards = async (subTopicId?: string) => {
     let q: Query | CollectionReference = collection(db, 'flashcards')
     
     if (subTopicId) {
-      q = query(q, where('subTopicId', '==', subTopicId))
+      q = query(q, where('subTopicId', '==', subTopicId), orderBy('createdAt', 'asc'))
       console.log('Query created with filter for subTopicId:', subTopicId)
+    } else {
+      q = query(q, orderBy('createdAt', 'asc'))
     }
     
     const querySnapshot = await getDocs(q)
