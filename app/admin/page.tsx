@@ -22,8 +22,11 @@ import {
   EyeIcon,
   EyeSlashIcon,
   CheckIcon,
-  XMarkIcon
+  XMarkIcon,
+  PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
+import CreatePostModal from '@/components/admin/CreatePostModal';
+import toast from 'react-hot-toast';
 
 interface User {
   uid: string;
@@ -72,6 +75,7 @@ export default function AdminPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showTestimonialModal, setShowTestimonialModal] = useState(false);
+  const [showCreatePostModal, setShowCreatePostModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedTestimonial, setSelectedTestimonial] = useState<Testimonial | null>(null);
   const [newUser, setNewUser] = useState({
@@ -315,6 +319,18 @@ export default function AdminPage() {
     }
   };
 
+  const handleCreatePost = async (postData: { content: string; image?: File }) => {
+    try {
+      // Por enquanto, apenas simular a criação do post
+      // Implementar integração com Firebase depois
+      console.log('Creating post:', postData);
+      toast.success('Post criado com sucesso!');
+    } catch (error) {
+      console.error('Error creating post:', error);
+      toast.error('Erro ao criar post');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -350,6 +366,13 @@ export default function AdminPage() {
               className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
             >
               Gerenciar Matérias
+            </button>
+            <button
+              onClick={() => setShowCreatePostModal(true)}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+            >
+              <PaperAirplaneIcon className="w-5 h-5" />
+              <span>Criar Post</span>
             </button>
             <button
               onClick={handleLogout}
@@ -803,6 +826,13 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* Create Post Modal */}
+        <CreatePostModal
+          isOpen={showCreatePostModal}
+          onClose={() => setShowCreatePostModal(false)}
+          onSubmit={handleCreatePost}
+        />
       </div>
     </div>
   );

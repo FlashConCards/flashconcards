@@ -28,9 +28,12 @@ import {
   StarIcon,
   PlayIcon,
   ChartBarIcon,
-  PaperAirplaneIcon
+  PaperAirplaneIcon,
+  SunIcon,
+  MoonIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import { useDarkMode } from '@/components/DarkModeProvider';
 
 interface Testimonial {
   id: string;
@@ -44,6 +47,7 @@ interface Testimonial {
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const { darkMode, toggleDarkMode } = useDarkMode();
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
@@ -249,15 +253,31 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       {/* Header */}
-      <div className="bg-white shadow">
+      <div className={`${darkMode ? 'bg-gray-800 shadow-gray-900' : 'bg-white shadow'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 sm:py-6 gap-4 sm:gap-0">
             <div className="flex items-center">
               <BookOpenIcon className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
-              <h1 className="ml-2 text-xl sm:text-2xl font-bold text-gray-900">Dashboard</h1>
+              <h1 className={`ml-2 text-xl sm:text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Dashboard</h1>
             </div>
+            
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={toggleDarkMode}
+              className={`p-2 rounded-lg transition-colors ${
+                darkMode 
+                  ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {darkMode ? (
+                <SunIcon className="w-5 h-5" />
+              ) : (
+                <MoonIcon className="w-5 h-5" />
+              )}
+            </button>
             
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
               <button
@@ -296,22 +316,30 @@ export default function DashboardPage() {
                 </button>
                 
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                  <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 z-10 ${
+                    darkMode ? 'bg-gray-800' : 'bg-white'
+                  }`}>
                     <button
                       onClick={() => setShowProfileModal(true)}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className={`block w-full text-left px-4 py-2 text-sm ${
+                        darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
                     >
                       Editar Perfil
                     </button>
                     <button
                       onClick={() => setShowPasswordModal(true)}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className={`block w-full text-left px-4 py-2 text-sm ${
+                        darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
                     >
                       Alterar Senha
                     </button>
                     <button
                       onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      className={`block w-full text-left px-4 py-2 text-sm text-red-600 ${
+                        darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                      }`}
                     >
                       Sair
                     </button>
@@ -325,19 +353,19 @@ export default function DashboardPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6 mb-8`}>
+          <h2 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             Bem-vindo, {user.displayName || user.email}!
           </h2>
-          <p className="text-gray-600">
+          <p className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
             Selecione um curso para começar seus estudos.
           </p>
         </div>
 
         {/* Course Selection */}
         {courses.length > 0 && (
-          <div className="bg-white rounded-lg shadow p-6 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Seus Cursos</h3>
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6 mb-8`}>
+            <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Seus Cursos</h3>
                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                {courses.map((course) => (
                  <div
