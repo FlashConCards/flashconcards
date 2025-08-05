@@ -915,12 +915,12 @@ export const deleteFlashcard = async (flashcardId: string) => {
 }
 
 // ===== APROFUNDAMENTOS (/deepenings) =====
-export const getDeepenings = async (topicId?: string) => {
+export const getDeepenings = async (subTopicId?: string) => {
   try {
     let q: Query | CollectionReference = collection(db, 'deepenings')
     
-    if (topicId) {
-      q = query(q, where('topicId', '==', topicId))
+    if (subTopicId) {
+      q = query(q, where('subTopicId', '==', subTopicId))
     }
     
     const querySnapshot = await getDocs(q)
@@ -960,8 +960,10 @@ export const getDeepeningsBySubTopic = async (subTopicId?: string) => {
 export const createDeepening = async (deepeningData: any) => {
   try {
     const deepeningDoc = {
-      topicId: deepeningData.topicId,
+      subTopicId: deepeningData.subTopicId,
+      title: deepeningData.title,
       content: deepeningData.content,
+      isActive: true,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     }

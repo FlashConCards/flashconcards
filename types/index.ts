@@ -80,7 +80,7 @@ export interface Flashcard {
 
 export interface Deepening {
   id: string;
-  flashcardId: string;
+  subTopicId: string;
   title: string;
   content: string;
   images: string[];
