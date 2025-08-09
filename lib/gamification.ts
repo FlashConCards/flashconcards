@@ -284,14 +284,14 @@ export const getLeaderboard = async (limitCount: number = 10): Promise<Leaderboa
     const querySnapshot = await getDocs(q);
     const leaderboard: LeaderboardEntry[] = [];
     
-    querySnapshot.forEach((doc, index) => {
+    querySnapshot.forEach((doc) => {
       const data = doc.data() as UserStats;
       leaderboard.push({
         userId: doc.id,
         userName: 'Usuario', // Buscar nome real do usuário
         totalXP: data.totalXP,
         level: data.level,
-        position: index + 1,
+        position: leaderboard.length + 1,
         studyStreak: data.studyStreak
       });
     });
