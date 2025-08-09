@@ -302,6 +302,8 @@ export const calculateNextReviewDate = (
   } else if (reviewCount === 1) {
     interval = accuracy >= 0.8 ? 6 : 1; // 6 dias se acertou, 1 se errou
   } else {
+    // Inicializar intervalo base para casos subsequentes
+    interval = 6; // Valor base
     // Fator de facilidade baseado na precisão
     const easeFactor = Math.max(1.3, 2.5 + (accuracy - 0.8) * 1.5);
     interval = Math.round(interval * easeFactor);
