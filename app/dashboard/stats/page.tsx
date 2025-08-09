@@ -8,6 +8,8 @@ import {
   getStudySessions,
   getCoursesWithAccess
 } from '@/lib/firebase';
+import StatsOverview from '@/components/gamification/StatsOverview';
+import { Achievement } from '@/types';
 import { 
   ChartBarIcon,
   ClockIcon,
@@ -57,6 +59,8 @@ export default function StatsPage() {
   const [studySessions, setStudySessions] = useState<StudySession[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [selectedTimeframe, setSelectedTimeframe] = useState<'week' | 'month' | 'all'>('week');
+  const [showAchievementModal, setShowAchievementModal] = useState(false);
+  const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -240,6 +244,17 @@ export default function StatsPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Gamification Stats Overview */}
+        <div className="mb-8">
+          <StatsOverview 
+            userId={user?.uid || ''} 
+            onAchievementClick={(achievement) => {
+              setSelectedAchievement(achievement);
+              setShowAchievementModal(true);
+            }}
+          />
+        </div>
+
         {/* Timeframe Selector */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex items-center justify-between mb-6">
@@ -449,6 +464,41 @@ export default function StatsPage() {
                   <span className="text-gray-600">Cursos Ativos</span>
                   <span className="font-bold text-gray-900">{courses.length}</span>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Achievement Modal */}
+        {showAchievementModal && selectedAchievement && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+              <div className="p-6 text-center">
+                <div className="text-6xl mb-4">{selectedAchievement.icon}</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  {selectedAchievement.title}
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {selectedAchievement.description}
+                </p>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                  <p className="text-yellow-800 font-semibold">
+                    +{selectedAchievement.xpReward} XP conquistados!
+                  </p>
+                </div>
+                {selectedAchievement.unlockedAt && (
+                  <p className="text-sm text-gray-500">
+                    Desbloqueada em: {new Date(selectedAchievement.unlockedAt).toLocaleDateString('pt-BR')}
+                  </p>
+                )}
+              </div>
+              <div className="border-t border-gray-200 p-4">
+                <button
+                  onClick={() => setShowAchievementModal(false)}
+                  className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Fechar
+                </button>
               </div>
             </div>
           </div>

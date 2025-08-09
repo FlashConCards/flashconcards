@@ -6,6 +6,8 @@ import {
   signOut, 
   onAuthStateChanged,
   updateProfile,
+  setPersistence,
+  browserLocalPersistence,
   User as FirebaseUser
 } from 'firebase/auth'
 import { 
@@ -42,6 +44,15 @@ const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
 export const db = getFirestore(app)
 export const storage = getStorage(app)
+
+// Configurar persistência de sessão para 7 dias
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log('Firebase Auth persistence set to local')
+  })
+  .catch((error) => {
+    console.error('Error setting Firebase Auth persistence:', error)
+  })
 
 // ===== ESTRUTURA ORGANIZADA DO FIREBASE =====
 // /users - Todos os usuários (registrados + admin)
@@ -667,14 +678,15 @@ export const deleteSubTopic = async (subTopicId: string) => {
 }
 
 // ===== FLASHCARDS (/flashcards) =====
-export const getFlashcards = async (topicId?: string) => {
+export const getFlashcards = async (subTopicId?: string) => {
   try {
-    console.log('Getting flashcards for topicId:', topicId)
+    console.log('Getting flashcards for subTopicId:', subTopicId)
     let q: Query | CollectionReference = collection(db, 'flashcards')
     
-    if (topicId) {
-      q = query(q, where('topicId', '==', topicId))
-      console.log('Query created with filter for topicId:', topicId)
+    if (subTopicId) {
+      // Corrigido: buscar por subTopicId, não topicId
+      q = query(q, where('subTopicId', '==', subTopicId))
+      console.log('Query created with filter for subTopicId:', subTopicId)
     }
     
     const querySnapshot = await getDocs(q)
@@ -817,7 +829,7 @@ export const createFlashcard = async (flashcardData: any) => {
       front: flashcardData.front || '',
       back: flashcardData.back || '',
       explanation: flashcardData.explanation || '',
-      topicId: flashcardData.topicId,
+      subTopicId: flashcardData.subTopicId || flashcardData.topicId, // Corrigido: usar subTopicId
       order: flashcardData.order || 1,
       isActive: flashcardData.isActive !== false,
       createdAt: serverTimestamp(),
@@ -959,14 +971,18 @@ export const getDeepeningsBySubTopic = async (subTopicId?: string) => {
 
 export const createDeepening = async (deepeningData: any) => {
   try {
+    console.log('Creating deepening:', deepeningData);
+    
     const deepeningDoc = {
       subTopicId: deepeningData.subTopicId,
-      title: deepeningData.title,
+      title: deepeningData.title || 'Aprofundamento',
       content: deepeningData.content,
       isActive: true,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     }
+    
+    console.log('Deepening document to save:', deepeningDoc);
     
     const docRef = await addDoc(collection(db, 'deepenings'), deepeningDoc)
     console.log('Deepening created with ID:', docRef.id)
@@ -1930,9 +1946,13 @@ export const likePost = async (postId: string, userId: string) => {
 
 export const commentPost = async (postId: string, commentData: any) => {
   try {
+    console.log('Adding comment to post:', postId, commentData);
+    
     let imageUrl = '';
     if (commentData.image) {
+      console.log('Uploading comment image...');
       imageUrl = await uploadFile(commentData.image, `comments/${Date.now()}_${commentData.image.name}`);
+      console.log('Comment image uploaded:', imageUrl);
     }
 
     const postRef = doc(db, 'posts', postId)
@@ -1947,17 +1967,24 @@ export const commentPost = async (postId: string, commentData: any) => {
         content: commentData.content,
         authorId: commentData.authorId,
         authorName: commentData.authorName,
-        authorPhotoURL: commentData.authorPhotoURL,
+        authorPhotoURL: commentData.authorPhotoURL || '',
         authorRole: commentData.authorRole,
         imageUrl,
-        createdAt: serverTimestamp()
+        createdAt: new Date() // Usar Date normal para evitar problemas com serverTimestamp
       }
       
+      console.log('Adding comment:', newComment);
+      
       await updateDoc(postRef, { 
-        comments: [...comments, newComment]
+        comments: [...comments, newComment],
+        updatedAt: serverTimestamp()
       })
       
+      console.log('Comment added successfully');
       return newComment
+    } else {
+      console.error('Post not found:', postId);
+      throw new Error('Post não encontrado');
     }
   } catch (error) {
     console.error('Error commenting post:', error)

@@ -74,6 +74,8 @@ export default function DashboardPage() {
     newPassword: '',
     confirmPassword: ''
   });
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // Check if user has access
   useEffect(() => {
@@ -225,24 +227,36 @@ export default function DashboardPage() {
         return;
       }
 
+      setUploadingPhoto(true);
+      let photoURL = profileData.photoURL;
+
+      // Upload da foto se selecionada
+      if (selectedPhoto) {
+        console.log('Uploading photo...');
+        const uploadedPhotoURL = await updateUserPhoto(user.uid, selectedPhoto);
+        photoURL = uploadedPhotoURL;
+        console.log('Photo uploaded:', uploadedPhotoURL);
+      }
+
       // Atualizar displayName no Firebase Auth
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, {
-          displayName: profileData.displayName
+          displayName: profileData.displayName,
+          photoURL: photoURL
         });
       }
 
-      // Atualizar no Firestore se necessário
-      // await updateUser(user.uid, { displayName: profileData.displayName });
-
       toast.success('Perfil atualizado com sucesso!');
       setShowProfileModal(false);
+      setSelectedPhoto(null);
       
       // Recarregar a página para refletir as mudanças
       window.location.reload();
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Erro ao atualizar perfil');
+    } finally {
+      setUploadingPhoto(false);
     }
   };
 
@@ -646,6 +660,47 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold mb-4">Editar Perfil</h3>
             <div className="space-y-4">
+              {/* Foto de Perfil */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Foto de Perfil
+                </label>
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200">
+                    {selectedPhoto ? (
+                      <img 
+                        src={URL.createObjectURL(selectedPhoto)} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover" 
+                      />
+                    ) : profileData.photoURL ? (
+                      <img 
+                        src={profileData.photoURL} 
+                        alt="Foto atual" 
+                        className="w-full h-full object-cover" 
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                        <span className="text-white font-bold text-xl">
+                          {profileData.displayName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-md border border-gray-300 flex items-center space-x-2">
+                    <PhotoIcon className="w-4 h-4" />
+                    <span className="text-sm">Escolher foto</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setSelectedPhoto(e.target.files?.[0] || null)}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+              
+              {/* Nome */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Nome
@@ -667,9 +722,13 @@ export default function DashboardPage() {
               </button>
               <button
                 onClick={handleUpdateProfile}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                disabled={uploadingPhoto}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               >
-                Salvar
+                {uploadingPhoto && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                )}
+                <span>{uploadingPhoto ? 'Salvando...' : 'Salvar'}</span>
               </button>
             </div>
           </div>

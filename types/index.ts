@@ -70,7 +70,7 @@ export interface Flashcard {
   subTopicId: string;
   front: string;
   back: string;
-  explanation: string;
+  explanation?: string;
   order: number;
   isActive: boolean;
   deepening?: string;
@@ -176,4 +176,105 @@ export interface Comment {
   authorRole: 'admin' | 'moderator' | 'teacher' | 'user';
   createdAt: any;
   imageUrl?: string;
+}
+
+// ===== SISTEMA DE GAMIFICAÇÃO =====
+
+export interface UserStats {
+  totalCards: number;
+  studiedCards: number;
+  correctCards: number;
+  wrongCards: number;
+  studyStreak: number;
+  totalXP: number;
+  level: number;
+  achievements: Achievement[];
+  dailyGoal: number;
+  weeklyGoal: number;
+  monthlyGoal: number;
+}
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  xpReward: number;
+  type: 'cards_studied' | 'correct_answers' | 'study_streak' | 'subjects_completed' | 'special';
+  requirement: number;
+  unlockedAt?: Date;
+  isUnlocked: boolean;
+}
+
+export interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  type: 'daily' | 'weekly' | 'monthly';
+  target: number;
+  current: number;
+  xpReward: number;
+  deadline: Date;
+  isCompleted: boolean;
+  subjectId?: string;
+}
+
+export interface LeaderboardEntry {
+  userId: string;
+  userName: string;
+  userPhoto?: string;
+  totalXP: number;
+  level: number;
+  position: number;
+  studyStreak: number;
+}
+
+// ===== SISTEMA DE IA ADAPTATIVA =====
+
+export interface AIProfile {
+  userId: string;
+  learningStyle: 'visual' | 'auditory' | 'kinesthetic' | 'reading';
+  strongSubjects: string[];
+  weakSubjects: string[];
+  optimalStudyTime: number; // em minutos
+  difficultyPreference: 'easy' | 'medium' | 'hard' | 'adaptive';
+  lastAnalysis: Date;
+  recommendations: AIRecommendation[];
+}
+
+export interface AIRecommendation {
+  id: string;
+  type: 'study_plan' | 'review_cards' | 'new_subject' | 'break_suggestion' | 'difficulty_adjustment';
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high';
+  subjectId?: string;
+  flashcardIds?: string[];
+  estimatedTime: number;
+  confidence: number; // 0-1
+  createdAt: Date;
+  appliedAt?: Date;
+}
+
+export interface StudyPattern {
+  userId: string;
+  subjectId: string;
+  averageAccuracy: number;
+  averageResponseTime: number;
+  preferredStudyTime: number;
+  commonMistakes: string[];
+  improvementAreas: string[];
+  lastUpdated: Date;
+}
+
+export interface SmartFlashcard extends Flashcard {
+  aiGenerated?: boolean;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  examBoard?: string;
+  questionType?: string;
+  adaptiveLevel?: number;
+  userAccuracy?: number;
+  nextReviewDate?: Date;
+  reviewCount?: number;
+  lastReviewed?: Date;
 } 
