@@ -157,14 +157,24 @@ export default function DeepeningPage() {
 
   const handleAddDeepening = async () => {
     try {
-      if (!newDeepening.subTopicId || !newDeepening.content.trim()) {
-        alert('Preencha todos os campos obrigatórios');
+      // Usar o subTopicId da URL se o newDeepening.subTopicId estiver vazio
+      const finalSubTopicId = newDeepening.subTopicId || subTopicId;
+      
+      if (!finalSubTopicId || !newDeepening.content.trim()) {
+        alert('Preencha todos os campos obrigatórios. SubTopicId e conteúdo são necessários.');
         return;
       }
 
+      console.log('Creating deepening with data:', {
+        subTopicId: finalSubTopicId,
+        content: newDeepening.content,
+        title: newDeepening.title || 'Aprofundamento'
+      });
+
       await createDeepening({
-        ...newDeepening,
-        topicId: selectedTopic?.id || ''
+        subTopicId: finalSubTopicId,
+        content: newDeepening.content,
+        title: newDeepening.title || 'Aprofundamento'
       });
       await loadData();
       

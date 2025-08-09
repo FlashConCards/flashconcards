@@ -973,6 +973,18 @@ export const createDeepening = async (deepeningData: any) => {
   try {
     console.log('Creating deepening:', deepeningData);
     
+    // Validar se subTopicId está presente
+    if (!deepeningData.subTopicId) {
+      console.error('subTopicId is required but not provided:', deepeningData);
+      throw new Error('subTopicId é obrigatório para criar um aprofundamento');
+    }
+    
+    // Validar se content está presente
+    if (!deepeningData.content || !deepeningData.content.trim()) {
+      console.error('content is required but not provided:', deepeningData);
+      throw new Error('Conteúdo é obrigatório para criar um aprofundamento');
+    }
+    
     const deepeningDoc = {
       subTopicId: deepeningData.subTopicId,
       title: deepeningData.title || 'Aprofundamento',

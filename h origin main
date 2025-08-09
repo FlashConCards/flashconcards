@@ -1,5 +1,0 @@
-[33madc93e6[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m  Corrigido erro 500 - Melhor tratamento de PIX e preferências
-[33m90933a4[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m  Corrigido último erro TypeScript - get-preference
-[33mbb4f306[m  Corrigido erro TypeScript - MercadoPagoConfig
-[33m0d11ca1[m  Sistema de pagamento Mercado Pago completo - PIX e cartão funcionando
-[33m276846f[m Adicionar teste do Mercado Pago para verificar token
