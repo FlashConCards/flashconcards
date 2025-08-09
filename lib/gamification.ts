@@ -273,12 +273,12 @@ export const updateChallengeProgress = async (userId: string, cardsStudied: numb
 
 // ===== RANKING E LEADERBOARD =====
 
-export const getLeaderboard = async (limit: number = 10): Promise<LeaderboardEntry[]> => {
+export const getLeaderboard = async (limitCount: number = 10): Promise<LeaderboardEntry[]> => {
   try {
     const q = query(
       collection(db, 'user-stats'),
       orderBy('totalXP', 'desc'),
-      limit(limit)
+      limit(limitCount)
     );
     
     const querySnapshot = await getDocs(q);
