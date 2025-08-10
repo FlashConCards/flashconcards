@@ -11,6 +11,7 @@ import {
   getCoursesWithAccess,
   getDeepenings,
   getSubTopics,
+  getDeepeningsByTopic,
   createFlashcard
 } from '@/lib/firebase';
 import { Course, Subject, Topic, Flashcard } from '@/types';
@@ -77,23 +78,15 @@ function TopicCard({ topic, onStartStudy, getProgressForTopic, formatLastStudied
         // Buscar progresso do tópico
         const realProgress = await getProgressForTopic(topic.id);
         
-        // Buscar subTopics do tópico
-        const subTopics = await getSubTopics(topic.id);
-        
-        // Buscar deepenings de todos os subTopics
-        let allDeepenings: any[] = [];
-        for (const subTopic of subTopics) {
-          const deepenings = await getDeepenings(subTopic.id);
-          allDeepenings.push(...deepenings);
-        }
+        // Buscar aprofundamentos diretamente por topicId
+        const deepenings = await getDeepeningsByTopic(topic.id);
         
         // Usar o primeiro deepening encontrado ou null
-        const firstDeepening = allDeepenings.length > 0 ? allDeepenings[0] : null;
+        const firstDeepening = deepenings.length > 0 ? deepenings[0] : null;
         
         console.log('=== DADOS CARREGADOS ===');
         console.log('Tópico:', topic.name);
-        console.log('SubTopics encontrados:', subTopics.length);
-        console.log('Deepenings encontrados:', allDeepenings.length);
+        console.log('Deepenings encontrados:', deepenings.length);
         console.log('Primeiro deepening:', firstDeepening);
         
         setProgress(realProgress);

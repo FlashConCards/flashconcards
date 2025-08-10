@@ -969,6 +969,38 @@ export const getDeepeningsBySubTopic = async (subTopicId?: string) => {
   }
 }
 
+export const getDeepeningsByTopic = async (topicId?: string) => {
+  try {
+    if (!topicId) return [];
+    
+    let allDeepenings: any[] = [];
+    
+    // 1. Buscar aprofundamentos que tenham subTopicId igual ao topicId
+    // (quando o admin cria aprofundamentos usando topicId como subTopicId)
+    const directDeepenings = await getDeepenings(topicId);
+    allDeepenings.push(...directDeepenings);
+    
+    // 2. Buscar subTopics do tópico
+    const subTopics = await getSubTopics(topicId);
+    
+    // 3. Para cada subTopic, buscar seus aprofundamentos
+    for (const subTopic of subTopics) {
+      const subTopicDeepenings = await getDeepenings(subTopic.id);
+      allDeepenings.push(...subTopicDeepenings);
+    }
+    
+    console.log('Deepenings by topic loaded:', allDeepenings.length);
+    console.log('Direct deepenings:', directDeepenings.length);
+    console.log('SubTopics found:', subTopics.length);
+    console.log('SubTopic deepenings:', allDeepenings.length - directDeepenings.length);
+    
+    return allDeepenings;
+  } catch (error: any) {
+    console.error('Error getting deepenings by topic:', error)
+    return []
+  }
+}
+
 export const createDeepening = async (deepeningData: any) => {
   try {
     console.log('Creating deepening:', deepeningData);

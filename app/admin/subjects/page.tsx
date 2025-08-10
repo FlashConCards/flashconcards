@@ -9,6 +9,7 @@ import {
   getSubTopics,
   getFlashcards,
   getDeepenings,
+  getDeepeningsByTopic,
   createSubject,
   updateSubject,
   deleteSubject,
@@ -182,7 +183,7 @@ export default function SubjectsPage() {
 
   const loadDeepenings = async (topicId: string) => {
     try {
-      const deepeningsData = await getDeepenings(topicId);
+      const deepeningsData = await getDeepeningsByTopic(topicId);
       setDeepenings(deepeningsData || []);
     } catch (error) {
       console.error('Erro ao carregar aprofundamentos:', error);
