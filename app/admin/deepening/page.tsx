@@ -159,11 +159,17 @@ export default function DeepeningPage() {
 
   const handleAddDeepening = async () => {
     try {
-      // Usar o subTopicId da URL se o newDeepening.subTopicId estiver vazio
-      const finalSubTopicId = newDeepening.subTopicId || subTopicId;
+      // Verificar se há um subtópico selecionado
+      if (!selectedSubTopic) {
+        alert('Por favor, selecione um subtópico primeiro.');
+        return;
+      }
+
+      // Usar o subTopicId do subtópico selecionado
+      const finalSubTopicId = selectedSubTopic.id;
       
-      if (!finalSubTopicId || !newDeepening.content.trim()) {
-        alert('Preencha todos os campos obrigatórios. SubTopicId e conteúdo são necessários.');
+      if (!newDeepening.content.trim()) {
+        alert('Por favor, preencha o conteúdo do aprofundamento.');
         return;
       }
 
@@ -321,6 +327,20 @@ export default function DeepeningPage() {
               <h3 className="text-lg font-semibold mb-4">Adicionar Aprofundamento para "{selectedSubTopic.name}"</h3>
               
               <div className="space-y-4">
+                {/* Título */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Título do Aprofundamento
+                  </label>
+                  <input
+                    type="text"
+                    value={newDeepening.title}
+                    onChange={(e) => setNewDeepening({...newDeepening, title: e.target.value})}
+                    placeholder="Digite o título do aprofundamento"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
                 {/* Rich Text Editor */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
