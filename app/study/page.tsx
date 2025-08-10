@@ -8,7 +8,8 @@ import {
   getFlashcards,
   updateUserProgress,
   getUserProgress,
-  createStudySession
+  createStudySession,
+  createFlashcard
 } from '@/lib/firebase';
 import { Flashcard } from '@/types';
 import { 
@@ -22,6 +23,7 @@ import {
 import toast from 'react-hot-toast';
 import FlashcardComponent from '@/components/flashcards/Flashcard';
 import DeepeningModal from '@/components/flashcards/DeepeningModal';
+import FlashcardGeneratorModal from '@/components/ai/FlashcardGeneratorModal';
 
 export default function StudyPage() {
   const { user } = useAuth();
@@ -47,6 +49,11 @@ export default function StudyPage() {
   });
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionDirection, setTransitionDirection] = useState<'left' | 'right'>('right');
+
+  // Estados para IA
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [selectedDeepeningContent, setSelectedDeepeningContent] = useState('');
+  const [selectedDeepeningTitle, setSelectedDeepeningTitle] = useState('');
 
   // Get course info from URL params
   const courseId = searchParams.get('courseId');
@@ -408,9 +415,40 @@ export default function StudyPage() {
   };
 
   const handleDeepening = (content: string) => {
-    if (content && content.trim()) {
-      setSelectedDeepening(content);
-      setShowDeepening(true);
+    setSelectedDeepening(content);
+    setShowDeepening(true);
+  };
+
+  const handleAIGeneratedFlashcards = async (generatedFlashcards: any[]) => {
+    try {
+      // Salvar flashcards gerados por IA no Firebase
+      for (const flashcard of generatedFlashcards) {
+        await createFlashcard(flashcard);
+      }
+      
+      // Recarregar flashcards
+      const realFlashcards = await getFlashcards(subTopicId!);
+      if (realFlashcards && realFlashcards.length > 0) {
+        const formattedFlashcards: Flashcard[] = realFlashcards.map((card: any) => ({
+          id: card.id,
+          front: card.front || card.question || '',
+          back: card.back || card.answer || '',
+          explanation: card.explanation || '',
+          subTopicId: card.subTopicId,
+          order: card.order || 1,
+          isActive: card.isActive !== false
+        }));
+        
+        setFlashcards(formattedFlashcards);
+        setStudyQueue(formattedFlashcards);
+        setSessionStats(prev => ({ ...prev, totalCards: formattedFlashcards.length }));
+      }
+      
+      toast.success(`${generatedFlashcards.length} flashcards gerados por IA foram salvos!`);
+      
+    } catch (error) {
+      console.error('Erro ao salvar flashcards gerados por IA:', error);
+      toast.error('Erro ao salvar flashcards gerados por IA');
     }
   };
 
@@ -668,56 +706,77 @@ export default function StudyPage() {
 
         {/* Navigation Buttons */}
         {currentCard && studyQueue.length > 0 && (
-          <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-            <button
-              onClick={handlePrevious}
-              disabled={currentIndex === 0}
-              className={`flex items-center px-4 py-2 rounded-lg transition-colors touch-button ${
-                currentIndex === 0
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <ChevronLeftIcon className="w-5 h-5 mr-1" />
-              <span className="hidden sm:inline">Anterior</span>
-            </button>
-
-            <div className="flex space-x-2 sm:space-x-4">
+          <>
+            {/* Botão Gerar com IA */}
+            <div className="flex justify-center mb-6">
               <motion.button
-                onClick={() => handleCardResponse(false)}
+                onClick={() => {
+                  setSelectedDeepeningContent(currentCard?.deepening || 'Conteúdo do flashcard atual');
+                  setSelectedDeepeningTitle('Flashcard Atual');
+                  setShowAIModal(true);
+                }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="flex items-center space-x-2 bg-red-600 text-white px-4 sm:px-6 py-3 rounded-lg hover:bg-red-700 transition-colors touch-button"
-                disabled={isTransitioning}
+                className="flex items-center space-x-2 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors touch-button shadow-lg"
               >
-                <XCircleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="text-sm sm:text-base">Errei (1)</span>
-              </motion.button>
-              <motion.button
-                onClick={() => handleCardResponse(true)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center space-x-2 bg-green-600 text-white px-4 sm:px-6 py-3 rounded-lg hover:bg-green-700 transition-colors touch-button"
-                disabled={isTransitioning}
-              >
-                <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="text-sm sm:text-base">Acertei (2)</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span className="font-medium">Gerar Flashcards com IA</span>
               </motion.button>
             </div>
 
-            <button
-              onClick={handleNext}
-              disabled={currentIndex >= studyQueue.length - 1}
-              className={`flex items-center px-4 py-2 rounded-lg transition-colors touch-button ${
-                currentIndex >= studyQueue.length - 1
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <span className="hidden sm:inline">Próximo</span>
-              <ChevronRightIcon className="w-5 h-5 ml-1" />
-            </button>
-          </div>
+            <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+              <button
+                onClick={handlePrevious}
+                disabled={currentIndex === 0}
+                className={`flex items-center px-4 py-2 rounded-lg transition-colors touch-button ${
+                  currentIndex === 0
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <ChevronLeftIcon className="w-5 h-5 mr-1" />
+                <span className="hidden sm:inline">Anterior</span>
+              </button>
+
+              <div className="flex space-x-2 sm:space-x-4">
+                <motion.button
+                  onClick={() => handleCardResponse(false)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center space-x-2 bg-red-600 text-white px-4 sm:px-6 py-3 rounded-lg hover:bg-red-700 transition-colors touch-button"
+                  disabled={isTransitioning}
+                >
+                  <XCircleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-sm sm:text-base">Errei (1)</span>
+                </motion.button>
+                <motion.button
+                  onClick={() => handleCardResponse(true)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center space-x-2 bg-green-600 text-white px-4 sm:px-6 py-3 rounded-lg hover:bg-green-700 transition-colors touch-button"
+                  disabled={isTransitioning}
+                >
+                  <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-sm sm:text-base">Acertei (2)</span>
+                </motion.button>
+              </div>
+
+              <button
+                onClick={handleNext}
+                disabled={currentIndex >= studyQueue.length - 1}
+                className={`flex items-center px-4 py-2 rounded-lg transition-colors touch-button ${
+                  currentIndex >= studyQueue.length - 1
+                    ? 'text-gray-400 cursor-not-allowed'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <span className="hidden sm:inline">Próximo</span>
+                <ChevronRightIcon className="w-5 h-5 ml-1" />
+              </button>
+            </div>
+          </>
         )}
       </div>
 
@@ -737,6 +796,18 @@ export default function StudyPage() {
             externalLinks: [],
             isActive: true
           }}
+        />
+      )}
+
+      {/* AI Flashcard Generator Modal */}
+      {showAIModal && (
+        <FlashcardGeneratorModal
+          isOpen={showAIModal}
+          onClose={() => setShowAIModal(false)}
+          subTopicId={subTopicId || ''}
+          subTopicName={selectedDeepeningTitle}
+          content={selectedDeepeningContent}
+          onGenerate={handleAIGeneratedFlashcards}
         />
       )}
     </div>

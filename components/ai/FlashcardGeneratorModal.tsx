@@ -57,70 +57,51 @@ export default function FlashcardGeneratorModal({
     try {
       setLoading(true);
       
-      // Simular geração com IA (em produção, usar OpenAI/Claude API)
-      const prompt = `
-        Baseado no conteúdo sobre "${subTopicName}":
-        ${content}
-        
-        Gere ${settings.quantity} flashcards com as seguintes características:
-        - Dificuldade: ${settings.difficulty}
-        - Banca: ${settings.examBoard}
-        - Tipo: ${settings.questionType}
-        
-        Formato de resposta esperado: JSON array com objetos contendo front, back, explanation
-      `;
+      // Chamar API real de IA
+      const response = await fetch('/api/ai/generate-flashcards', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content,
+          subTopicName,
+          settings
+        }),
+      });
 
-      // Simulando resposta da IA
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const mockFlashcards = generateMockFlashcards(settings.quantity, subTopicName, settings);
-      
-      onGenerate(mockFlashcards);
-      toast.success(`${mockFlashcards.length} flashcards gerados com sucesso!`);
-      onClose();
-      
-    } catch (error) {
-      console.error('Erro ao gerar flashcards:', error);
-      toast.error('Erro ao gerar flashcards');
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (!response.ok) {
+        throw new Error(`Erro na API: ${response.status}`);
+      }
 
-  const generateMockFlashcards = (quantity: number, topic: string, settings: any) => {
-    const templates = {
-      easy: [
-        { front: `O que é ${topic}?`, back: `${topic} é um conceito fundamental...`, explanation: 'Definição básica do conceito.' },
-        { front: `Qual a importância de ${topic}?`, back: `${topic} é importante porque...`, explanation: 'Relevância do conceito na área.' }
-      ],
-      medium: [
-        { front: `Como ${topic} se aplica na prática?`, back: `Na prática, ${topic} pode ser aplicado...`, explanation: 'Aplicação prática do conceito.' },
-        { front: `Quais são as características de ${topic}?`, back: `As principais características são...`, explanation: 'Detalhamento das características.' }
-      ],
-      hard: [
-        { front: `Analise criticamente o papel de ${topic} no contexto atual.`, back: `Uma análise crítica revela que ${topic}...`, explanation: 'Análise aprofundada e crítica.' },
-        { front: `Compare ${topic} com conceitos similares.`, back: `Comparando com outros conceitos...`, explanation: 'Comparação e diferenciação.' }
-      ]
-    };
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
 
-    const selectedTemplates = templates[settings.difficulty as keyof typeof templates];
-    const flashcards = [];
-    
-    for (let i = 0; i < quantity; i++) {
-      const template = selectedTemplates[i % selectedTemplates.length];
-      flashcards.push({
-        ...template,
+      // Formatar flashcards para o formato esperado
+      const formattedFlashcards = data.flashcards.map((flashcard: any, index: number) => ({
+        ...flashcard,
         subTopicId,
-        order: i + 1,
+        order: index + 1,
         isActive: true,
         aiGenerated: true,
         difficulty: settings.difficulty,
         examBoard: settings.examBoard,
         questionType: settings.questionType
-      });
+      }));
+      
+      onGenerate(formattedFlashcards);
+      toast.success(`${formattedFlashcards.length} flashcards gerados com sucesso!`);
+      onClose();
+      
+    } catch (error: any) {
+      console.error('Erro ao gerar flashcards:', error);
+      toast.error(`Erro ao gerar flashcards: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
-    
-    return flashcards;
   };
 
   if (!isOpen) return null;
