@@ -69,8 +69,9 @@ interface Flashcard {
 
 interface Deepening {
   id: string;
+  subTopicId: string;
+  title: string;
   content: string;
-  topicId: string;
   createdAt: any;
   updatedAt: any;
 }
@@ -123,7 +124,8 @@ export default function SubjectsPage() {
 
   const [newDeepening, setNewDeepening] = useState({
     content: '',
-    topicId: ''
+    title: '',
+    subTopicId: ''
   });
 
   // Check if user is admin
@@ -296,16 +298,22 @@ export default function SubjectsPage() {
         return;
       }
 
+      // Para aprofundamentos na página de subjects, vamos usar o topicId como subTopicId
+      // já que não temos subtópicos selecionados aqui
       const deepeningData = {
-        ...newDeepening,
-        topicId: selectedTopic.id
+        subTopicId: selectedTopic.id, // Usar topicId como subTopicId temporariamente
+        title: newDeepening.title || 'Aprofundamento',
+        content: newDeepening.content
       };
+
+      console.log('Creating deepening with data:', deepeningData);
 
       await createDeepening(deepeningData);
       await loadDeepenings(selectedTopic.id);
       setNewDeepening({
         content: '',
-        topicId: ''
+        title: '',
+        subTopicId: ''
       });
       setShowDeepeningModal(false);
       alert('Aprofundamento criado com sucesso!');
@@ -667,7 +675,8 @@ export default function SubjectsPage() {
                       setEditingItem(null);
                       setNewDeepening({
                         content: '',
-                        topicId: selectedTopic.id
+                        title: '',
+                        subTopicId: selectedTopic.id
                       });
                       setShowDeepeningModal(true);
                     }}
@@ -935,6 +944,19 @@ export default function SubjectsPage() {
               </h3>
               
               <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Título do Aprofundamento *
+                  </label>
+                  <input
+                    type="text"
+                    value={newDeepening.title}
+                    onChange={(e) => setNewDeepening({...newDeepening, title: e.target.value})}
+                    placeholder="Digite o título do aprofundamento"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Conteúdo do Aprofundamento *
