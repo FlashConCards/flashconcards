@@ -36,6 +36,8 @@ import toast from 'react-hot-toast';
 import DeepeningModal from '@/components/flashcards/DeepeningModal';
 import FlashcardGeneratorModal from '@/components/ai/FlashcardGeneratorModal';
 import { useDarkMode } from '@/components/DarkModeProvider';
+import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface StudyProgress {
   totalCards: number;
@@ -194,15 +196,16 @@ function TopicCard({ topic, onStartStudy, getProgressForTopic, formatLastStudied
           <span className="text-sm">Gerar com IA</span>
         </button>
 
-        {deepening && (
-          <button
-            onClick={() => setShowDeepeningModal(true)}
-            className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-all duration-200 flex items-center justify-center space-x-2"
-          >
-            <BookOpenIcon className="w-4 h-4" />
-            <span className="text-sm">Aprofundar</span>
-          </button>
-        )}
+        {/* Botão Aprofundar - Sempre visível, mas com conteúdo diferente */}
+        <button
+          onClick={() => setShowDeepeningModal(true)}
+          className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-all duration-200 flex items-center justify-center space-x-2"
+        >
+          <BookOpenIcon className="w-4 h-4" />
+          <span className="text-sm">
+            {deepening ? 'Ver Aprofundamento' : 'Sem Aprofundamento'}
+          </span>
+        </button>
       </div>
 
       {/* Last Studied */}
@@ -215,14 +218,16 @@ function TopicCard({ topic, onStartStudy, getProgressForTopic, formatLastStudied
         </div>
       )}
 
-      {/* Deepening Modal */}
-      {deepening && (
-        <DeepeningModal
-          deepening={deepening}
-          isOpen={showDeepeningModal}
-          onClose={() => setShowDeepeningModal(false)}
-        />
-      )}
+      {/* Deepening Modal - Sempre visível, mas com conteúdo diferente */}
+      <DeepeningModal
+        deepening={deepening || {
+          title: topic.name,
+          content: topic.description || 'Este tópico ainda não possui aprofundamento específico.',
+          subTopicId: topic.id
+        }}
+        isOpen={showDeepeningModal}
+        onClose={() => setShowDeepeningModal(false)}
+      />
     </div>
   );
 }
@@ -326,18 +331,26 @@ export default function StudyAreaPage() {
   };
 
   const handleAIGeneratedFlashcards = async (generatedFlashcards: any[]) => {
-    if (!selectedTopicForAI) return;
+    if (!selectedTopicForAI || !user) return;
     
     try {
+      // Criar uma nova coleção para flashcards pessoais do usuário
+      const userFlashcardsRef = collection(db, 'user-flashcards');
+      
       for (const flashcard of generatedFlashcards) {
-        await createFlashcard({
+        // Salvar na coleção de flashcards pessoais do usuário
+        await addDoc(userFlashcardsRef, {
           ...flashcard,
+          userId: user.uid, // ID do usuário atual
           topicId: selectedTopicForAI.id,
-          subTopicId: selectedTopicForAI.id // Usando topicId como subTopicId temporariamente
+          subTopicId: selectedTopicForAI.id, // Usando topicId como subTopicId temporariamente
+          createdAt: new Date(),
+          isPersonal: true, // Marcar como flashcard pessoal
+          aiGenerated: true
         });
       }
       
-      toast.success(`${generatedFlashcards.length} flashcards gerados por IA foram salvos!`);
+      toast.success(`${generatedFlashcards.length} flashcards gerados por IA foram salvos para você!`);
       setShowFlashcardGenerator(false);
       
       // Recarregar os tópicos para mostrar o progresso atualizado
@@ -352,9 +365,21 @@ export default function StudyAreaPage() {
 
   const getProgressForTopic = async (topicId: string): Promise<StudyProgress> => {
     try {
-      // Buscar flashcards reais do tópico
+      // Buscar flashcards reais do tópico (do banco de matérias)
       const flashcards = await getFlashcards(topicId);
-      const totalCards = flashcards.length;
+      
+      // Buscar flashcards pessoais do usuário para este tópico
+      const userFlashcardsRef = collection(db, 'user-flashcards');
+      const userFlashcardsQuery = query(
+        userFlashcardsRef,
+        where('userId', '==', user?.uid),
+        where('topicId', '==', topicId)
+      );
+      const userFlashcardsSnapshot = await getDocs(userFlashcardsQuery);
+      const userFlashcards = userFlashcardsSnapshot.docs.map(doc => doc.data());
+      
+      // Total de flashcards = flashcards do banco + flashcards pessoais do usuário
+      const totalCards = flashcards.length + userFlashcards.length;
       
       // Por enquanto, retornar dados reais mas sem progresso (usuário ainda não estudou)
       return {

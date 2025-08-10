@@ -16,7 +16,14 @@ export default function DeepeningModal({ isOpen, onClose, deepening }: Deepening
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [darkMode, setDarkMode] = useState(false)
   
-  if (!deepening) return null
+  // Se não há deepening, criar um objeto padrão
+  const displayDeepening = deepening || {
+    title: 'Informações do Tópico',
+    content: 'Este tópico ainda não possui aprofundamento específico. O conteúdo será baseado na descrição geral do tópico.',
+    subTopicId: '',
+    images: [],
+    externalLinks: []
+  }
 
   return (
     <>
@@ -56,7 +63,7 @@ export default function DeepeningModal({ isOpen, onClose, deepening }: Deepening
                     <Dialog.Title as="h3" className={`text-2xl font-bold leading-6 ${
                       darkMode ? 'text-white' : 'text-gray-900'
                     }`}>
-                      {deepening.title}
+                      {displayDeepening.title}
                     </Dialog.Title>
                     
                     <div className="flex items-center space-x-4">
@@ -98,138 +105,122 @@ export default function DeepeningModal({ isOpen, onClose, deepening }: Deepening
                   }`}>
                     <div className="space-y-6">
                       {/* Conteúdo Principal com Formatação Melhorada */}
-                      <div className={`prose prose-lg max-w-none ${
-                        darkMode 
-                          ? 'prose-invert prose-gray-300' 
-                          : 'prose-gray-900'
+                      <div className={`prose max-w-none ${
+                        darkMode ? 'prose-invert' : ''
                       }`}>
                         <div 
-                          className={`leading-relaxed ${
-                            darkMode ? 'text-gray-300' : 'text-gray-700'
+                          className={`text-lg leading-relaxed ${
+                            darkMode ? 'text-gray-200' : 'text-gray-800'
                           }`}
-                          dangerouslySetInnerHTML={{ 
-                            __html: deepening.content 
-                              .replace(/<h1>/g, '<h1 class="text-3xl font-bold mb-4 mt-6 text-blue-600">')
-                              .replace(/<h2>/g, '<h2 class="text-2xl font-bold mb-3 mt-5 text-blue-500">')
-                              .replace(/<h3>/g, '<h3 class="text-xl font-semibold mb-2 mt-4 text-blue-400">')
-                              .replace(/<h4>/g, '<h4 class="text-lg font-semibold mb-2 mt-3 text-blue-300">')
-                              .replace(/<p>/g, '<p class="mb-3 leading-relaxed">')
-                              .replace(/<ul>/g, '<ul class="list-disc list-inside mb-3 space-y-1">')
-                              .replace(/<ol>/g, '<ol class="list-decimal list-inside mb-3 space-y-1">')
-                              .replace(/<li>/g, '<li class="ml-4">')
-                              .replace(/<strong>/g, '<strong class="font-bold text-blue-600">')
-                              .replace(/<em>/g, '<em class="italic text-gray-600">')
-                              .replace(/<blockquote>/g, '<blockquote class="border-l-4 border-blue-500 pl-4 italic bg-gray-50 p-3 rounded">')
-                          }} 
+                          dangerouslySetInnerHTML={{ __html: displayDeepening.content }}
                         />
                       </div>
 
-                      {/* Imagens */}
-                      {deepening.images && deepening.images.length > 0 && (
-                        <div>
-                          <h4 className={`text-lg font-semibold mb-3 ${
+                      {/* Imagens (se houver) */}
+                      {displayDeepening.images && displayDeepening.images.length > 0 && (
+                        <div className="space-y-4">
+                          <h4 className={`text-lg font-semibold ${
                             darkMode ? 'text-white' : 'text-gray-900'
-                          }`}>Imagens</h4>
+                          }`}>
+                            Imagens de Apoio
+                          </h4>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {deepening.images.map((image, index) => (
-                              <div key={index} className="relative group">
-                                <img
-                                  src={image}
-                                  alt={`Imagem ${index + 1}`}
-                                  className="w-full h-auto max-h-96 object-contain rounded-lg shadow-md group-hover:shadow-lg transition-shadow cursor-pointer"
-                                  onClick={() => setSelectedImage(image)}
-                                />
-                              </div>
-                            ))}
+                            {displayDeepening.images.map((image, index) => {
+                              // Lidar com formato antigo (string) e novo (objeto)
+                              const imageUrl = typeof image === 'string' ? image : image.url;
+                              const imageAlt = typeof image === 'string' ? `Imagem ${index + 1}` : (image.alt || `Imagem ${index + 1}`);
+                              const imageCaption = typeof image === 'string' ? undefined : image.caption;
+                              
+                              return (
+                                <div key={index} className="relative group">
+                                  <img
+                                    src={imageUrl}
+                                    alt={imageAlt}
+                                    className="w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                    onClick={() => setSelectedImage(imageUrl)}
+                                  />
+                                  {imageCaption && (
+                                    <p className={`text-sm mt-2 text-center ${
+                                      darkMode ? 'text-gray-300' : 'text-gray-600'
+                                    }`}>
+                                      {imageCaption}
+                                    </p>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
 
-                      {/* Vídeos */}
-                      {deepening.videos && deepening.videos.length > 0 && (
-                        <div>
-                          <h4 className={`text-lg font-semibold mb-3 ${
+                      {/* Links (se houver) */}
+                      {displayDeepening.externalLinks && displayDeepening.externalLinks.length > 0 && (
+                        <div className="space-y-4">
+                          <h4 className={`text-lg font-semibold ${
                             darkMode ? 'text-white' : 'text-gray-900'
-                          }`}>Vídeos</h4>
-                          <div className="space-y-4">
-                            {deepening.videos.map((video, index) => (
-                              <div key={index} className="relative">
-                                {video.includes('youtube.com') || video.includes('youtu.be') ? (
-                                  <div className="aspect-video">
-                                    <iframe
-                                      src={video.replace('watch?v=', 'embed/')}
-                                      title={`Vídeo ${index + 1}`}
-                                      className="w-full h-full rounded-lg"
-                                      frameBorder="0"
-                                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                      allowFullScreen
-                                    />
+                          }`}>
+                            Links Relacionados
+                          </h4>
+                          <div className="space-y-3">
+                            {displayDeepening.externalLinks.map((link: any, index: number) => {
+                              // Lidar com formato antigo (string) e novo (objeto)
+                              const linkUrl = typeof link === 'string' ? link : link.url;
+                              const linkTitle = typeof link === 'string' ? `Link ${index + 1}` : link.title;
+                              const linkDescription = typeof link === 'string' ? undefined : link.description;
+                              
+                              return (
+                                <a
+                                  key={index}
+                                  href={linkUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors ${
+                                    darkMode 
+                                      ? 'border-gray-700 hover:border-gray-600 hover:bg-gray-800' 
+                                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                  }`}
+                                >
+                                  <LinkIcon className="w-5 h-5 text-blue-500" />
+                                  <div>
+                                    <p className={`font-medium ${
+                                      darkMode ? 'text-white' : 'text-gray-900'
+                                    }`}>
+                                      {linkTitle}
+                                    </p>
+                                    {linkDescription && (
+                                      <p className={`text-sm ${
+                                        darkMode ? 'text-gray-400' : 'text-gray-600'
+                                      }`}>
+                                        {linkDescription}
+                                      </p>
+                                    )}
                                   </div>
-                                ) : (
-                                  <video
-                                    controls
-                                    className="w-full rounded-lg"
-                                    src={video}
-                                  >
-                                    Seu navegador não suporta vídeos.
-                                  </video>
-                                )}
-                              </div>
-                            ))}
+                                </a>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
 
-                      {/* PDFs */}
-                      {deepening.pdfs && deepening.pdfs.length > 0 && (
-                        <div>
-                          <h4 className={`text-lg font-semibold mb-3 ${
-                            darkMode ? 'text-white' : 'text-gray-900'
-                          }`}>Documentos</h4>
-                          <div className="space-y-2">
-                            {deepening.pdfs.map((pdf, index) => (
-                              <a
-                                key={index}
-                                href={pdf}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`flex items-center gap-2 p-3 border rounded-lg transition-colors ${
-                                  darkMode 
-                                    ? 'border-gray-700 hover:bg-gray-800 text-gray-300' 
-                                    : 'border-gray-200 hover:bg-gray-50 text-gray-700'
-                                }`}
-                              >
-                                <DocumentIcon className="w-5 h-5 text-red-500" />
-                                <span>Documento {index + 1}</span>
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Links Externos */}
-                      {deepening.externalLinks && deepening.externalLinks.length > 0 && (
-                        <div>
-                          <h4 className={`text-lg font-semibold mb-3 ${
-                            darkMode ? 'text-white' : 'text-gray-900'
-                          }`}>Links Úteis</h4>
-                          <div className="space-y-2">
-                            {deepening.externalLinks.map((link, index) => (
-                              <a
-                                key={index}
-                                href={link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`flex items-center gap-2 p-3 border rounded-lg transition-colors ${
-                                  darkMode 
-                                    ? 'border-gray-700 hover:bg-gray-800 text-gray-300' 
-                                    : 'border-gray-200 hover:bg-gray-50 text-gray-700'
-                                }`}
-                              >
-                                <LinkIcon className="w-5 h-5 text-blue-500" />
-                                <span>Link {index + 1}</span>
-                              </a>
-                            ))}
+                      {/* Mensagem quando não há aprofundamento */}
+                      {!deepening && (
+                        <div className={`p-4 rounded-lg border-2 border-dashed ${
+                          darkMode ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-gray-50'
+                        }`}>
+                          <div className="text-center">
+                            <DocumentIcon className={`w-12 h-12 mx-auto mb-3 ${
+                              darkMode ? 'text-gray-400' : 'text-gray-500'
+                            }`} />
+                            <p className={`text-lg font-medium mb-2 ${
+                              darkMode ? 'text-white' : 'text-gray-900'
+                            }`}>
+                              Sem Aprofundamento Específico
+                            </p>
+                            <p className={`text-sm ${
+                              darkMode ? 'text-gray-400' : 'text-gray-600'
+                            }`}>
+                              Este tópico ainda não possui conteúdo aprofundado. Os flashcards gerados por IA serão baseados na descrição geral do tópico.
+                            </p>
                           </div>
                         </div>
                       )}
@@ -241,14 +232,16 @@ export default function DeepeningModal({ isOpen, onClose, deepening }: Deepening
           </div>
         </Dialog>
       </Transition.Root>
-      
-      {/* Modal de Imagem */}
-      <ImageModal
-        isOpen={!!selectedImage}
-        onClose={() => setSelectedImage(null)}
-        imageUrl={selectedImage || ''}
-        alt="Imagem em tamanho completo"
-      />
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <ImageModal
+          imageUrl={selectedImage}
+          isOpen={!!selectedImage}
+          onClose={() => setSelectedImage(null)}
+          alt="Imagem em tamanho completo"
+        />
+      )}
     </>
   )
 } 

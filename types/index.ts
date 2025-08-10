@@ -83,10 +83,18 @@ export interface Deepening {
   subTopicId: string;
   title: string;
   content: string;
-  images: string[];
+  images: Array<{
+    url: string;
+    alt?: string;
+    caption?: string;
+  }>;
   videos: string[];
   pdfs: string[];
-  externalLinks: string[];
+  externalLinks: Array<{
+    url: string;
+    title: string;
+    description?: string;
+  }>;
   isActive: boolean;
   createdAt?: any;
   updatedAt?: any;
