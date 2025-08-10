@@ -10,6 +10,7 @@ import {
   getFlashcards,
   getCoursesWithAccess,
   getDeepenings,
+  getSubTopics,
   createFlashcard
 } from '@/lib/firebase';
 import { Course, Subject, Topic, Flashcard } from '@/types';
@@ -70,12 +71,31 @@ function TopicCard({ topic, onStartStudy, getProgressForTopic, formatLastStudied
     const loadData = async () => {
       try {
         setLoading(true);
-        const [realProgress, deepenings] = await Promise.all([
-          getProgressForTopic(topic.id),
-          getDeepenings(topic.id)
-        ]);
+        
+        // Buscar progresso do tópico
+        const realProgress = await getProgressForTopic(topic.id);
+        
+        // Buscar subTopics do tópico
+        const subTopics = await getSubTopics(topic.id);
+        
+        // Buscar deepenings de todos os subTopics
+        let allDeepenings: any[] = [];
+        for (const subTopic of subTopics) {
+          const deepenings = await getDeepenings(subTopic.id);
+          allDeepenings.push(...deepenings);
+        }
+        
+        // Usar o primeiro deepening encontrado ou null
+        const firstDeepening = allDeepenings.length > 0 ? allDeepenings[0] : null;
+        
+        console.log('=== DADOS CARREGADOS ===');
+        console.log('Tópico:', topic.name);
+        console.log('SubTopics encontrados:', subTopics.length);
+        console.log('Deepenings encontrados:', allDeepenings.length);
+        console.log('Primeiro deepening:', firstDeepening);
+        
         setProgress(realProgress);
-        setDeepening(deepenings && deepenings.length > 0 ? deepenings[0] : null);
+        setDeepening(firstDeepening);
       } catch (error) {
         console.error('Error loading topic data:', error);
         setProgress({
@@ -565,8 +585,28 @@ export default function StudyAreaPage() {
                         formatLastStudied={formatLastStudied}
                         onGenerateAI={(topic, deepening) => {
                           setSelectedTopicForAI(topic);
-                          setSelectedDeepeningContent(deepening?.content || topic.description || 'Conteúdo do tópico');
-                          setSelectedDeepeningTitle(topic.name);
+                          
+                          // Usar o conteúdo real do deepening se existir, senão usar o conteúdo do tópico
+                          const deepeningContent = deepening?.content || topic.description || 'Conteúdo do tópico';
+                          const deepeningTitle = deepening?.title || topic.name;
+                          
+                          console.log('=== DADOS PARA IA ===');
+                          console.log('Tópico:', topic.name);
+                          console.log('Deepening encontrado:', !!deepening);
+                          console.log('Conteúdo do deepening:', deepening?.content);
+                          console.log('Título do deepening:', deepening?.title);
+                          console.log('Conteúdo final para IA:', deepeningContent);
+                          console.log('Título final para IA:', deepeningTitle);
+                          
+                          // Se não temos deepening, mostrar aviso
+                          if (!deepening) {
+                            toast.error('Este tópico não possui aprofundamento. Os flashcards serão gerados com base na descrição do tópico.');
+                          } else {
+                            toast.success('Usando conteúdo do aprofundamento para gerar flashcards personalizados!');
+                          }
+                          
+                          setSelectedDeepeningContent(deepeningContent);
+                          setSelectedDeepeningTitle(deepeningTitle);
                           setShowFlashcardGenerator(true);
                         }}
                       />
