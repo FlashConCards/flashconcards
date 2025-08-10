@@ -25,24 +25,13 @@ export default function FlashcardGeneratorModal({
   const [settings, setSettings] = useState({
     quantity: 5,
     difficulty: 'medium',
-    examBoard: 'geral',
-    questionType: 'mixed',
-    focusAreas: [] as string[]
+    questionType: 'mixed'
   });
 
   const difficultyOptions = [
     { value: 'easy', label: 'Fácil', description: 'Conceitos básicos e definições' },
     { value: 'medium', label: 'Médio', description: 'Aplicação prática de conceitos' },
     { value: 'hard', label: 'Difícil', description: 'Análise crítica e casos complexos' }
-  ];
-
-  const examBoardOptions = [
-    { value: 'geral', label: 'Geral' },
-    { value: 'cespe', label: 'CESPE/CEBRASPE' },
-    { value: 'fgv', label: 'FGV' },
-    { value: 'fcc', label: 'FCC' },
-    { value: 'vunesp', label: 'VUNESP' },
-    { value: 'aocp', label: 'AOCP' }
   ];
 
   const questionTypeOptions = [
@@ -57,6 +46,10 @@ export default function FlashcardGeneratorModal({
     try {
       setLoading(true);
       
+      console.log('=== INICIANDO GERAÇÃO DE FLASHCARDS ===');
+      console.log('Dados para envio:', { content, subTopicName, settings });
+      console.log('URL da API:', '/api/ai/generate-flashcards');
+      
       // Chamar API real de IA
       const response = await fetch('/api/ai/generate-flashcards', {
         method: 'POST',
@@ -70,14 +63,32 @@ export default function FlashcardGeneratorModal({
         }),
       });
 
+      console.log('=== RESPOSTA DA API ===');
+      console.log('Status:', response.status);
+      console.log('Status Text:', response.statusText);
+      console.log('Headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        throw new Error(`Erro na API: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Erro na API:', errorText);
+        throw new Error(`Erro na API: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('=== DADOS RECEBIDOS ===');
+      console.log('Dados brutos:', data);
+      console.log('Tipo de dados:', typeof data);
+      console.log('Tem flashcards?', !!data.flashcards);
+      console.log('É array?', Array.isArray(data.flashcards));
+      console.log('Quantidade:', data.flashcards?.length);
       
       if (data.error) {
         throw new Error(data.error);
+      }
+
+      if (!data.flashcards || !Array.isArray(data.flashcards)) {
+        console.error('Formato inválido:', data);
+        throw new Error('Formato de resposta inválido da API');
       }
 
       // Formatar flashcards para o formato esperado
@@ -88,16 +99,22 @@ export default function FlashcardGeneratorModal({
         isActive: true,
         aiGenerated: true,
         difficulty: settings.difficulty,
-        examBoard: settings.examBoard,
         questionType: settings.questionType
       }));
+      
+      console.log('=== FLASHCARDS FORMATADOS ===');
+      console.log('Quantidade formatada:', formattedFlashcards.length);
+      console.log('Primeiro flashcard:', formattedFlashcards[0]);
       
       onGenerate(formattedFlashcards);
       toast.success(`${formattedFlashcards.length} flashcards gerados com sucesso!`);
       onClose();
       
     } catch (error: any) {
-      console.error('Erro ao gerar flashcards:', error);
+      console.error('=== ERRO NA GERAÇÃO ===');
+      console.error('Tipo de erro:', typeof error);
+      console.error('Mensagem:', error.message);
+      console.error('Stack:', error.stack);
       toast.error(`Erro ao gerar flashcards: ${error.message}`);
     } finally {
       setLoading(false);
@@ -179,24 +196,6 @@ export default function FlashcardGeneratorModal({
                 </label>
               ))}
             </div>
-          </div>
-
-          {/* Estilo da Banca */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Estilo da Banca
-            </label>
-            <select
-              value={settings.examBoard}
-              onChange={(e) => setSettings({...settings, examBoard: e.target.value})}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            >
-              {examBoardOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
           </div>
 
           {/* Tipo de Questão */}

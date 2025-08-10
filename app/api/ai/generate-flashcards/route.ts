@@ -36,15 +36,6 @@ function buildPrompt(content: string, subTopicName: string, settings: any): stri
     hard: 'análise crítica e casos complexos'
   };
 
-  const examBoardMap = {
-    cespe: 'estilo CESPE/CEBRASPE (certo ou errado)',
-    fgv: 'estilo FGV (múltipla escolha)',
-    fcc: 'estilo FCC (múltipla escolha)',
-    vunesp: 'estilo VUNESP (múltipla escolha)',
-    aocp: 'estilo AOCP (múltipla escolha)',
-    geral: 'estilo geral de concursos'
-  };
-
   const questionTypeMap = {
     objective: 'pergunta direta com resposta objetiva',
     truefalse: 'afirmações para julgar como verdadeiro ou falso',
@@ -63,7 +54,6 @@ CONTEXTO:
 REQUISITOS:
 - Quantidade: ${settings.quantity} flashcards
 - Dificuldade: ${difficultyMap[settings.difficulty as keyof typeof difficultyMap]}
-- Banca: ${examBoardMap[settings.examBoard as keyof typeof examBoardMap]}
 - Tipo: ${questionTypeMap[settings.questionType as keyof typeof questionTypeMap]}
 
 INSTRUÇÕES:
