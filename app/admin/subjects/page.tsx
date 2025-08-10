@@ -22,7 +22,8 @@ import {
   updateFlashcard,
   deleteFlashcard,
   createDeepening,
-  deleteDeepening
+  deleteDeepening,
+  updateDeepening
 } from '@/lib/firebase';
 import { 
   PlusIcon, 
@@ -323,7 +324,7 @@ export default function SubjectsPage() {
     }
   };
 
-  const handleEdit = (item: any, type: 'subject' | 'topic' | 'subtopic' | 'flashcard') => {
+  const handleEdit = (item: any, type: 'subject' | 'topic' | 'subtopic' | 'flashcard' | 'deepening') => {
     setEditingItem({ ...item, type });
     
     switch (type) {
@@ -357,6 +358,14 @@ export default function SubjectsPage() {
         });
         setShowFlashcardModal(true);
         break;
+      case 'deepening':
+        setNewDeepening({
+          title: item.title || '',
+          content: item.content || '',
+          subTopicId: item.subTopicId || ''
+        });
+        setShowDeepeningModal(true);
+        break;
     }
   };
 
@@ -376,6 +385,14 @@ export default function SubjectsPage() {
         case 'flashcard':
           await updateFlashcard(editingItem.id, newFlashcard);
           if (selectedTopic) await loadFlashcards(selectedTopic.id);
+          break;
+        case 'deepening':
+          await updateDeepening(editingItem.id, {
+            title: newDeepening.title,
+            content: newDeepening.content,
+            subTopicId: newDeepening.subTopicId
+          });
+          if (selectedTopic) await loadDeepenings(selectedTopic.id);
           break;
       }
 
@@ -704,6 +721,12 @@ export default function SubjectsPage() {
                         </div>
                         <div className="flex space-x-1 ml-2">
                           <button
+                            onClick={() => handleEdit(deepening, 'deepening')}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            <PencilIcon className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() => handleDelete(deepening.id, 'deepening')}
                             className="text-red-600 hover:text-red-900"
                           >
@@ -940,7 +963,7 @@ export default function SubjectsPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg font-semibold mb-4">
-                Novo Aprofundamento
+                {editingItem ? 'Editar Aprofundamento' : 'Novo Aprofundamento'}
               </h3>
               
               <div className="space-y-4">
@@ -972,16 +995,19 @@ export default function SubjectsPage() {
 
               <div className="flex justify-end space-x-3 mt-6">
                 <button
-                  onClick={() => setShowDeepeningModal(false)}
+                  onClick={() => {
+                    setShowDeepeningModal(false);
+                    setEditingItem(null);
+                  }}
                   className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
                 >
                   Cancelar
                 </button>
                 <button
-                  onClick={handleCreateDeepening}
+                  onClick={editingItem ? handleUpdate : handleCreateDeepening}
                   className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
                 >
-                  Criar
+                  {editingItem ? 'Atualizar' : 'Criar'}
                 </button>
               </div>
             </div>
