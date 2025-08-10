@@ -16,6 +16,7 @@ import {
 interface Deepening {
   id: string;
   subTopicId: string;
+  title: string;
   content: string;
   createdAt: any;
   updatedAt: any;
@@ -67,6 +68,7 @@ export default function DeepeningPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newDeepening, setNewDeepening] = useState({
     subTopicId: '',
+    title: '',
     content: ''
   });
   const editorRef = useRef<HTMLDivElement>(null);
@@ -180,6 +182,7 @@ export default function DeepeningPage() {
       
       setNewDeepening({
         subTopicId: '',
+        title: '',
         content: ''
       });
       setShowAddModal(false);
