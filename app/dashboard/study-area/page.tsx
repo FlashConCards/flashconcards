@@ -9,7 +9,8 @@ import {
   getTopics, 
   getFlashcards,
   getCoursesWithAccess,
-  getDeepenings
+  getDeepenings,
+  createFlashcard
 } from '@/lib/firebase';
 import { Course, Subject, Topic, Flashcard } from '@/types';
 import { 
@@ -32,6 +33,7 @@ import {
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import DeepeningModal from '@/components/flashcards/DeepeningModal';
+import FlashcardGeneratorModal from '@/components/ai/FlashcardGeneratorModal';
 import { useDarkMode } from '@/components/DarkModeProvider';
 
 interface StudyProgress {
@@ -48,9 +50,10 @@ interface TopicCardProps {
   onStartStudy: (topic: Topic) => void;
   getProgressForTopic: (topicId: string) => Promise<StudyProgress>;
   formatLastStudied: (date?: Date) => string;
+  onGenerateAI: (topic: Topic, deepening: any) => void;
 }
 
-function TopicCard({ topic, onStartStudy, getProgressForTopic, formatLastStudied }: TopicCardProps) {
+function TopicCard({ topic, onStartStudy, getProgressForTopic, formatLastStudied, onGenerateAI }: TopicCardProps) {
   const [progress, setProgress] = useState<StudyProgress>({
     totalCards: 0,
     studiedCards: 0,
@@ -160,6 +163,17 @@ function TopicCard({ topic, onStartStudy, getProgressForTopic, formatLastStudied
           <span>{progress.totalCards === 0 ? 'Sem cards' : 'Estudar'}</span>
         </button>
 
+        {/* Botão Gerar com IA */}
+        <button
+          onClick={() => onGenerateAI(topic, deepening)}
+          className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-4 rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-all duration-200 flex items-center justify-center space-x-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span>Gerar com IA</span>
+        </button>
+
         {deepening && (
           <button
             onClick={() => setShowDeepeningModal(true)}
@@ -205,6 +219,10 @@ export default function StudyAreaPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'studied' | 'unstudied'>('all');
+  const [showFlashcardGenerator, setShowFlashcardGenerator] = useState(false);
+  const [selectedTopicForAI, setSelectedTopicForAI] = useState<Topic | null>(null);
+  const [selectedDeepeningContent, setSelectedDeepeningContent] = useState('');
+  const [selectedDeepeningTitle, setSelectedDeepeningTitle] = useState('');
 
   useEffect(() => {
     if (!user) {
@@ -282,6 +300,31 @@ export default function StudyAreaPage() {
 
   const handleStartStudy = (topic: Topic) => {
     router.push(`/study?topicId=${topic.id}&subjectId=${selectedSubject?.id}&courseId=${selectedCourse?.id}`);
+  };
+
+  const handleAIGeneratedFlashcards = async (generatedFlashcards: any[]) => {
+    if (!selectedTopicForAI) return;
+    
+    try {
+      for (const flashcard of generatedFlashcards) {
+        await createFlashcard({
+          ...flashcard,
+          topicId: selectedTopicForAI.id,
+          subTopicId: selectedTopicForAI.id // Usando topicId como subTopicId temporariamente
+        });
+      }
+      
+      toast.success(`${generatedFlashcards.length} flashcards gerados por IA foram salvos!`);
+      setShowFlashcardGenerator(false);
+      
+      // Recarregar os tópicos para mostrar o progresso atualizado
+      if (selectedSubject) {
+        await loadTopics(selectedSubject.id);
+      }
+    } catch (error) {
+      console.error('Erro ao salvar flashcards gerados por IA:', error);
+      toast.error('Erro ao salvar flashcards gerados por IA');
+    }
   };
 
   const getProgressForTopic = async (topicId: string): Promise<StudyProgress> => {
@@ -517,6 +560,12 @@ export default function StudyAreaPage() {
                         onStartStudy={handleStartStudy}
                         getProgressForTopic={getProgressForTopic}
                         formatLastStudied={formatLastStudied}
+                        onGenerateAI={(topic, deepening) => {
+                          setSelectedTopicForAI(topic);
+                          setSelectedDeepeningContent(deepening?.content || topic.description || 'Conteúdo do tópico');
+                          setSelectedDeepeningTitle(topic.name);
+                          setShowFlashcardGenerator(true);
+                        }}
                       />
                     ))}
                   </div>
@@ -533,6 +582,18 @@ export default function StudyAreaPage() {
               </div>
             )}
           </div>
+        )}
+
+        {/* AI Flashcard Generator Modal */}
+        {showFlashcardGenerator && selectedTopicForAI && (
+          <FlashcardGeneratorModal
+            isOpen={showFlashcardGenerator}
+            onClose={() => setShowFlashcardGenerator(false)}
+            subTopicId={selectedTopicForAI.id}
+            subTopicName={selectedDeepeningTitle}
+            content={selectedDeepeningContent}
+            onGenerate={handleAIGeneratedFlashcards}
+          />
         )}
       </div>
     </div>
