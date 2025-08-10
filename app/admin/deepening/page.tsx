@@ -119,6 +119,11 @@ export default function DeepeningPage() {
                     setSelectedSubTopic(subTopic || null);
                     setNewDeepening({...newDeepening, subTopicId: subTopicId});
                     
+                    // Log de debug
+                    console.log('Debug - subTopicId from URL:', subTopicId);
+                    console.log('Debug - subTopic found:', subTopic);
+                    console.log('Debug - selectedSubTopic set to:', subTopic);
+                    
                     // Carregar aprofundamentos do subtópico
                     const deepeningsData = await getDeepeningsBySubTopic(subTopicId);
                     setDeepenings(deepeningsData || []);
@@ -173,17 +178,20 @@ export default function DeepeningPage() {
         return;
       }
 
-      console.log('Creating deepening with data:', {
-        subTopicId: finalSubTopicId,
-        content: newDeepening.content,
-        title: newDeepening.title || 'Aprofundamento'
-      });
+      // Log de debug para verificar os valores
+      console.log('Debug - selectedSubTopic:', selectedSubTopic);
+      console.log('Debug - finalSubTopicId:', finalSubTopicId);
+      console.log('Debug - newDeepening:', newDeepening);
 
-      await createDeepening({
+      const deepeningData = {
         subTopicId: finalSubTopicId,
         content: newDeepening.content,
         title: newDeepening.title || 'Aprofundamento'
-      });
+      };
+
+      console.log('Creating deepening with data:', deepeningData);
+
+      await createDeepening(deepeningData);
       await loadData();
       
       setNewDeepening({
