@@ -122,7 +122,7 @@ export default function StudyPage() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [currentIndex, studyQueue, sessionCompleted, loading]);
 
-  // Load flashcards
+  // Load flashcards - VERSÃO SIMPLIFICADA
   useEffect(() => {
     if (!courseId || !topicId || !subTopicId) {
       console.error('=== PARÂMETROS INVÁLIDOS ===');
@@ -139,61 +139,41 @@ export default function StudyPage() {
       try {
         setLoading(true);
         console.log('=== INICIANDO CARREGAMENTO DE FLASHCARDS ===');
-        console.log('Parâmetros recebidos:', { courseId, subjectId, topicId, subTopicId });
         
-        // Carregar flashcards reais do Firebase
-        console.log('Chamando getFlashcards com subTopicId:', subTopicId);
+        // Carregar flashcards do Firebase
         const realFlashcards = await getFlashcards(subTopicId);
         console.log('=== RESULTADO DO GETFLASHCARDS ===');
         console.log('Quantidade retornada:', realFlashcards?.length || 0);
-        console.log('Dados retornados:', realFlashcards);
         
         if (realFlashcards && realFlashcards.length > 0) {
-          console.log('=== PROCESSANDO FLASHCARDS ===');
-          // Converter dados do Firebase para o formato esperado
-          const formattedFlashcards: Flashcard[] = realFlashcards.map((card: any, index: number) => {
-            console.log(`Processando card ${index + 1}:`, card);
-            
-            const formattedCard = {
-              id: card.id,
-              subTopicId: card.subTopicId,
-              front: card.front || card.question || 'Pergunta não definida',
-              back: card.back || card.answer || 'Resposta não definida',
-              explanation: card.explanation || '',
-              order: card.order || 1,
-              isActive: card.isActive !== false,
-              deepening: card.deepening || '',
-              createdAt: card.createdAt,
-              updatedAt: card.updatedAt,
-            };
-            
-            console.log(`Card ${index + 1} formatado:`, formattedCard);
-            return formattedCard;
-          });
+          // Converter dados do Firebase
+          const formattedFlashcards: Flashcard[] = realFlashcards.map((card: any) => ({
+            id: card.id,
+            subTopicId: card.subTopicId,
+            front: card.front || card.question || 'Pergunta não definida',
+            back: card.back || card.answer || 'Resposta não definida',
+            explanation: card.explanation || '',
+            order: card.order || 1,
+            isActive: card.isActive !== false,
+            deepening: card.deepening || '',
+            createdAt: card.createdAt,
+            updatedAt: card.updatedAt,
+          }));
           
           console.log('=== FLASHCARDS FINALIZADOS ===');
           console.log('Total formatado:', formattedFlashcards.length);
-          console.log('Primeiro card formatado:', formattedFlashcards[0]);
           
-          // Embaralhar os flashcards para estudo aleatório
+          // Embaralhar e definir estado
           const shuffledFlashcards = [...formattedFlashcards].sort(() => Math.random() - 0.5);
-          
           setFlashcards(formattedFlashcards);
           setStudyQueue(shuffledFlashcards);
           setSessionStats(prev => ({ ...prev, totalCards: formattedFlashcards.length }));
-          
-          // Inicializar sessão de estudo
           setSessionStartTime(new Date());
+          
           console.log('=== SESSÃO INICIADA ===');
           console.log('Flashcards carregados:', formattedFlashcards.length);
-          console.log('Fila de estudo criada:', shuffledFlashcards.length);
         } else {
           console.warn('=== NENHUM FLASHCARD ENCONTRADO ===');
-          console.warn('subTopicId usado na busca:', subTopicId);
-          console.warn('Tipo do subTopicId:', typeof subTopicId);
-          console.warn('subTopicId está vazio?', subTopicId === '');
-          
-          // Se não há flashcards, mostrar mensagem
           setFlashcards([]);
           setStudyQueue([]);
           setSessionStats(prev => ({ ...prev, totalCards: 0 }));
@@ -203,16 +183,14 @@ export default function StudyPage() {
         setLoading(false);
       } catch (error: any) {
         console.error('=== ERRO AO CARREGAR FLASHCARDS ===');
-        console.error('Erro completo:', error);
-        console.error('Mensagem de erro:', error.message);
-        console.error('Stack trace:', error.stack);
+        console.error('Erro:', error.message);
         toast.error('Erro ao carregar flashcards');
         setLoading(false);
       }
     };
 
     loadFlashcards();
-  }, [courseId, subjectId, topicId, subTopicId]);
+  }, [courseId, topicId, subTopicId]);
 
   const handleCardResponse = (isCorrect: boolean) => {
     if (!user || currentIndex >= studyQueue.length || isTransitioning) return;
@@ -539,12 +517,15 @@ export default function StudyPage() {
 
   const currentCard = studyQueue[currentIndex];
   
-  // DEBUG: Verificar o estado atual
-  console.log('=== ESTADO ATUAL ===');
-  console.log('studyQueue length:', studyQueue.length);
-  console.log('currentIndex:', currentIndex);
-  console.log('currentCard:', currentCard);
-  console.log('flashcards state:', flashcards);
+  // DEBUG: Verificar o estado atual (APENAS UMA VEZ)
+  if (!(window as any).debugLogged) {
+    console.log('=== ESTADO ATUAL ===');
+    console.log('studyQueue length:', studyQueue.length);
+    console.log('currentIndex:', currentIndex);
+    console.log('currentCard:', currentCard);
+    console.log('flashcards state:', flashcards);
+    (window as any).debugLogged = true;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
