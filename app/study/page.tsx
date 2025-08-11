@@ -212,7 +212,7 @@ export default function StudyPage() {
     };
 
     loadFlashcards();
-  }, [courseId, subjectId, topicId, subTopicId, router]);
+  }, [courseId, subjectId, topicId, subTopicId]);
 
   const handleCardResponse = (isCorrect: boolean) => {
     if (!user || currentIndex >= studyQueue.length || isTransitioning) return;
