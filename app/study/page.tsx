@@ -538,6 +538,13 @@ export default function StudyPage() {
   }
 
   const currentCard = studyQueue[currentIndex];
+  
+  // DEBUG: Verificar o estado atual
+  console.log('=== ESTADO ATUAL ===');
+  console.log('studyQueue length:', studyQueue.length);
+  console.log('currentIndex:', currentIndex);
+  console.log('currentCard:', currentCard);
+  console.log('flashcards state:', flashcards);
 
   return (
     <div className="min-h-screen bg-gray-50">
