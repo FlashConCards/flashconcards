@@ -122,7 +122,7 @@ export default function StudyPage() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [currentIndex, studyQueue, sessionCompleted, loading]);
 
-  // Load flashcards - VERSÃO SIMPLIFICADA
+  // Load flashcards - VERSÃO ANTI-LOOP
   useEffect(() => {
     if (!courseId || !topicId || !subTopicId) {
       console.error('=== PARÂMETROS INVÁLIDOS ===');
@@ -135,10 +135,19 @@ export default function StudyPage() {
       return;
     }
 
+    // Evitar carregamento duplicado
+    if (flashcards.length > 0 && studyQueue.length > 0) {
+      console.log('=== FLASHCARDS JÁ CARREGADOS ===');
+      console.log('Flashcards existentes:', flashcards.length);
+      console.log('Fila de estudo existente:', studyQueue.length);
+      return;
+    }
+
     const loadFlashcards = async () => {
       try {
         setLoading(true);
         console.log('=== INICIANDO CARREGAMENTO DE FLASHCARDS ===');
+        console.log('subTopicId:', subTopicId);
         
         // Carregar flashcards do Firebase
         const realFlashcards = await getFlashcards(subTopicId);
@@ -190,7 +199,7 @@ export default function StudyPage() {
     };
 
     loadFlashcards();
-  }, [courseId, topicId, subTopicId]);
+  }, [courseId, topicId, subTopicId, flashcards.length, studyQueue.length]);
 
   const handleCardResponse = (isCorrect: boolean) => {
     if (!user || currentIndex >= studyQueue.length || isTransitioning) return;
@@ -368,8 +377,8 @@ export default function StudyPage() {
       
       console.log('Total de flashcards salvos:', savedFlashcards.length);
       
-      // Aguardar um pouco para o Firebase processar
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Aguardar mais tempo para o Firebase processar
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Recarregar flashcards do Firebase
       console.log('Recarregando flashcards do Firebase...');
@@ -391,6 +400,14 @@ export default function StudyPage() {
         
         console.log('Flashcards formatados:', formattedFlashcards);
         
+        // LIMPAR ESTADO ANTIGO E DEFINIR NOVO
+        setFlashcards([]);
+        setStudyQueue([]);
+        
+        // Aguardar um tick para limpar
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Definir novos flashcards
         setFlashcards(formattedFlashcards);
         setStudyQueue(formattedFlashcards);
         setSessionStats(prev => ({ ...prev, totalCards: formattedFlashcards.length }));
@@ -425,6 +442,53 @@ export default function StudyPage() {
       wrongCards: 0,
       studyTime: 0
     });
+  };
+
+  const handleReloadFlashcards = async () => {
+    try {
+      console.log('=== RECARREGANDO FLASHCARDS MANUALMENTE ===');
+      setLoading(true);
+      
+      // Limpar estado atual
+      setFlashcards([]);
+      setStudyQueue([]);
+      setCurrentIndex(0);
+      setShowAnswer(false);
+      
+      // Recarregar do Firebase
+      const realFlashcards = await getFlashcards(subTopicId!);
+      console.log('Flashcards recarregados:', realFlashcards);
+      
+      if (realFlashcards && realFlashcards.length > 0) {
+        const formattedFlashcards: Flashcard[] = realFlashcards.map((card: any) => ({
+          id: card.id,
+          subTopicId: card.subTopicId,
+          front: card.front || card.question || 'Pergunta não definida',
+          back: card.back || card.answer || 'Resposta não definida',
+          explanation: card.explanation || '',
+          order: card.order || 1,
+          isActive: card.isActive !== false,
+          deepening: card.deepening || '',
+          createdAt: card.createdAt,
+          updatedAt: card.updatedAt,
+        }));
+        
+        const shuffledFlashcards = [...formattedFlashcards].sort(() => Math.random() - 0.5);
+        setFlashcards(formattedFlashcards);
+        setStudyQueue(shuffledFlashcards);
+        setSessionStats(prev => ({ ...prev, totalCards: formattedFlashcards.length }));
+        
+        toast.success(`${formattedFlashcards.length} flashcards recarregados com sucesso!`);
+      } else {
+        toast.error('Nenhum flashcard encontrado');
+      }
+      
+      setLoading(false);
+    } catch (error: any) {
+      console.error('Erro ao recarregar flashcards:', error);
+      toast.error('Erro ao recarregar flashcards');
+      setLoading(false);
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -673,8 +737,8 @@ export default function StudyPage() {
         {/* Navigation Buttons */}
         {currentCard && studyQueue.length > 0 && (
           <>
-            {/* Botão Gerar com IA */}
-            <div className="flex justify-center mb-6">
+            {/* Botões de IA e Recarregar */}
+            <div className="flex justify-center space-x-4 mb-6">
               <motion.button
                 onClick={() => {
                   setSelectedDeepeningContent(currentCard?.deepening || 'Conteúdo do flashcard atual');
@@ -689,6 +753,19 @@ export default function StudyPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
                 <span className="font-medium">Gerar Flashcards com IA</span>
+              </motion.button>
+              
+              <motion.button
+                onClick={handleReloadFlashcards}
+                disabled={loading}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors touch-button shadow-lg disabled:opacity-50"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span className="font-medium">{loading ? 'Recarregando...' : '🔄 Recarregar'}</span>
               </motion.button>
             </div>
 
