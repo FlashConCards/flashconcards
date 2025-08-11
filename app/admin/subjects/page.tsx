@@ -64,7 +64,7 @@ interface Flashcard {
   front: string;
   back: string;
   explanation?: string;
-  topicId: string;
+  subTopicId: string;
   order: number;
   isActive: boolean;
 }
