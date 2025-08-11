@@ -124,7 +124,7 @@ export default function StudyPage() {
 
   // Load flashcards
   useEffect(() => {
-    if (!courseId || !subjectId || !topicId || !subTopicId) {
+    if (!courseId || !topicId || !subTopicId) {
       console.error('=== PARÂMETROS INVÁLIDOS ===');
       console.error('courseId:', courseId);
       console.error('subjectId:', subjectId);
