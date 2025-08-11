@@ -680,227 +680,114 @@ export const deleteSubTopic = async (subTopicId: string) => {
 // ===== FLASHCARDS (/flashcards) =====
 export const getFlashcards = async (subTopicId?: string) => {
   try {
-    console.log('Getting flashcards for subTopicId:', subTopicId)
-    let q: Query | CollectionReference = collection(db, 'flashcards')
+    console.log('=== GETFLASHCARDS DEBUG ===');
+    console.log('subTopicId recebido:', subTopicId);
+    console.log('Tipo do subTopicId:', typeof subTopicId);
     
-    if (subTopicId) {
-      // Corrigido: buscar por subTopicId, não topicId
-      q = query(q, where('subTopicId', '==', subTopicId))
-      console.log('Query created with filter for subTopicId:', subTopicId)
+    if (!subTopicId) {
+      console.log('No subTopicId provided, returning empty array');
+      return [];
     }
     
-    const querySnapshot = await getDocs(q)
-    console.log('Query snapshot size:', querySnapshot.size)
+    // Verificar se o subTopicId não está vazio
+    if (subTopicId.trim() === '') {
+      console.log('subTopicId está vazio, retornando array vazio');
+      return [];
+    }
     
-        const flashcards = querySnapshot.docs.map(doc => {
-      const data = doc.data()
-      console.log('Document data:', doc.id, data)
-      console.log('Document fields:', {
-        id: doc.id,
-        front: data.front,
-        back: data.back,
-        question: data.question,
-        answer: data.answer,
-        explanation: data.explanation,
-        subTopicId: data.subTopicId,
-        order: data.order,
-        isActive: data.isActive
-      })
-      
-      // Verificar se os campos estão vazios
-      if (!data.front && !data.question) {
-        console.error('Flashcard sem pergunta:', doc.id, data);
-      }
-      if (!data.back && !data.answer) {
-        console.error('Flashcard sem resposta:', doc.id, data);
-      }
-      
-          // Verificar se os campos estão sendo salvos corretamente
-    console.log('Document fields check:', {
-      id: doc.id,
-      hasFront: !!data.front,
-      hasBack: !!data.back,
-      hasQuestion: !!data.question,
-      hasAnswer: !!data.answer,
-      frontLength: data.front?.length || 0,
-      backLength: data.back?.length || 0,
-      frontValue: data.front,
-      backValue: data.back,
-      frontType: typeof data.front,
-      backType: typeof data.back,
-      allFields: Object.keys(data),
-      dataKeys: Object.keys(data),
-      dataValues: Object.values(data),
-      dataEntries: Object.entries(data),
-      dataStringified: JSON.stringify(data, null, 2),
-      dataRaw: data,
-      dataNull: data === null,
-      dataUndefined: data === undefined,
-      dataEmpty: Object.keys(data).length === 0,
-      dataHasSubTopicId: !!data.subTopicId,
-      dataHasFront: !!data.front,
-      dataHasBack: !!data.back,
-      dataFrontEmpty: data.front === '',
-      dataBackEmpty: data.back === '',
-      dataFrontNull: data.front === null,
-      dataBackNull: data.back === null,
-      dataFrontUndefined: data.front === undefined,
-      dataBackUndefined: data.back === undefined,
-      dataFrontTruthy: !!data.front,
-      dataBackTruthy: !!data.back,
-      dataFrontLength: data.front?.length || 0,
-      dataBackLength: data.back?.length || 0,
-      dataFrontString: String(data.front),
-      dataBackString: String(data.back),
-      dataFrontTrimmed: data.front?.trim(),
-      dataBackTrimmed: data.back?.trim(),
-      dataFrontTrimmedLength: data.front?.trim()?.length || 0,
-      dataBackTrimmedLength: data.back?.trim()?.length || 0,
-      dataFrontTrimmedTruthy: !!data.front?.trim(),
-      dataBackTrimmedTruthy: !!data.back?.trim(),
-      dataFrontTrimmedEmpty: data.front?.trim() === '',
-      dataBackTrimmedEmpty: data.back?.trim() === ''
-    });
+    let q: Query | CollectionReference = collection(db, 'flashcards');
+    q = query(q, where('subTopicId', '==', subTopicId), where('isActive', '==', true));
+    console.log('Query criada com filtro para subTopicId:', subTopicId);
+    
+    const querySnapshot = await getDocs(q);
+    console.log('Query snapshot size:', querySnapshot.size);
+    console.log('Query snapshot docs:', querySnapshot.docs.map(doc => ({ id: doc.id, data: doc.data() })));
+    
+    const flashcards = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      console.log('Processando documento:', { id: doc.id, data });
       
       return {
         id: doc.id,
-        ...data
-      }
-    }) as any[]
+        front: data.front || data.question || '',
+        back: data.back || data.answer || '',
+        explanation: data.explanation || '',
+        subTopicId: data.subTopicId,
+        order: data.order || 1,
+        isActive: data.isActive !== false,
+        aiGenerated: data.aiGenerated || false,
+        difficulty: data.difficulty || 'medium',
+        questionType: data.questionType || 'mixed',
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt
+      };
+    });
     
-    console.log('Flashcards loaded:', flashcards.length)
-    console.log('Flashcards data:', flashcards)
-    console.log('First flashcard structure:', flashcards[0])
+    console.log('Flashcards processados:', flashcards);
+    console.log('Total de flashcards retornados:', flashcards.length);
     
-    // Verificar se os campos estão presentes
-    flashcards.forEach((flashcard, index) => {
-      console.log(`Flashcard ${index}:`, {
-        id: flashcard.id,
-        front: flashcard.front,
-        back: flashcard.back,
-        question: flashcard.question,
-        answer: flashcard.answer,
-        explanation: flashcard.explanation,
-        subTopicId: flashcard.subTopicId,
-        order: flashcard.order,
-        isActive: flashcard.isActive
-      })
-      
-      // Verificar se os campos estão vazios
-      if (!flashcard.front && !flashcard.question) {
-        console.error(`Flashcard ${index} sem pergunta:`, flashcard);
-      }
-      if (!flashcard.back && !flashcard.answer) {
-        console.error(`Flashcard ${index} sem resposta:`, flashcard);
-      }
-    })
-    
-    return flashcards
-  } catch (error: any) {
-    console.error('Error getting flashcards:', error)
-    return []
+    return flashcards;
+  } catch (error) {
+    console.error('Erro em getFlashcards:', error);
+    throw error;
   }
-}
+};
 
 export const createFlashcard = async (flashcardData: any) => {
   try {
-    console.log('Creating flashcard:', flashcardData)
-    console.log('Flashcard data structure:', {
-      front: flashcardData.front,
-      back: flashcardData.back,
-      explanation: flashcardData.explanation,
-      topicId: flashcardData.topicId,
-      order: flashcardData.order,
-      isActive: flashcardData.isActive
-    })
+    console.log('=== CREATE FLASHCARD DEBUG ===');
+    console.log('Dados recebidos:', flashcardData);
     
-    // Verificar se os dados estão sendo passados corretamente
-    if (!flashcardData.front || flashcardData.front.length === 0) {
+    // Validar dados obrigatórios
+    if (!flashcardData.front || flashcardData.front.trim().length === 0) {
       console.error('Campo front está vazio:', flashcardData);
       throw new Error('Campo front não pode estar vazio');
     }
     
-    if (!flashcardData.back || flashcardData.back.length === 0) {
+    if (!flashcardData.back || flashcardData.back.trim().length === 0) {
       console.error('Campo back está vazio:', flashcardData);
       throw new Error('Campo back não pode estar vazio');
     }
     
+    if (!flashcardData.subTopicId) {
+      console.error('Campo subTopicId está faltando:', flashcardData);
+      throw new Error('Campo subTopicId é obrigatório');
+    }
+    
+    // Preparar dados para salvar
     const flashcardDoc = {
-      front: flashcardData.front || '',
-      back: flashcardData.back || '',
+      front: flashcardData.front.trim(),
+      back: flashcardData.back.trim(),
       explanation: flashcardData.explanation || '',
-      subTopicId: flashcardData.subTopicId || flashcardData.topicId, // Corrigido: usar subTopicId
+      subTopicId: flashcardData.subTopicId,
       order: flashcardData.order || 1,
       isActive: flashcardData.isActive !== false,
+      aiGenerated: flashcardData.aiGenerated || false,
+      difficulty: flashcardData.difficulty || 'medium',
+      questionType: flashcardData.questionType || 'mixed',
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    }
+    };
     
-    // Verificar se os campos estão sendo salvos corretamente
-    console.log('Flashcard document structure:', {
-      front: flashcardDoc.front,
-      back: flashcardDoc.back,
-      explanation: flashcardDoc.explanation,
-      subTopicId: flashcardDoc.subTopicId,
-      order: flashcardDoc.order,
-      isActive: flashcardDoc.isActive,
-      frontLength: flashcardDoc.front.length,
-      backLength: flashcardDoc.back.length,
-      frontType: typeof flashcardDoc.front,
-      backType: typeof flashcardDoc.back,
-      allFields: Object.keys(flashcardDoc),
-      docKeys: Object.keys(flashcardDoc),
-      docValues: Object.values(flashcardDoc),
-      docEntries: Object.entries(flashcardDoc),
-      docStringified: JSON.stringify(flashcardDoc, null, 2),
-      docRaw: flashcardDoc,
-      docNull: flashcardDoc === null,
-      docUndefined: flashcardDoc === undefined,
-      docEmpty: Object.keys(flashcardDoc).length === 0,
-      docHasSubTopicId: !!flashcardDoc.subTopicId,
-      docHasFront: !!flashcardDoc.front,
-      docHasBack: !!flashcardDoc.back,
-      docFrontEmpty: flashcardDoc.front === '',
-      docBackEmpty: flashcardDoc.back === '',
-      docFrontNull: flashcardDoc.front === null,
-      docBackNull: flashcardDoc.back === null,
-      docFrontUndefined: flashcardDoc.front === undefined,
-      docBackUndefined: flashcardDoc.back === undefined,
-      docFrontTruthy: !!flashcardDoc.front,
-      docBackTruthy: !!flashcardDoc.back,
-      docFrontLength: flashcardDoc.front?.length || 0,
-      docBackLength: flashcardDoc.back?.length || 0,
-      docFrontString: String(flashcardDoc.front),
-      docBackString: String(flashcardDoc.back),
-      docFrontTrimmed: flashcardDoc.front?.trim(),
-      docBackTrimmed: flashcardDoc.back?.trim(),
-      docFrontTrimmedLength: flashcardDoc.front?.trim()?.length || 0,
-      docBackTrimmedLength: flashcardDoc.back?.trim()?.length || 0,
-      docFrontTrimmedTruthy: !!flashcardDoc.front?.trim(),
-      docBackTrimmedTruthy: !!flashcardDoc.back?.trim(),
-      docFrontTrimmedEmpty: flashcardDoc.front?.trim() === '',
-      docBackTrimmedEmpty: flashcardDoc.back?.trim() === ''
-    });
+    console.log('Dados preparados para salvar:', flashcardDoc);
     
-    console.log('Flashcard document to save:', flashcardDoc)
+    const docRef = await addDoc(collection(db, 'flashcards'), flashcardDoc);
+    console.log('Flashcard salvo com ID:', docRef.id);
     
-    // Verificar se os campos estão vazios antes de salvar
-    if (!flashcardDoc.front || flashcardDoc.front.length === 0) {
-      throw new Error('Campo front não pode estar vazio');
-    }
+    // Retornar o documento criado com ID
+    const savedFlashcard = {
+      id: docRef.id,
+      ...flashcardDoc
+    };
     
-    if (!flashcardDoc.back || flashcardDoc.back.length === 0) {
-      throw new Error('Campo back não pode estar vazio');
-    }
+    console.log('Flashcard retornado:', savedFlashcard);
+    return savedFlashcard;
     
-    const docRef = await addDoc(collection(db, 'flashcards'), flashcardDoc)
-    console.log('Flashcard created successfully:', docRef.id)
-    return docRef.id
   } catch (error) {
-    console.error('Error creating flashcard:', error)
-    throw error
+    console.error('Erro ao criar flashcard:', error);
+    throw error;
   }
-}
+};
 
 export const updateFlashcard = async (flashcardId: string, flashcardData: any) => {
   try {

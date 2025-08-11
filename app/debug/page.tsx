@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
 import { useRouter } from 'next/navigation'
+import { createFlashcard, getFlashcards } from '@/lib/firebase'
 import toast from 'react-hot-toast'
+import { collection, getDocs } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 
 export default function DebugPage() {
   const { user } = useAuth()
@@ -118,6 +121,114 @@ export default function DebugPage() {
     }
   }
 
+  const testFlashcardCreation = async () => {
+    try {
+      setLoading(true);
+      
+      // Usar o subTopicId real do seu sistema
+      const realSubTopicId = 'uSqKKFCXMFfzwJMkQNvE'; // Use o ID que aparece nos logs
+      
+      // Testar criação de flashcard
+      const testFlashcard = {
+        front: 'Teste de Flashcard - Compreensão Textual',
+        back: 'Resposta de teste para compreensão textual',
+        explanation: 'Explicação de teste para ajudar no aprendizado',
+        subTopicId: realSubTopicId,
+        order: 1,
+        isActive: true,
+        aiGenerated: true,
+        difficulty: 'medium',
+        questionType: 'objective'
+      };
+      
+      console.log('=== TESTE DE CRIAÇÃO DE FLASHCARD ===');
+      console.log('Criando flashcard de teste:', testFlashcard);
+      
+      const result = await createFlashcard(testFlashcard);
+      console.log('Flashcard criado com sucesso:', result);
+      
+      // Aguardar um pouco para o Firebase processar
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Buscar flashcards
+      console.log('=== TESTE DE RECUPERAÇÃO ===');
+      console.log('Buscando flashcards para subTopicId:', realSubTopicId);
+      
+      const flashcards = await getFlashcards(realSubTopicId);
+      console.log('Flashcards encontrados:', flashcards);
+      console.log('Quantidade encontrada:', flashcards.length);
+      
+      if (flashcards.length > 0) {
+        console.log('Primeiro flashcard encontrado:', flashcards[0]);
+        toast.success(`Teste concluído! ${flashcards.length} flashcards encontrados.`);
+      } else {
+        console.warn('Nenhum flashcard encontrado');
+        toast.error('Teste falhou: nenhum flashcard foi encontrado');
+      }
+      
+    } catch (error: any) {
+      console.error('Erro no teste:', error);
+      toast.error(`Erro no teste: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkExistingFlashcards = async () => {
+    try {
+      setLoading(true);
+      
+      console.log('=== VERIFICANDO FLASHCARDS EXISTENTES ===');
+      
+      // Verificar todos os flashcards na coleção
+      const allFlashcards = await getDocs(collection(db, 'flashcards'));
+      console.log('Total de flashcards na coleção:', allFlashcards.size);
+      
+      if (allFlashcards.size > 0) {
+        console.log('=== FLASHCARDS ENCONTRADOS ===');
+        allFlashcards.forEach((doc) => {
+          const data = doc.data();
+          console.log('Flashcard:', {
+            id: doc.id,
+            front: data.front,
+            back: data.back,
+            subTopicId: data.subTopicId,
+            isActive: data.isActive,
+            aiGenerated: data.aiGenerated,
+            createdAt: data.createdAt
+          });
+        });
+        
+        // Agrupar por subTopicId
+        const flashcardsBySubTopic: { [key: string]: any[] } = {};
+        allFlashcards.forEach((doc) => {
+          const data = doc.data();
+          const subTopicId = data.subTopicId;
+          if (!flashcardsBySubTopic[subTopicId]) {
+            flashcardsBySubTopic[subTopicId] = [];
+          }
+          flashcardsBySubTopic[subTopicId].push({ id: doc.id, ...data });
+        });
+        
+        console.log('=== FLASHCARDS AGRUPADOS POR SUBTÓPICO ===');
+        Object.keys(flashcardsBySubTopic).forEach(subTopicId => {
+          console.log(`SubTópico ${subTopicId}:`, flashcardsBySubTopic[subTopicId].length, 'flashcards');
+        });
+        
+        toast.success(`Encontrados ${allFlashcards.size} flashcards no total`);
+      } else {
+        console.log('Nenhum flashcard encontrado na coleção');
+        toast.error('Nenhum flashcard encontrado na coleção');
+      }
+      
+    } catch (error: any) {
+      console.error('Erro ao verificar flashcards:', error);
+      toast.error(`Erro: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -152,23 +263,39 @@ export default function DebugPage() {
                 {loading ? 'Criando...' : 'Criar Curso de Teste'}
               </button>
               
-                                               <button
-                    onClick={checkUserAccess}
-                    disabled={loading}
-                    className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
-                  >
-                    {loading ? 'Verificando...' : 'Verificar Acesso'}
-                  </button>
+              <button
+                onClick={checkUserAccess}
+                disabled={loading}
+                className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
+              >
+                {loading ? 'Verificando...' : 'Verificar Acesso'}
+              </button>
 
-                  <button
-                    onClick={debugSubjects}
-                    disabled={loading || !selectedCourse}
-                    className="w-full bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 disabled:opacity-50"
-                  >
-                    {loading ? 'Verificando...' : 'Debug Matérias'}
-                  </button>
+              <button
+                onClick={debugSubjects}
+                disabled={loading || !selectedCourse}
+                className="w-full bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 disabled:opacity-50"
+              >
+                {loading ? 'Verificando...' : 'Debug Matérias'}
+              </button>
 
-               <div className="border-t pt-4">
+              <button
+                onClick={testFlashcardCreation}
+                disabled={loading}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {loading ? 'Testando...' : 'Testar Criação de Flashcards'}
+              </button>
+
+              <button
+                onClick={checkExistingFlashcards}
+                disabled={loading}
+                className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {loading ? 'Verificando...' : 'Verificar Flashcards Existentes'}
+              </button>
+
+              <div className="border-t pt-4">
                  <h3 className="font-semibold mb-2">Atualizar Acesso do Usuário</h3>
                  <select
                    value={selectedCourse}

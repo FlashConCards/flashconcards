@@ -125,6 +125,11 @@ export default function StudyPage() {
   // Load flashcards
   useEffect(() => {
     if (!courseId || !subjectId || !topicId || !subTopicId) {
+      console.error('=== PARÂMETROS INVÁLIDOS ===');
+      console.error('courseId:', courseId);
+      console.error('subjectId:', subjectId);
+      console.error('topicId:', topicId);
+      console.error('subTopicId:', subTopicId);
       toast.error('Parâmetros de estudo inválidos');
       router.push('/dashboard');
       return;
@@ -133,33 +138,27 @@ export default function StudyPage() {
     const loadFlashcards = async () => {
       try {
         setLoading(true);
+        console.log('=== INICIANDO CARREGAMENTO DE FLASHCARDS ===');
+        console.log('Parâmetros recebidos:', { courseId, subjectId, topicId, subTopicId });
         
         // Carregar flashcards reais do Firebase
+        console.log('Chamando getFlashcards com subTopicId:', subTopicId);
         const realFlashcards = await getFlashcards(subTopicId);
-        console.log('Real flashcards from Firebase:', realFlashcards);
-        console.log('Real flashcards structure:', JSON.stringify(realFlashcards, null, 2));
+        console.log('=== RESULTADO DO GETFLASHCARDS ===');
+        console.log('Quantidade retornada:', realFlashcards?.length || 0);
+        console.log('Dados retornados:', realFlashcards);
         
         if (realFlashcards && realFlashcards.length > 0) {
+          console.log('=== PROCESSANDO FLASHCARDS ===');
           // Converter dados do Firebase para o formato esperado
-          const formattedFlashcards: Flashcard[] = realFlashcards.map((card: any) => {
-            console.log('Processing card:', card);
-            console.log('Card fields:', {
-              id: card.id,
-              front: card.front,
-              back: card.back,
-              question: card.question,
-              answer: card.answer,
-              explanation: card.explanation,
-              subTopicId: card.subTopicId,
-              order: card.order,
-              isActive: card.isActive
-            });
+          const formattedFlashcards: Flashcard[] = realFlashcards.map((card: any, index: number) => {
+            console.log(`Processando card ${index + 1}:`, card);
             
             const formattedCard = {
               id: card.id,
               subTopicId: card.subTopicId,
-              front: card.front || card.question || 'Pergunta não definida', // Suporte para ambos os formatos
-              back: card.back || card.answer || 'Resposta não definida', // Suporte para ambos os formatos
+              front: card.front || card.question || 'Pergunta não definida',
+              back: card.back || card.answer || 'Resposta não definida',
               explanation: card.explanation || '',
               order: card.order || 1,
               isActive: card.isActive !== false,
@@ -168,81 +167,13 @@ export default function StudyPage() {
               updatedAt: card.updatedAt,
             };
             
-            // Verificar se os campos estão vazios
-            if (!formattedCard.front || formattedCard.front === 'Pergunta não definida') {
-              console.warn('Flashcard sem pergunta:', card);
-            }
-            if (!formattedCard.back || formattedCard.back === 'Resposta não definida') {
-              console.warn('Flashcard sem resposta:', card);
-            }
-            
-            // Verificar se os campos estão vazios no card original
-            if (!card.front && !card.question) {
-              console.error('Card original sem pergunta:', card);
-            }
-            if (!card.back && !card.answer) {
-              console.error('Card original sem resposta:', card);
-            }
-            
-            // Verificar se os campos estão vazios no card formatado
-            if (!formattedCard.front || formattedCard.front === 'Pergunta não definida') {
-              console.error('Card formatado sem pergunta:', formattedCard);
-            }
-            if (!formattedCard.back || formattedCard.back === 'Resposta não definida') {
-              console.error('Card formatado sem resposta:', formattedCard);
-            }
-            
-            // Verificar se os campos estão sendo processados corretamente
-            console.log('Card processing check:', {
-              id: card.id,
-              originalFront: card.front,
-              originalBack: card.back,
-              originalQuestion: card.question,
-              originalAnswer: card.answer,
-              formattedFront: formattedCard.front,
-              formattedBack: formattedCard.back,
-              frontLength: card.front?.length || 0,
-              backLength: card.back?.length || 0,
-              frontType: typeof card.front,
-              backType: typeof card.back,
-              allFields: Object.keys(card),
-              cardKeys: Object.keys(card),
-              cardValues: Object.values(card),
-              cardEntries: Object.entries(card),
-              cardStringified: JSON.stringify(card, null, 2),
-              cardRaw: card,
-              cardNull: card === null,
-              cardUndefined: card === undefined,
-              cardEmpty: Object.keys(card).length === 0,
-              cardHasSubTopicId: !!card.subTopicId,
-              cardHasFront: !!card.front,
-              cardHasBack: !!card.back,
-              cardFrontEmpty: card.front === '',
-              cardBackEmpty: card.back === '',
-              cardFrontNull: card.front === null,
-              cardBackNull: card.back === null,
-              cardFrontUndefined: card.front === undefined,
-              cardBackUndefined: card.back === undefined,
-              cardFrontTruthy: !!card.front,
-              cardBackTruthy: !!card.back,
-              cardFrontLength: card.front?.length || 0,
-              cardBackLength: card.back?.length || 0,
-              cardFrontString: String(card.front),
-              cardBackString: String(card.back),
-              cardFrontTrimmed: card.front?.trim(),
-              cardBackTrimmed: card.back?.trim(),
-              cardFrontTrimmedLength: card.front?.trim()?.length || 0,
-              cardBackTrimmedLength: card.back?.trim()?.length || 0,
-              cardFrontTrimmedTruthy: !!card.front?.trim(),
-              cardBackTrimmedTruthy: !!card.back?.trim(),
-              cardFrontTrimmedEmpty: card.front?.trim() === '',
-              cardBackTrimmedEmpty: card.back?.trim() === ''
-            });
-            console.log('Formatted card:', formattedCard);
+            console.log(`Card ${index + 1} formatado:`, formattedCard);
             return formattedCard;
           });
           
-          console.log('Formatted flashcards:', formattedFlashcards);
+          console.log('=== FLASHCARDS FINALIZADOS ===');
+          console.log('Total formatado:', formattedFlashcards.length);
+          console.log('Primeiro card formatado:', formattedFlashcards[0]);
           
           // Embaralhar os flashcards para estudo aleatório
           const shuffledFlashcards = [...formattedFlashcards].sort(() => Math.random() - 0.5);
@@ -253,7 +184,15 @@ export default function StudyPage() {
           
           // Inicializar sessão de estudo
           setSessionStartTime(new Date());
+          console.log('=== SESSÃO INICIADA ===');
+          console.log('Flashcards carregados:', formattedFlashcards.length);
+          console.log('Fila de estudo criada:', shuffledFlashcards.length);
         } else {
+          console.warn('=== NENHUM FLASHCARD ENCONTRADO ===');
+          console.warn('subTopicId usado na busca:', subTopicId);
+          console.warn('Tipo do subTopicId:', typeof subTopicId);
+          console.warn('subTopicId está vazio?', subTopicId === '');
+          
           // Se não há flashcards, mostrar mensagem
           setFlashcards([]);
           setStudyQueue([]);
@@ -262,8 +201,11 @@ export default function StudyPage() {
         }
         
         setLoading(false);
-      } catch (error) {
-        console.error('Error loading flashcards:', error);
+      } catch (error: any) {
+        console.error('=== ERRO AO CARREGAR FLASHCARDS ===');
+        console.error('Erro completo:', error);
+        console.error('Mensagem de erro:', error.message);
+        console.error('Stack trace:', error.stack);
         toast.error('Erro ao carregar flashcards');
         setLoading(false);
       }
@@ -421,13 +363,41 @@ export default function StudyPage() {
 
   const handleAIGeneratedFlashcards = async (generatedFlashcards: any[]) => {
     try {
+      console.log('=== SALVANDO FLASHCARDS GERADOS POR IA ===');
+      console.log('Quantidade recebida:', generatedFlashcards.length);
+      console.log('Primeiro flashcard:', generatedFlashcards[0]);
+      console.log('subTopicId atual:', subTopicId);
+      
       // Salvar flashcards gerados por IA no Firebase
+      const savedFlashcards = [];
       for (const flashcard of generatedFlashcards) {
-        await createFlashcard(flashcard);
+        try {
+          // Garantir que o subTopicId está correto
+          const flashcardWithSubTopic = {
+            ...flashcard,
+            subTopicId: subTopicId || flashcard.subTopicId
+          };
+          
+          console.log('Salvando flashcard:', flashcardWithSubTopic);
+          const savedFlashcard = await createFlashcard(flashcardWithSubTopic);
+          savedFlashcards.push(savedFlashcard);
+          console.log('Flashcard salvo com sucesso:', savedFlashcard);
+        } catch (error: any) {
+          console.error('Erro ao salvar flashcard individual:', error);
+          toast.error(`Erro ao salvar flashcard: ${error.message}`);
+        }
       }
       
-      // Recarregar flashcards
+      console.log('Total de flashcards salvos:', savedFlashcards.length);
+      
+      // Aguardar um pouco para o Firebase processar
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Recarregar flashcards do Firebase
+      console.log('Recarregando flashcards do Firebase...');
       const realFlashcards = await getFlashcards(subTopicId!);
+      console.log('Flashcards recarregados do Firebase:', realFlashcards);
+      
       if (realFlashcards && realFlashcards.length > 0) {
         const formattedFlashcards: Flashcard[] = realFlashcards.map((card: any) => ({
           id: card.id,
@@ -436,19 +406,27 @@ export default function StudyPage() {
           explanation: card.explanation || '',
           subTopicId: card.subTopicId,
           order: card.order || 1,
-          isActive: card.isActive !== false
+          isActive: card.isActive !== false,
+          createdAt: card.createdAt,
+          updatedAt: card.updatedAt
         }));
+        
+        console.log('Flashcards formatados:', formattedFlashcards);
         
         setFlashcards(formattedFlashcards);
         setStudyQueue(formattedFlashcards);
         setSessionStats(prev => ({ ...prev, totalCards: formattedFlashcards.length }));
+        
+        toast.success(`${savedFlashcards.length} flashcards gerados por IA foram salvos e carregados!`);
+      } else {
+        console.warn('Nenhum flashcard foi encontrado após salvar');
+        console.log('subTopicId usado na busca:', subTopicId);
+        toast.error('Flashcards salvos, mas não foi possível carregá-los. Tente recarregar a página.');
       }
       
-      toast.success(`${generatedFlashcards.length} flashcards gerados por IA foram salvos!`);
-      
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao salvar flashcards gerados por IA:', error);
-      toast.error('Erro ao salvar flashcards gerados por IA');
+      toast.error(`Erro ao salvar flashcards: ${error.message}`);
     }
   };
 
